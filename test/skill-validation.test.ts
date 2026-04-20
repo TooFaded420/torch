@@ -642,8 +642,8 @@ describe('office-hours skill structure', () => {
     expect(content).toContain('golden age');
   });
 
-  test('contains Garry Tan personal plea', () => {
-    expect(content).toContain('Garry Tan, the creator of GStack');
+  test('contains closing note', () => {
+    expect(content).toContain('Torch thinks you are among the top people who could do this');
   });
 
   test('contains founder signal synthesis phase', () => {

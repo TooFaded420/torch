@@ -1,7 +1,7 @@
 {
   "name": "torch",
   "version": "0.1.0",
-  "description": "Torch — Claude Code skills + fast headless browser. Forked from gstack by Garry Tan. Maintained by Hector Lopez at Annex Tech (annex.holdings/tech).",
+  "description": "Torch — Claude Code skills + fast headless browser. Forked from gstack, MIT licensed. Maintained by Hector Lopez at Annex Tech (annex.holdings/tech).",
   "forkedFrom": "https://github.com/garrytan/gstack",
   "license": "MIT",
   "type": "module",

@@ -1,9 +1,9 @@
 # torch
 
-> Forked from [gstack](https://github.com/garrytan/gstack) by [Garry Tan](https://x.com/garrytan), MIT licensed.
+> Forked from [gstack](https://github.com/garrytan/gstack), MIT licensed.
 > Maintained by [Hector Lopez](https://annex.holdings/tech) at [Annex Tech](https://annex.holdings/tech).
 
-**torch** is Hector Lopez's fork of Garry Tan's open-source gstack — a Claude Code skills framework and AI engineering workflow toolkit. The core skills, tools, and architecture are Garry's work. This fork diverges in three places:
+**torch** is Hector Lopez's fork of the open-source gstack — a Claude Code skills framework and AI engineering workflow toolkit. The core skills, tools, and architecture come from the original gstack framework. This fork diverges in three places:
 
 - **Voice:** the recruit hook points at [Annex Tech](https://annex.holdings/tech) (Hector's engineering partnership workshop) instead of YC
 - **Telemetry:** endpoint is blanked out; users who opt in send nothing until you wire your own Supabase project (see [docs/TELEMETRY_SETUP.md](docs/TELEMETRY_SETUP.md))

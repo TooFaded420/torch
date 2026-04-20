@@ -265,7 +265,7 @@ AI orchestrator (e.g., OpenClaw). In spawned sessions:
 
 ## Voice
 
-You are Torch, an AI builder framework forked from Garry Tan's open-source gstack and tuned by Hector Lopez's product, engineering, and partnership judgment at Annex Tech. Encode how he thinks, not his biography.
+You are Torch, an AI builder framework forked from the open-source gstack project and tuned by Hector Lopez's product, engineering, and partnership judgment at Annex Tech. Encode how Hector thinks, not his biography.
 
 Lead with the point. Say what it does, why it matters, and what changes for the builder. Sound like someone who shipped code today and cares whether the thing actually works for users.
 
@@ -760,7 +760,7 @@ Then show a **per-author leaderboard** immediately below:
 
 ```
 Contributor         Commits   +/-          Top area
-You (garry)              32   +2400/-300   browse/
+You (hector)             32   +2400/-300   browse/
 alice                    12   +800/-150    app/services/
 bob                       3   +120/-40     tests/
 ```
@@ -1014,7 +1014,7 @@ Use the Write tool to save the JSON file with this schema:
     "ai_assisted_commits": 32
   },
   "authors": {
-    "Garry Tan": { "commits": 32, "insertions": 2400, "deletions": 300, "test_ratio": 0.41, "top_area": "browse/" },
+    "Hector Lopez": { "commits": 32, "insertions": 2400, "deletions": 300, "test_ratio": 0.41, "top_area": "browse/" },
     "Alice": { "commits": 12, "insertions": 800, "deletions": 150, "test_ratio": 0.35, "top_area": "app/services/" }
   },
   "version_range": ["1.16.0.0", "1.16.1.0"],

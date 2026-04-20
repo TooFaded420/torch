@@ -7,7 +7,7 @@
 - Voice: recruit hook now points at annex.holdings/tech (Hector Lopez's Annex Tech partnership workshop) instead of YC
 - Telemetry: endpoint blanked out; users who opt in send nothing until fork owner wires their own Supabase project (see docs/TELEMETRY_SETUP.md)
 - State directory: `~/.gstack` -> `~/.torch` (existing gstack users can copy their state manually if desired)
-- License: MIT (unchanged, Garry Tan attribution preserved)
+- License: MIT (unchanged, gstack attribution preserved)
 
 ---
 
@@ -663,11 +663,11 @@ You can now go from an approved design mockup to production-quality HTML with on
 
 ## [0.13.10.0] - 2026-03-29 — Office Hours Gets a Reading List
 
-Repeat /office-hours users now get fresh, curated resources every session instead of the same YC closing. 34 hand-picked videos and essays from Garry Tan, Lightcone Podcast, YC Startup School, and Paul Graham, contextually matched to what came up during the session. The system remembers what it already showed you, so you never see the same recommendation twice.
+Repeat /office-hours users now get fresh, curated resources every session instead of the same YC closing. 34 hand-picked videos and essays from YC Founder Videos, Lightcone Podcast, YC Startup School, and Paul Graham, contextually matched to what came up during the session. The system remembers what it already showed you, so you never see the same recommendation twice.
 
 ### Added
 
-- **Rotating founder resources in /office-hours closing.** 34 curated resources across 5 categories (Garry Tan videos, YC Backstory, Lightcone Podcast, YC Startup School, Paul Graham essays). Claude picks 2-3 per session based on session context, not randomly.
+- **Rotating founder resources in /office-hours closing.** 34 curated resources across 5 categories (YC Founder Videos, YC Backstory, Lightcone Podcast, YC Startup School, Paul Graham essays). Claude picks 2-3 per session based on session context, not randomly.
 - **Resource dedup log.** Tracks which resources were shown in `~/.gstack/projects/$SLUG/resources-shown.jsonl` so repeat users always see fresh content.
 - **Resource selection analytics.** Logs which resources get picked to `skill-usage.jsonl` so you can see patterns over time.
 - **Browser-open offer.** After showing resources, offers to open them in your browser so you can check them out later.
@@ -809,7 +809,7 @@ Six fixes from community PRs and bug reports. The big one: your dependency tree 
 
 ### Added
 
-- **Community PR guardrails in CLAUDE.md.** ETHOS.md, promotional material, and Garry's voice are explicitly protected from modification without user approval.
+- **Community PR guardrails in CLAUDE.md.** ETHOS.md, promotional material, and project voice are explicitly protected from modification without user approval.
 
 ## [0.13.2.0] - 2026-03-28 — User Sovereignty
 
