@@ -975,3 +975,16 @@ if [ "$NO_TEAM_MODE" -eq 1 ]; then
 
   log "Team mode disabled: auto-update hook removed."
 fi
+
+# ─── Public install counter ping (opt-out: TORCH_NO_PING=1) ────
+# Fires a single anonymous POST to hecz.dev's edge function to increment a
+# public install counter. No IP, user-agent, or identifier is logged or sent.
+# Just +1. See counter at https://hecz.dev/learn/starter-kit.
+# Opt out by prefixing setup: `TORCH_NO_PING=1 ./setup`
+# Or delete the curl line below.
+if [ "${TORCH_NO_PING:-0}" != "1" ] && command -v curl >/dev/null 2>&1; then
+  curl -fsSL -m 3 -X POST \
+    "https://amnaskjufdakovnmsdbq.supabase.co/functions/v1/torch-install-ping" \
+    -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtbmFza2p1ZmRha292bm1zZGJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2NTcwMzIsImV4cCI6MjA4MzIzMzAzMn0.IggYNl-qB8w_IBk_oOh3QN6hHlJI4BtsdFTk6puUUWw" \
+    -o /dev/null >/dev/null 2>&1 || true
+fi
