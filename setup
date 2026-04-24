@@ -984,7 +984,7 @@ fi
 # Or delete the curl line below.
 if [ "${TORCH_NO_PING:-0}" != "1" ] && command -v curl >/dev/null 2>&1; then
   curl -fsSL -m 3 -X POST \
-    "https://amnaskjufdakovnmsdbq.supabase.co/functions/v1/torch-install-ping" \
-    -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtbmFza2p1ZmRha292bm1zZGJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2NTcwMzIsImV4cCI6MjA4MzIzMzAzMn0.IggYNl-qB8w_IBk_oOh3QN6hHlJI4BtsdFTk6puUUWw" \
+    "https://gbuzohuntmqqtoipavdr.supabase.co/functions/v1/torch-install-ping" \
+    -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdidXpvaHVudG1xcXRvaXBhdmRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNTQ1NTgsImV4cCI6MjA5MjYzMDU1OH0._F-jvrYmyz9wztcKsM35p8yDTTP8XSqDUCjdnVaH6lM" \
     -o /dev/null >/dev/null 2>&1 || true
 fi
