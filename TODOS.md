@@ -2,23 +2,23 @@
 
 ## NEXT PRIORITY
 
-### P1: #1882 — portable skill-install prefix (non-`gstack` install dirs break silently)
+### P1: #1882 — portable skill-install prefix (non-`torch` install dirs break silently)
 
-**What:** Every generated SKILL.md hardcodes the literal `~/.claude/skills/gstack/...`
+**What:** Every generated SKILL.md hardcodes the literal `~/.claude/skills/torch/...`
 for its `bin/`/asset calls (the per-invocation telemetry/config preamble plus ~9
 resolvers). `setup` wires the top-level skill symlinks for any directory name, so
 installing at `~/.claude/skills/<other>` leaves every internal `bin` reference
-pointing at a non-existent `~/.claude/skills/gstack/` path — failing **silently, at
+pointing at a non-existent `~/.claude/skills/torch/` path — failing **silently, at
 skill-invocation time**. Make the emitted references portable: resolve the install
-root at runtime (the preamble already defines `GSTACK_ROOT`/`GSTACK_BIN` in
+root at runtime (the preamble already defines `torch_ROOT`/`torch_BIN` in
 `scripts/resolvers/preamble/generate-preamble-bash.ts` but the literals don't use
-them) and emit `$GSTACK_BIN`-relative paths instead of the hardcoded prefix.
+them) and emit `$torch_BIN`-relative paths instead of the hardcoded prefix.
 
 **Why:** Filed as #1882. Split out of the June 2026 fix wave (decision A) once
 implementation showed it is a host-config/design change, not a fix-wave patch. The
 urgent half — the guard/freeze/careful frontmatter hooks broken on CC 2.1.162 — was
 already fixed in that wave (#1871) with a literal `$HOME`-anchored path, because
-frontmatter hooks run before any runtime variable exists and cannot use `$GSTACK_BIN`.
+frontmatter hooks run before any runtime variable exists and cannot use `$torch_BIN`.
 So #1882 is now purely the body-preamble portability work.
 
 **Pros:** Unblocks installs at any directory name; removes a whole class of silent
@@ -30,17 +30,17 @@ a silent mistake breaks all 52 skills. High blast radius — needs its own focus
 - Rewire `ctx.paths.binDir` (and browse/design dir paths) + the ~9 resolvers that
   emit the literal (`testing.ts`, `review.ts`, `design.ts`, `browse.ts`,
   `redact-doc.ts`, `tasks-section.ts`, `preamble/generate-*.ts`) to use the
-  preamble-defined `$GSTACK_ROOT`/`$GSTACK_BIN`.
-- Ensure `GSTACK_ROOT`/`GSTACK_BIN` are defined before first use in EVERY skill's
+  preamble-defined `$torch_ROOT`/`$torch_BIN`.
+- Ensure `torch_ROOT`/`torch_BIN` are defined before first use in EVERY skill's
   preamble (verify the telemetry preamble's first bin call is after the definition).
 - **Test conflict (verified):** `test/gen-skill-docs.test.ts:1942` and the sibling
-  ship assertion currently *assert* generated Claude output `.toContain('~/.claude/skills/gstack')`
+  ship assertion currently *assert* generated Claude output `.toContain('~/.claude/skills/torch')`
   as a guardrail that Codex-host paths don't leak. These must be rewritten to match
   the new portable scheme.
 - Regenerate all 52 SKILL.md (`bun run scripts/gen-skill-docs.ts --host all`); never
   hand-edit generated files. Bisect: resolver/host-config change commit, then the
   52-file regen commit.
-- Smoke-test a skill invocation from a non-`gstack` install dir to prove the fix.
+- Smoke-test a skill invocation from a non-`torch` install dir to prove the fix.
 - Sibling of #349 (the `$CLAUDE_CONFIG_DIR` / `~/.claude` path issue).
 
 ## Test infrastructure
@@ -72,7 +72,7 @@ glob is wrong — needs a curated exclude list.
 `test/helpers/touchfiles.ts` E2E_TIERS (tier labels already exist per test), orphan
 list generated via `comm -23` between `ls test/skill-e2e-*.test.ts` and the file lists
 in `.github/workflows/evals*.yml`. Receipts from the autoplan incident:
-`~/.gstack/projects/garrytan-gstack/e2e-runs/2026-07-10-0154/` (0-turn "Unknown command"
+`~/.torch/projects/garrytan-torch/e2e-runs/2026-07-10-0154/` (0-turn "Unknown command"
 transcripts).
 
 ### Eval harness: live progress + incremental result persistence (kill the silent hour)
@@ -82,7 +82,7 @@ transcripts).
 **What:** `bun run test:evals` is observably silent for its entire runtime and
 persists nothing until completion. Make the E2E harness (1) append a one-line
 progress record per test START and END to a well-known heartbeat file (e.g.
-`~/.gstack-dev/evals/.current-run.jsonl`), (2) write each test's eval-store
+`~/.torch-dev/evals/.current-run.jsonl`), (2) write each test's eval-store
 result incrementally instead of only at run end, and (3) flush per-test
 pass/fail lines to stderr unbuffered so `bun test --concurrent` mega-file
 buffering can't hide 50 minutes of legitimate progress.
@@ -90,7 +90,7 @@ buffering can't hide 50 minutes of legitimate progress.
 **Why:** During the v1.57.11.0 ship, the diff-selected eval run (54 tests) was
 killed ~50 min in and NOTHING distinguished the corpse from a healthy run for
 hours: the log had zero test lines (per-file buffering across five mega
-`skill-e2e-*.test.ts` files), `~/.gstack-dev/evals/` had zero new files
+`skill-e2e-*.test.ts` files), `~/.torch-dev/evals/` had zero new files
 (results persist only on completion), and the only available liveness signal
 (`pgrep "bun test --max-concurrency"`) false-positives on every sibling
 free-suite shard. An agent or human watching the run has no honest signal.
@@ -161,7 +161,7 @@ corpus-wide.
 split-rules) vs hot (voice, recommendation format) before cutting. Validate on one skill,
 then roll corpus-wide.
 
-**Effort estimate:** L (human team) → M (CC+gstack)
+**Effort estimate:** L (human team) → M (CC+torch)
 **Priority:** P3
 **Depends on / blocked by:** The section pipeline (shipped v1.54). No hard blocker.
 
@@ -175,7 +175,7 @@ each stands alone and any one could ship independently.
 ### P2: MV3 extension service worker memory profile
 
 **What:** The `/memory` endpoint snapshot enumerates pages but does
-not enumerate the gstack baked-in extension's service-worker target.
+not enumerate the torch baked-in extension's service-worker target.
 A long-running MV3 service worker can leak through retained DOM
 snapshots, message ports that never close, alarms that re-arm, and
 caches that grow without bound. The diagnostic should call
@@ -336,7 +336,7 @@ Originally listed in the plan's "TODOs surfaced for later" section:
 
 - Per-daemon scoped auth tokens (only relevant once a tunnel/share use case appears).
 - Optional persistent board history on disk in
-  `~/.gstack/projects/$SLUG/designs/history/` so submitted boards survive
+  `~/.torch/projects/$SLUG/designs/history/` so submitted boards survive
   daemon restarts.
 - Windows spawn branch lifted from browse (V1 daemon is macOS + Linux;
   Windows users fall back to legacy `--no-daemon` per-process server).
@@ -409,7 +409,7 @@ fourth tips the cost balance: the per-field surface gets noisy, and
 "what does this factory own?" becomes a question you have to ask of three
 or four scattered fields instead of one explicit set.
 
-**Pros:** Single source of truth for "what gstack tears down". Trivial
+**Pros:** Single source of truth for "what torch tears down". Trivial
 extension surface for future caller-owned resources. Easier to assert in
 tests ("the set should contain X, not Y").
 
@@ -430,9 +430,9 @@ voice (autoplan). Trigger: a 4th caller-owned teardown gate in this same
 ### P2: Investigate `gbrain import` perf on large staging dirs
 
 **What:** Cold-run time on a 5131-file staging dir is >10 min in `gbrain import`
-alone (after gstack's prepare phase, which is now <10s after dropping per-file
+alone (after torch's prepare phase, which is now <10s after dropping per-file
 gitleaks). On 501 files it took 10s. The scaling is worse than linear and the
-bottleneck is inside gbrain, not the gstack orchestrator.
+bottleneck is inside gbrain, not the torch orchestrator.
 
 **Why:** With memory-ingest's prepare phase now fast, the remaining cold-run cost
 is entirely on the gbrain side. Users with large corpora (5K+ files) currently pay
@@ -448,15 +448,15 @@ gbrain callers too (`gbrain sync`, MCP `put_page` workflows). Likely 10-50x
 speedup from batched queries alone.
 
 **Cons:** Cross-repo change, requires gbrain test coverage for the new batched
-path. Not on the gstack critical path; gstack's architecture is already correct.
+path. Not on the torch critical path; torch's architecture is already correct.
 
-**Context:** Verified on real corpus 2026-05-10. gstack-side prepare with
+**Context:** Verified on real corpus 2026-05-10. torch-side prepare with
 `--scan-secrets` off runs in <10s. The full gbrain import on the same staged
 dir consumes 100% CPU for >10 min. Both observations from
-`bin/gstack-memory-ingest.ts:ingestPass` reaching the `runGbrainImport` call
+`bin/torch-memory-ingest.ts:ingestPass` reaching the `runGbrainImport` call
 quickly, then the child process taking the bulk of the wall time.
 
-**Depends on:** None — gstack's batch-ingest architecture (D1-D8 in
+**Depends on:** None — torch's batch-ingest architecture (D1-D8 in
 `docs/designs/SYNC_GBRAIN_BATCH_INGEST.md`) is already shipped and correct.
 
 ---
@@ -490,13 +490,13 @@ made opt-in. Lower priority than the gbrain-side perf issue above.
 
 ### P1: Browser-skills Phase 2 — `/scrape` and `/skillify` skill templates
 
-**What:** Phase 2a of the browser-skills design (`docs/designs/BROWSER_SKILLS_V1.md`). Two new gstack skills: `/scrape <intent>` (read-only) is the single entry point for pulling page data — first call prototypes via `$B` primitives, subsequent calls on a matching intent route to a codified browser-skill in ~200ms. `/skillify` codifies the most recent successful prototype into a permanent browser-skill on disk: synthesizes `script.ts` + `script.test.ts` + fixture from the agent's own context (final-attempt $B calls only), runs the test in a temp dir, asks before committing, atomic rename to `~/.gstack/browser-skills/<name>/`. The mutating-flow sibling `/automate` is split out as its own P0 (below) — same skillify pattern, different trust profile.
+**What:** Phase 2a of the browser-skills design (`docs/designs/BROWSER_SKILLS_V1.md`). Two new torch skills: `/scrape <intent>` (read-only) is the single entry point for pulling page data — first call prototypes via `$B` primitives, subsequent calls on a matching intent route to a codified browser-skill in ~200ms. `/skillify` codifies the most recent successful prototype into a permanent browser-skill on disk: synthesizes `script.ts` + `script.test.ts` + fixture from the agent's own context (final-attempt $B calls only), runs the test in a temp dir, asks before committing, atomic rename to `~/.torch/browser-skills/<name>/`. The mutating-flow sibling `/automate` is split out as its own P0 (below) — same skillify pattern, different trust profile.
 
-**Why:** Phase 1 shipped the runtime — humans can hand-write deterministic browser scripts that gstack runs. Phase 2a unlocks the productivity gain: an agent that gets a flow right once via 20+ `$B` commands says `/skillify` and the script becomes a 200ms call forever after. Same skillify pattern Garry's articles describe, applied to the read-only browser activity (scraping) most amenable to deterministic compression. Mutating actions ship next as `/automate` because the failure mode (unintended writes) needs stronger gates.
+**Why:** Phase 1 shipped the runtime — humans can hand-write deterministic browser scripts that torch runs. Phase 2a unlocks the productivity gain: an agent that gets a flow right once via 20+ `$B` commands says `/skillify` and the script becomes a 200ms call forever after. Same skillify pattern Garry's articles describe, applied to the read-only browser activity (scraping) most amenable to deterministic compression. Mutating actions ship next as `/automate` because the failure mode (unintended writes) needs stronger gates.
 
 **Pros:** The 100x productivity gain lives here. Closes the loop: agents prototype, codify, then reach for the codified skill in future sessions instead of re-exploring. Replaces the original "self-authoring `$B` commands" P1 — same user-visible goal, no in-daemon isolation problem (skill scripts run as standalone Bun processes, never imported into the daemon). Synthesis question (Codex finding #6) is resolved by re-prompting from the agent's own conversation context (option b in the design doc), bounded to final-attempt `$B` calls per `/plan-eng-review` D2.
 
-**Cons:** **Bun runtime distribution** (Codex finding #7). Phase 1 sidesteps this because the bundled reference skill ships inside the gstack install. User-authored skills land on machines without Bun unless we ship a runtime alongside, compile to a self-contained binary, or use Node + the existing `cli.ts` pattern. Deferred to Phase 4 — `/skillify` documents the assumption that gstack is installed (which means Bun is on PATH).
+**Cons:** **Bun runtime distribution** (Codex finding #7). Phase 1 sidesteps this because the bundled reference skill ships inside the torch install. User-authored skills land on machines without Bun unless we ship a runtime alongside, compile to a self-contained binary, or use Node + the existing `cli.ts` pattern. Deferred to Phase 4 — `/skillify` documents the assumption that torch is installed (which means Bun is on PATH).
 
 **Context:** The Phase 1 architecture (3-tier lookup, scoped tokens, sibling SDK, frontmatter contract) is locked and exercised by the bundled `hackernews-frontpage` reference skill. Phase 2a plugs `/scrape` and `/skillify` into that runtime via two skill templates plus one new helper (`browse/src/browser-skill-write.ts` for atomic temp-dir-then-rename per `/plan-eng-review` D3) — no new storage primitives.
 
@@ -508,7 +508,7 @@ made opt-in. Lower priority than the gbrain-side perf issue above.
 
 ### P2: Browser-skills Phase 3 — resolver injection at session start
 
-**What:** Mirror the domain-skill resolver at `browse/src/server.ts:722-743`. When a sidebar-agent session starts on a host with matching browser-skills, inject a list block telling the agent which skills exist for that host and how to invoke them (`$B skill run <name> --arg ...`). UNTRUSTED-wrapped via the existing L1-L6 security stack. Add `gstack-config browser_skillify_prompts` knob (default `off`) controlling end-of-task nudges in `/qa`, `/design-review`, etc. when activity feed shows ≥N commands on a single host AND no skill exists yet for that host+intent.
+**What:** Mirror the domain-skill resolver at `browse/src/server.ts:722-743`. When a sidebar-agent session starts on a host with matching browser-skills, inject a list block telling the agent which skills exist for that host and how to invoke them (`$B skill run <name> --arg ...`). UNTRUSTED-wrapped via the existing L1-L6 security stack. Add `torch-config browser_skillify_prompts` knob (default `off`) controlling end-of-task nudges in `/qa`, `/design-review`, etc. when activity feed shows ≥N commands on a single host AND no skill exists yet for that host+intent.
 
 **Why:** Without the resolver, browser-skills only work when the user explicitly types `$B skill run <name>`. With the resolver, agents auto-discover existing skills for the current host and reach for them instead of re-exploring. Same compounding pattern as domain-skills.
 
@@ -540,13 +540,13 @@ made opt-in. Lower priority than the gbrain-side perf issue above.
 
 ### P2: Migrate `/learn` to SQLite
 
-**What:** The current `~/.gstack/projects/<slug>/learnings.jsonl` storage works (append-only, tolerant parser, idle compactor) but Codex outside-voice (T5) flagged JSONL as "the wrong primitive" for multi-writer canonical state: lost-update on rewrite, partial-line corruption on crash, no transactions. v1.8.0.0 hardened JSONL with flock + O_APPEND but the right long-term primitive is SQLite (which Bun has built in via `bun:sqlite`).
+**What:** The current `~/.torch/projects/<slug>/learnings.jsonl` storage works (append-only, tolerant parser, idle compactor) but Codex outside-voice (T5) flagged JSONL as "the wrong primitive" for multi-writer canonical state: lost-update on rewrite, partial-line corruption on crash, no transactions. v1.8.0.0 hardened JSONL with flock + O_APPEND but the right long-term primitive is SQLite (which Bun has built in via `bun:sqlite`).
 
 **Why:** Domain skills now live in the same `learnings.jsonl` (per CEO D1 unification). As volume grows, the JSONL hardening compactor + tolerant parser approach becomes the long pole. SQLite gives atomic transactions, indexes (huge for hostname lookup), and crash-safety without a custom compactor.
 
 **Pros:** Atomic writes. Real schema. Fast indexed lookups by hostname/key/type. Crash-safe.
 
-**Cons:** Migration touches every consumer of `learnings.jsonl` — `/learn` scripts (`gstack-learnings-log`, `gstack-learnings-search`), domain-skills.ts read/write, gbrain-sync (which currently treats it as a flat file). Old `learnings.jsonl` files in the wild need a one-shot migration script.
+**Cons:** Migration touches every consumer of `learnings.jsonl` — `/learn` scripts (`torch-learnings-log`, `torch-learnings-search`), domain-skills.ts read/write, gbrain-sync (which currently treats it as a flat file). Old `learnings.jsonl` files in the wild need a one-shot migration script.
 
 **Context:** The JSONL hardening in v1.8.0.0 was the right call for that release scope (preserve unification, not boil-the-ocean). But the failure modes are bounded, not eliminated. SQLite is the boil-the-ocean fix.
 
@@ -574,17 +574,17 @@ made opt-in. Lower priority than the gbrain-side perf issue above.
 
 ---
 
-### P2: Bump gbrain install-pin in lockstep with gstack memory-feature releases (#1305 part 2)
+### P2: Bump gbrain install-pin in lockstep with torch memory-feature releases (#1305 part 2)
 
-**What:** `bin/gstack-gbrain-install` pins gbrain to commit `08b3698` (v0.18.2). When gstack ships features that depend on newer gbrain ops or schema (e.g. v1.26.0 manifests + `code-def`/`code-refs`/`reindex-code`), the pin doesn't move with it. Fresh `/setup-gbrain` installs an old gbrain that fails `gbrain doctor` schema_version checks (24 vs latest 32+) until the user manually upgrades.
+**What:** `bin/torch-gbrain-install` pins gbrain to commit `08b3698` (v0.18.2). When torch ships features that depend on newer gbrain ops or schema (e.g. v1.26.0 manifests + `code-def`/`code-refs`/`reindex-code`), the pin doesn't move with it. Fresh `/setup-gbrain` installs an old gbrain that fails `gbrain doctor` schema_version checks (24 vs latest 32+) until the user manually upgrades.
 
-**Why:** Filed in #1305 alongside the `put_page` CLI bug. Out of scope for the v1.26.5.0 fix wave (separate release-coordination concern: which gbrain version we install vs. how we call it). The install-pin should either (a) auto-bump whenever gstack releases features that need newer gbrain, or (b) detect a stale pin during preamble and either auto-upgrade gbrain or print a one-line FIX hint.
+**Why:** Filed in #1305 alongside the `put_page` CLI bug. Out of scope for the v1.26.5.0 fix wave (separate release-coordination concern: which gbrain version we install vs. how we call it). The install-pin should either (a) auto-bump whenever torch releases features that need newer gbrain, or (b) detect a stale pin during preamble and either auto-upgrade gbrain or print a one-line FIX hint.
 
-**Pros:** Closes the "fresh-install paper-cut" path. New users land on a healthy schema. Reduces support noise on `/setup-gbrain` flows. Makes the gstack/gbrain release contract visible.
+**Pros:** Closes the "fresh-install paper-cut" path. New users land on a healthy schema. Reduces support noise on `/setup-gbrain` flows. Makes the torch/gbrain release contract visible.
 
-**Cons:** Adds release-cadence coupling between gstack and gbrain. Needs a policy: pin = "minimum version that still works" vs "latest known good." If gbrain ships a breaking change to `put` shape and gstack doesn't update the pin, fresh installs break in a new way.
+**Cons:** Adds release-cadence coupling between torch and gbrain. Needs a policy: pin = "minimum version that still works" vs "latest known good." If gbrain ships a breaking change to `put` shape and torch doesn't update the pin, fresh installs break in a new way.
 
-**Context:** Issue #1305 part 1 (the `put_page` CLI verb bug) was handled in v1.26.5.0. Part 2 (this TODO) is the install-pin staleness. Pin lives in `bin/gstack-gbrain-install` near the top as a constant. Easiest minimal fix: ship the pin as a tracked release artifact (e.g. write it from `package.json` at build time) and add a doctor-style preamble check.
+**Context:** Issue #1305 part 1 (the `put_page` CLI verb bug) was handled in v1.26.5.0. Part 2 (this TODO) is the install-pin staleness. Pin lives in `bin/torch-gbrain-install` near the top as a constant. Easiest minimal fix: ship the pin as a tracked release artifact (e.g. write it from `package.json` at build time) and add a doctor-style preamble check.
 
 **Effort:** S (human: ~2 days / CC: ~3 hours)
 **Priority:** P2
@@ -594,7 +594,7 @@ made opt-in. Lower priority than the gbrain-side perf issue above.
 
 ### P3: Source-id host-collision risk in `deriveCodeSourceId` (cross-host duplicate org/repo)
 
-**What:** v1.26.5.0's `deriveCodeSourceId` drops the host segment to fit gbrain's 32-char source-id budget. This means `github.com/acme/foo` and `gitlab.com/acme/foo` collapse to the same `gstack-code-acme-foo`. `ensureSourceRegisteredSync()` in `bin/gstack-gbrain-sync.ts:323` will silently re-register the source when `local_path` differs, evicting one side.
+**What:** v1.26.5.0's `deriveCodeSourceId` drops the host segment to fit gbrain's 32-char source-id budget. This means `github.com/acme/foo` and `gitlab.com/acme/foo` collapse to the same `torch-code-acme-foo`. `ensureSourceRegisteredSync()` in `bin/torch-gbrain-sync.ts:323` will silently re-register the source when `local_path` differs, evicting one side.
 
 **Why:** Vanishingly rare in practice — same `<org>/<repo>` shape across both github.com and gitlab.com on the same machine almost never happens. But the failure mode is silent (one repo evicts the other in the brain), and the user has no signal anything is wrong.
 
@@ -612,7 +612,7 @@ made opt-in. Lower priority than the gbrain-side perf issue above.
 
 ### P3: GBrain skillpack publishing for domain skills
 
-**What:** Domain skills are agent-authored notes per hostname. Right now they're per-machine or per-agent-repo. The natural compounding extension: publish curated skill packs to GBrain (`gstack-brain-sync`) so others can subscribe. "Louise's LinkedIn skills" or "Garry's GitHub skills" become packs anyone can pull.
+**What:** Domain skills are agent-authored notes per hostname. Right now they're per-machine or per-agent-repo. The natural compounding extension: publish curated skill packs to GBrain (`torch-brain-sync`) so others can subscribe. "Louise's LinkedIn skills" or "Garry's GitHub skills" become packs anyone can pull.
 
 **Why:** v1.8.0.0 gets us per-machine compounding. Cross-user compounding is the network effect — every user contributes, every user benefits.
 
@@ -753,30 +753,30 @@ scope of that PR; deliberately deferred to keep PTY-import small.
 
 ---
 
-## P3: Honor env vars in gstack-config (so QUESTION_TUNING/EXPLAIN_LEVEL actually isolate tests)
+## P3: Honor env vars in torch-config (so QUESTION_TUNING/EXPLAIN_LEVEL actually isolate tests)
 
-**What:** `gstack-config get <key>` reads `~/.gstack/config.yaml`. `runPlanSkillObservation` plumbs `env: { QUESTION_TUNING: 'false', EXPLAIN_LEVEL: 'default' }` through to the spawned `claude` process — but the skill preamble bash uses `gstack-config get question_tuning`, which never looks at env. The env passthrough is theater on current code.
+**What:** `torch-config get <key>` reads `~/.torch/config.yaml`. `runPlanSkillObservation` plumbs `env: { QUESTION_TUNING: 'false', EXPLAIN_LEVEL: 'default' }` through to the spawned `claude` process — but the skill preamble bash uses `torch-config get question_tuning`, which never looks at env. The env passthrough is theater on current code.
 
 **Why:** Without env honoring, the v1.21.1.0 plan-ceo-review smoke is still flaky on machines with `question_tuning: true` set in YAML. AUTO_DECIDE preferences would skip the rendered AskUserQuestion list, masking the regression we want to catch.
 
-**Pros:** Makes the gate test hermetic across machines. The env wiring is already in place — only `gstack-config` needs to read env first, fall back to YAML.
-**Cons:** Touches the gstack-config binary across all 3 platforms (linux/darwin/windows). Cross-binary refactor.
+**Pros:** Makes the gate test hermetic across machines. The env wiring is already in place — only `torch-config` needs to read env first, fall back to YAML.
+**Cons:** Touches the torch-config binary across all 3 platforms (linux/darwin/windows). Cross-binary refactor.
 
 **Context:** Captured from v1.21.1.0 adversarial review. Documented honestly in the test docstring as a known limitation.
 
 **Priority:** P3.
-**Effort:** S. Single-file edit to `bin/gstack-config` (~10 LOC for env-first lookup).
+**Effort:** S. Single-file edit to `bin/torch-config` (~10 LOC for env-first lookup).
 
 ---
 
 ## P3: Path-confusion hardening on SANCTIONED_WRITE_SUBSTRINGS
 
-**What:** `runPlanSkillObservation`'s silent-write detector uses substring matching on a few sanctioned paths (`.gstack/`, `CHANGELOG.md`, `TODOS.md`, etc). A write to `node_modules/some-pkg/CHANGELOG.md` or `src/foo/.gstack/leak.ts` is currently sanctioned because the substring matches anywhere in the path.
+**What:** `runPlanSkillObservation`'s silent-write detector uses substring matching on a few sanctioned paths (`.torch/`, `CHANGELOG.md`, `TODOS.md`, etc). A write to `node_modules/some-pkg/CHANGELOG.md` or `src/foo/.torch/leak.ts` is currently sanctioned because the substring matches anywhere in the path.
 
-**Why:** Defensive — no current bug exploits this, but a malicious skill or fixture could write to a path that happens to contain `.gstack/` or `CHANGELOG.md` and slip past silent-write detection.
+**Why:** Defensive — no current bug exploits this, but a malicious skill or fixture could write to a path that happens to contain `.torch/` or `CHANGELOG.md` and slip past silent-write detection.
 
 **Pros:** Hardens the harness against future skill misbehavior. Aligns substring rules with their intent.
-**Cons:** Need to anchor against absolute prefixes (`os.homedir() + '/.gstack/'`, worktree root) which makes the test less portable across machines.
+**Cons:** Need to anchor against absolute prefixes (`os.homedir() + '/.torch/'`, worktree root) which makes the test less portable across machines.
 
 **Context:** Captured from v1.21.1.0 adversarial review (HIGH/FIXABLE finding, pre-existing). Refactored into a `SANCTIONED_WRITE_SUBSTRINGS` constant in v1.21.1.0 but the substring-includes logic is unchanged from before.
 
@@ -795,9 +795,9 @@ scope of that PR; deliberately deferred to keep PTY-import small.
 
 **Cons:** Real design work. How does a skill declare expected question count — static value in frontmatter, or dynamic based on number of review sections that surface findings? Is the audit inline (blocking, same-turn) or post-hoc (after skill completion)? Calibration of expected-vs-actual thresholds depends on real V0 question-log data across skills.
 
-**Context:** Relevant files — `scripts/question-registry.ts` (typed question catalog), `scripts/resolvers/question-tuning.ts` (preference classification), `bin/gstack-question-log` (event log), `bin/gstack-question-preference` (read/write preferences), `test/helpers/agent-sdk-runner.ts` (canUseTool harness). Existing question-log already captures fire events; the gap is declaring expected counts and auditing against them.
+**Context:** Relevant files — `scripts/question-registry.ts` (typed question catalog), `scripts/resolvers/question-tuning.ts` (preference classification), `bin/torch-question-log` (event log), `bin/torch-question-preference` (read/write preferences), `test/helpers/agent-sdk-runner.ts` (canUseTool harness). Existing question-log already captures fire events; the gap is declaring expected counts and auditing against them.
 
-**Effort:** L (human: ~1-2 weeks / CC+gstack: ~2-3 hours for design doc + first-pass implementation).
+**Effort:** L (human: ~1-2 weeks / CC+torch: ~2-3 hours for design doc + first-pass implementation).
 **Priority:** P1 if interactive-skill volume is growing; P2 otherwise.
 **Depends on / blocked by:** design doc — likely its own `docs/designs/STOP_ASK_ENFORCEMENT_V0.md`.
 ## Context skills
@@ -812,7 +812,7 @@ scope of that PR; deliberately deferred to keep PTY-import small.
 
 **Cons:** Net-new functionality (not a port from the old `/checkpoint` skill). The "spawn new Conductor windows" part needs research into whether Conductor has a spawn CLI. Also requires lane-tagging discipline in the save step (manual or extracted).
 
-**Context:** Source of the lane data model is `plan-eng-review/SKILL.md.tmpl:240-249` (the "Parallelization Strategy" output with Lane A/B/C dependency tables and conflict flags). Deferred from the v0.18.5.0 rename PR so the rename could land as a tight, low-risk fix. Saved files currently live at `~/.gstack/projects/$SLUG/checkpoints/YYYYMMDD-HHMMSS-<title>.md` with YAML frontmatter (branch, timestamp, etc.). The lane feature would add a `lane:` field to frontmatter and a `--lane` filter to both skills.
+**Context:** Source of the lane data model is `plan-eng-review/SKILL.md.tmpl:240-249` (the "Parallelization Strategy" output with Lane A/B/C dependency tables and conflict flags). Deferred from the v0.18.5.0 rename PR so the rename could land as a tight, low-risk fix. Saved files currently live at `~/.torch/projects/$SLUG/checkpoints/YYYYMMDD-HHMMSS-<title>.md` with YAML frontmatter (branch, timestamp, etc.). The lane feature would add a `lane:` field to frontmatter and a `--lane` filter to both skills.
 
 **Effort:** M (human: ~1-2 days / CC: ~45-60 min)
 **Priority:** P3 (nice-to-have, not blocking anyone yet)
@@ -838,7 +838,7 @@ scope of that PR; deliberately deferred to keep PTY-import small.
 
 ## P0: PACING_UPDATES_V0 — Louise's fatigue root cause (V1.1)
 
-**What:** Implement the pacing overhaul extracted from PLAN_TUNING_V1. Full design in `docs/designs/PACING_UPDATES_V0.md`. Requires: session-state model, `phase` field in question-log schema, registry extension for dynamic findings, pacing as skill-template control flow (not preamble prose), `bin/gstack-flip-decision` command, migration-prompt budget rule, first-run preamble audit, ranking threshold calibration from real V0 data, one-way-door uncapped rule, concrete verification values.
+**What:** Implement the pacing overhaul extracted from PLAN_TUNING_V1. Full design in `docs/designs/PACING_UPDATES_V0.md`. Requires: session-state model, `phase` field in question-log schema, registry extension for dynamic findings, pacing as skill-template control flow (not preamble prose), `bin/torch-flip-decision` command, migration-prompt budget rule, first-run preamble audit, ranking threshold calibration from real V0 data, one-way-door uncapped rule, concrete verification values.
 
 **Why:** Louise de Sadeleer's "yes yes yes" during `/autoplan` was pacing + agency, not (only) jargon density. V1 addresses jargon (ELI10 writing). V1.1 addresses the interruption-volume half. Without this, V1 only gets halfway to the HOLY SHIT outcome.
 
@@ -863,14 +863,14 @@ ships the observational substrate only; v2 adds behavior adaptation.
 office-hours, plan-ceo-review, plan-eng-review SKILL.md.tmpl files. Implement
 `scripts/resolvers/profile-consumer.ts` with a per-skill adaptation registry
 (`scripts/profile-adaptations/{skill}.ts`). Each consumer reads
-`~/.gstack/developer-profile.json` on preamble and adapts skill-specific
+`~/.torch/developer-profile.json` on preamble and adapts skill-specific
 defaults (verbosity, mode selection, severity thresholds, pushback intensity).
 
 **Why:** v1 observational profile writes a file nobody reads. The substrate
 claim only becomes real when skills actually consume it. Without this, /plan-tune
 is a fancy config page.
 
-**Pros:** gstack feels personal. Every skill adapts to the user's steering
+**Pros:** torch feels personal. Every skill adapts to the user's steering
 style instead of defaulting to middle-of-the-road.
 
 **Cons:** Risk of psychographic drift if profile is noisy. Requires calibrated
@@ -893,7 +893,7 @@ versions of this card cited "2+ weeks" which conflicted with V0 — V0 wins.
 
 **Substrate risk (Codex outside-voice, Phase A review 2026-05-26):** Generated
 skill prose is agent-compliance-based. Tests can verify templates contain the
-right reads of `~/.gstack/developer-profile.json` and the right decision
+right reads of `~/.torch/developer-profile.json` and the right decision
 points, but tests cannot prove agents obey them at runtime. E1 ships
 adaptations as **advisory annotations on AskUserQuestion recommendations**
 ("Recommended via your profile: <choice>") until there's a hard runtime
@@ -911,7 +911,7 @@ fallback). v2 work is the narrative generator + /plan-tune skill wiring.
 
 **Why:** Makes profile tangible and shareable. Screenshot-able.
 
-**Pros:** Killer delight feature. Social surface for gstack. Concrete, specific
+**Pros:** Killer delight feature. Social surface for torch. Concrete, specific
 output anchored in real events (not generic AI slop).
 
 **Cons:** Requires stable inferred profile — without calibration it produces
@@ -930,12 +930,12 @@ subcommand + slop-check test.
 once per session per tier >= 2 skill. Boil-the-ocean user gets challenged on
 scope ("what's the 80% version?"); small-scope user gets challenged on ambition.
 `scripts/resolvers/blind-spot-coach.ts`. Marker file for session dedup. Opt-out
-via `gstack-config set blind_spot_coach false`.
+via `torch-config set blind_spot_coach false`.
 
-**Why:** Makes gstack a coach (challenges you) instead of a mirror (reflects
+**Why:** Makes torch a coach (challenges you) instead of a mirror (reflects
 you). The killer differentiation vs. a settings menu.
 
-**Pros:** The feature that makes gstack feel like Garry. Surfaces assumptions
+**Pros:** The feature that makes torch feel like Garry. Surfaces assumptions
 the user hasn't challenged.
 
 **Cons:** Logically conflicts with E1 (which adapts TO profile) and E6 (which
@@ -964,7 +964,7 @@ only, no JS deps).
 preamble (Codex #9). When promoted, moves to explicit `/plan-tune show-landed`
 OR post-ship hook — not passive detection in the hot path.
 
-**Why:** Biggest personality moment in gstack. The "one-word thing that makes
+**Why:** Biggest personality moment in torch. The "one-word thing that makes
 you remember why you built this."
 
 **Pros:** Screenshot-worthy. Shareable. The kind of dopamine hit that turns
@@ -975,7 +975,7 @@ power users into evangelists.
 narrative/vibe data.
 
 **Context:** /land-and-deploy trust/adoption is low, so passive detection is
-the right trigger shape. Dedup marker per PR in `~/.gstack/.landed-celebrated-*`.
+the right trigger shape. Dedup marker per PR in `~/.torch/.landed-celebrated-*`.
 E2E tests for squash/merge-commit/rebase/co-author/fresh-clone/dedup variants.
 
 **Effort:** M+ (human: ~1 week / CC: ~3h total)
@@ -1021,7 +1021,7 @@ auto-decide.
 on who the user IS, not just what they've said.
 
 **Pros:** Friction-free skill invocation for calibrated power users. Over time,
-gstack feels like it's reading your mind.
+torch feels like it's reading your mind.
 
 **Cons:** Highest-risk deferral. Wrong auto-decides are costly. Requires very
 high confidence in the signal map AND calibration gate.
@@ -1056,7 +1056,7 @@ calibration gate is trustworthy.
 **Status:** IN PROGRESS on branch `garrytan/prompt-injection-guard`. Classifier swap:
 **TestSavantAI** replaces DeBERTa (better on developer content — HN/Reddit/Wikipedia/tech blogs all
 score SAFE 0.98+, attacks score INJECTION 0.99+). Pre-impl gate 3 (benign corpus dry-run)
-forced this pivot — see `~/.gstack/projects/garrytan-gstack/ceo-plans/2026-04-19-prompt-injection-guard.md`.
+forced this pivot — see `~/.torch/projects/garrytan-torch/ceo-plans/2026-04-19-prompt-injection-guard.md`.
 
 **What shipped in v1:**
 - `browse/src/security.ts` — canary injection + check, verdict combiner (ensemble rule),
@@ -1110,7 +1110,7 @@ Ship all four together, re-run BrowseSafe-Bench smoke, record before/after. Targ
 
 #### Fine-tune a small classifier on BrowseSafe-Bench + Qualifire + xxz224 (P2 research)
 
-**What:** TestSavantAI was trained on direct-injection text, wrong distribution for browser-agent attacks (measured 15% recall). Take BERT-base, fine-tune on BrowseSafe-Bench (3,680 cases) + Qualifire prompt-injection-benchmark (5k) + xxz224 (3.7k) combined, ship in ~/.gstack/models/ as replacement L4 classifier.
+**What:** TestSavantAI was trained on direct-injection text, wrong distribution for browser-agent attacks (measured 15% recall). Take BERT-base, fine-tune on BrowseSafe-Bench (3,680 cases) + Qualifire prompt-injection-benchmark (5k) + xxz224 (3.7k) combined, ship in ~/.torch/models/ as replacement L4 classifier.
 
 **Why:** Expected 15% → 70%+ recall on the actual threat distribution without needing Haiku. Would also cut latency (no CLI subprocess) and drop Haiku cost.
 
@@ -1119,7 +1119,7 @@ Ship all four together, re-run BrowseSafe-Bench smoke, record before/after. Targ
 
 #### DeBERTa-v3 ensemble as default (P2)
 
-**What:** Flip `GSTACK_SECURITY_ENSEMBLE=deberta` from opt-in to default. Adds a 3rd ML vote; 2-of-3 agreement rule should reduce FPs while catching attacks that only DeBERTa sees.
+**What:** Flip `torch_SECURITY_ENSEMBLE=deberta` from opt-in to default. Adds a 3rd ML vote; 2-of-3 agreement rule should reduce FPs while catching attacks that only DeBERTa sees.
 
 **Why:** More votes = better calibration. Currently opt-in because 721MB is a big first-run download; flipping to default requires lazy-download UX.
 
@@ -1130,7 +1130,7 @@ Ship all four together, re-run BrowseSafe-Bench smoke, record before/after. Targ
 
 #### User-feedback flywheel — decisions become training data (P3)
 
-**What:** Every Allow/Block click is labeled data. Log (suspected_text hash, layer scores, user decision, ts) to ~/.gstack/security/feedback.jsonl. Aggregate via community-pulse when `telemetry: community`. Periodically retrain the classifier on aggregate feedback.
+**What:** Every Allow/Block click is labeled data. Log (suspected_text hash, layer scores, user decision, ts) to ~/.torch/security/feedback.jsonl. Aggregate via community-pulse when `telemetry: community`. Periodically retrain the classifier on aggregate feedback.
 
 **Why:** The system gets better the more it's used. Closes the loop between user reality and defense quality.
 
@@ -1157,7 +1157,7 @@ getSecurityStatus()`, and sidepanel.js calls `updateSecurityShield(data.security
 on every poll tick. Shield flips to 'protected' as soon as classifier warmup
 completes (typically ~30s after initial connect on first run), no reload needed.
 
-#### ~~Attack telemetry via gstack-telemetry-log (P1)~~ — SHIPPED
+#### ~~Attack telemetry via torch-telemetry-log (P1)~~ — SHIPPED
 
 Landed in commits 28ce883c (binary) + f68fa4a9 (security.ts wiring). The
 telemetry binary now accepts `--event-type attack_attempt --url-domain
@@ -1184,20 +1184,20 @@ Smoke-200 is a sample; full coverage catches the long tail. Run time ~5min herme
 #### ~~Cross-user aggregate attack dashboard (P2)~~ — CLI SHIPPED, web UI remains
 
 CLI dashboard shipped in commits a5588ec0 (schema migration) + 2d107978
-(community-pulse edge function security aggregation) + 756875a7 (bin/gstack-
-security-dashboard). Users can now run `gstack-security-dashboard` to see
+(community-pulse edge function security aggregation) + 756875a7 (bin/torch-
+security-dashboard). Users can now run `torch-security-dashboard` to see
 attacks last 7 days, top attacked domains, detection-layer distribution,
 and verdict counts — all aggregated from the Supabase community-pulse pipe.
 
-Web UI at gstack.gg/dashboard/security is still open — that's a separate
+Web UI at torch.gg/dashboard/security is still open — that's a separate
 webapp project outside this repo's scope.
 
 #### TestSavantAI ensemble → DeBERTa-v3 ensemble (P2) — SHIPPED (opt-in)
 
 Commits b4e49d08 + 8e9ec52d + 4e051603 + 7a815fa7: DeBERTa-v3-base-injection-onnx
 is now wired as an opt-in L4c ensemble classifier. Enable via
-`GSTACK_SECURITY_ENSEMBLE=deberta` — sidebar-agent warmup downloads the 721MB
-model to ~/.gstack/models/deberta-v3-injection/ on first run. combineVerdict
+`torch_SECURITY_ENSEMBLE=deberta` — sidebar-agent warmup downloads the 721MB
+model to ~/.torch/models/deberta-v3-injection/ on first run. combineVerdict
 becomes a 2-of-3 agreement rule (testsavant + deberta + transcript) when
 enabled. Default behavior unchanged (2-of-2 testsavant + transcript).
 
@@ -1275,7 +1275,7 @@ Remaining work (XL, multi-week):
 
 **Why:** Right now, headed mode launches a fresh Chromium profile. Users must log in manually or import cookies. Chrome DevTools MCP connects to the user's actual Chrome ... instant access to every authenticated site. This is the future of browser automation for AI agents.
 
-**Context:** Google shipped Chrome DevTools MCP in Chrome 146+ (June 2025). It provides screenshots, console messages, performance traces, Lighthouse audits, and full page interaction through the user's real browser. gstack should use it for real-session access while keeping Playwright for headless CI/testing workflows.
+**Context:** Google shipped Chrome DevTools MCP in Chrome 146+ (June 2025). It provides screenshots, console messages, performance traces, Lighthouse audits, and full page interaction through the user's real browser. torch should use it for real-session access while keeping Playwright for headless CI/testing workflows.
 
 Potential new skills:
 - `/debug-browser`: JS error tracing with source-mapped stack traces
@@ -1337,7 +1337,7 @@ May replace `/setup-browser-cookies` for most use cases since the user's real co
 
 ~~**What:** Save/load cookies + localStorage to JSON files for reproducible test sessions.~~
 
-`$B state save/load` ships in v0.12.1.0. V1 saves cookies + URLs only (not localStorage, which breaks on load-before-navigate). Files at `.gstack/browse-states/{name}.json` with 0o600 permissions. Load replaces session (closes all pages first). Name sanitized to `[a-zA-Z0-9_-]`.
+`$B state save/load` ships in v0.12.1.0. V1 saves cookies + URLs only (not localStorage, which breaks on load-before-navigate). Files at `.torch/browse-states/{name}.json` with 0o600 permissions. Load replaces session (closes all pages first). Name sanitized to `[a-zA-Z0-9_-]`.
 
 **Remaining:** V2 localStorage support (needs pre-navigation injection strategy).
 **Completed:** v0.12.1.0 (2026-03-26)
@@ -1416,7 +1416,7 @@ May replace `/setup-browser-cookies` for most use cases since the user's real co
 
 ### Headed mode with Chrome extension — SHIPPED
 
-`$B connect` launches Playwright's bundled Chromium in headed mode with the gstack Chrome extension auto-loaded. `$B handoff` now produces the same result (extension + side panel). Sidebar chat gated behind `--chat` flag.
+`$B connect` launches Playwright's bundled Chromium in headed mode with the torch Chrome extension auto-loaded. `$B handoff` now produces the same result (extension + side panel). Sidebar chat gated behind `--chat` flag.
 
 ### `$B watch` — SHIPPED
 
@@ -1442,7 +1442,7 @@ Sidebar agent writes structured messages to `.context/sidebar-inbox/`. Workspace
 
 **What:** Two issues with the sidebar agent (`sidebar-agent.ts`): (1) `--allowedTools` is hardcoded to `Bash,Read,Glob,Grep`, missing `Write`. Claude can't create files (like CSVs) when asked. (2) When Claude errors or returns empty, the sidebar UI shows nothing, just a green dot. No error message, no "I tried but failed", nothing.
 
-**Completed:** v0.15.4.0 (2026-04-04). Write tool added to allowedTools. 40+ empty catch blocks replaced with `[gstack sidebar]`, `[gstack bg]`, `[browse]`, `[sidebar-agent]` prefixed console logging across all 4 files (sidepanel.js, background.js, server.ts, sidebar-agent.ts). Error placeholder text now shows in red. Auth token stale-refresh bug fixed.
+**Completed:** v0.15.4.0 (2026-04-04). Write tool added to allowedTools. 40+ empty catch blocks replaced with `[torch sidebar]`, `[torch bg]`, `[browse]`, `[sidebar-agent]` prefixed console logging across all 4 files (sidepanel.js, background.js, server.ts, sidebar-agent.ts). Error placeholder text now shows in red. Auth token stale-refresh bug fixed.
 
 ### Sidebar direct API calls (eliminate claude -p startup tax)
 
@@ -1458,7 +1458,7 @@ Sidebar agent writes structured messages to `.context/sidebar-inbox/`. Workspace
 
 ### Chrome Web Store publishing
 
-**What:** Publish the gstack browse Chrome extension to Chrome Web Store for easier install.
+**What:** Publish the torch browse Chrome extension to Chrome Web Store for easier install.
 
 **Why:** Currently sideloaded via chrome://extensions. Web Store makes install one-click.
 
@@ -1530,7 +1530,7 @@ Linux cookie import shipped in v0.11.11.0 (Wave 3). Supports Chrome, Chromium, B
 
 ### Ship log — persistent record of /ship runs
 
-**What:** Append structured JSON entry to `.gstack/ship-log.json` at end of every /ship run (version, date, branch, PR URL, review findings, Greptile stats, todos completed, test results).
+**What:** Append structured JSON entry to `.torch/ship-log.json` at end of every /ship run (version, date, branch, PR URL, review findings, Greptile stats, todos completed, test results).
 
 **Why:** /retro has no structured data about shipping velocity. Ship log enables: PRs-per-week trending, review finding rates, Greptile signal over time, test suite growth.
 
@@ -1551,7 +1551,7 @@ Linux cookie import shipped in v0.11.11.0 (Wave 3). Supports Chrome, Chromium, B
 
 **Effort:** M
 **Priority:** P2
-**Depends on:** /setup-gstack-upload
+**Depends on:** /setup-torch-upload
 
 ## Review
 
@@ -1589,7 +1589,7 @@ Linux cookie import shipped in v0.11.11.0 (Wave 3). Supports Chrome, Chromium, B
 
 **Effort:** M
 **Priority:** P2
-**Depends on:** /setup-gstack-upload
+**Depends on:** /setup-torch-upload
 
 ## QA
 
@@ -1671,7 +1671,7 @@ Linux cookie import shipped in v0.11.11.0 (Wave 3). Supports Chrome, Chromium, B
 
 ## Infrastructure
 
-### /setup-gstack-upload skill (S3 bucket)
+### /setup-torch-upload skill (S3 bucket)
 
 **What:** Configure S3 bucket for image hosting. One-time setup for visual PR annotations.
 
@@ -1680,15 +1680,15 @@ Linux cookie import shipped in v0.11.11.0 (Wave 3). Supports Chrome, Chromium, B
 **Effort:** M
 **Priority:** P2
 
-### gstack-upload helper
+### torch-upload helper
 
-**What:** `browse/bin/gstack-upload` — upload file to S3, return public URL.
+**What:** `browse/bin/torch-upload` — upload file to S3, return public URL.
 
 **Why:** Shared utility for all skills that need to embed images in PRs.
 
 **Effort:** S
 **Priority:** P2
-**Depends on:** /setup-gstack-upload
+**Depends on:** /setup-torch-upload
 
 ### WebM to GIF conversion
 
@@ -1726,7 +1726,7 @@ Shipped: Default model changed to Sonnet for structure tests (~30), Opus retaine
 
 **Why:** Visual charts better for spotting trends than CLI tools.
 
-**Context:** Reads `~/.gstack-dev/evals/*.json`. ~200 lines HTML + chart.js via Bun HTTP server.
+**Context:** Reads `~/.torch-dev/evals/*.json`. ~200 lines HTML + chart.js via Bun HTTP server.
 
 **Effort:** M
 **Priority:** P3
@@ -1746,9 +1746,9 @@ Shipped: Default model changed to Sonnet for structure tests (~30), Opus retaine
 
 ### Cross-platform URL open helper
 
-**What:** `gstack-open-url` helper script — detect platform, use `open` (macOS) or `xdg-open` (Linux).
+**What:** `torch-open-url` helper script — detect platform, use `open` (macOS) or `xdg-open` (Linux).
 
-**Why:** The first-time Completeness Principle intro uses macOS `open` to launch the essay. If gstack ever supports Linux, this silently fails.
+**Why:** The first-time Completeness Principle intro uses macOS `open` to launch the essay. If torch ever supports Linux, this silently fails.
 
 **Effort:** S (human: ~30 min / CC: ~2 min)
 **Priority:** P4
@@ -1772,9 +1772,9 @@ Shipped: Default model changed to Sonnet for structure tests (~30), Opus retaine
 
 **What:** Add design docs (`*-design-*.md`) to the Supabase sync pipeline alongside test plans, retro snapshots, and QA reports.
 
-**Why:** Cross-team design discovery at scale. Local `~/.gstack/projects/$SLUG/` keyword-grep discovery works for same-machine users now, but Supabase sync makes it work across the whole team. Duplicate ideas surface, everyone sees what's been explored.
+**Why:** Cross-team design discovery at scale. Local `~/.torch/projects/$SLUG/` keyword-grep discovery works for same-machine users now, but Supabase sync makes it work across the whole team. Duplicate ideas surface, everyone sees what's been explored.
 
-**Context:** /office-hours writes design docs to `~/.gstack/projects/$SLUG/`. The team store already syncs test plans, retro snapshots, QA reports. Design docs follow the same pattern — just add a sync adapter.
+**Context:** /office-hours writes design docs to `~/.torch/projects/$SLUG/`. The team store already syncs test plans, retro snapshots, QA reports. Design docs follow the same pattern — just add a sync adapter.
 
 **Effort:** S
 **Priority:** P2
@@ -1828,7 +1828,7 @@ Shipped in v0.8.3. Step 8.5 added to `/ship` — after creating the PR, `/ship` 
 
 ### `{{DOC_VOICE}}` shared resolver
 
-**What:** Create a placeholder resolver in gen-skill-docs.ts encoding the gstack voice guide (friendly, user-forward, lead with benefits). Inject into /ship Step 5, /document-release Step 5, and reference from CLAUDE.md.
+**What:** Create a placeholder resolver in gen-skill-docs.ts encoding the torch voice guide (friendly, user-forward, lead with benefits). Inject into /ship Step 5, /document-release Step 5, and reference from CLAUDE.md.
 
 **Why:** DRY — voice rules currently live inline in 3 places (CLAUDE.md CHANGELOG style section, /ship Step 5, /document-release Step 5). When the voice evolves, all three drift.
 
@@ -1844,24 +1844,24 @@ Shipped in v0.8.3. Step 8.5 added to `/ship` — after creating the PR, `/ship` 
 
 ~~**What:** Auto-detect which of the 4 reviews are relevant based on branch changes (skip Design Review if no CSS/view changes, skip Code Review if plan-only).~~
 
-`bin/gstack-diff-scope` shipped — categorizes diff into SCOPE_FRONTEND, SCOPE_BACKEND, SCOPE_PROMPTS, SCOPE_TESTS, SCOPE_DOCS, SCOPE_CONFIG. Used by design-review-lite to skip when no frontend files changed. Dashboard integration for conditional row display is a follow-up.
+`bin/torch-diff-scope` shipped — categorizes diff into SCOPE_FRONTEND, SCOPE_BACKEND, SCOPE_PROMPTS, SCOPE_TESTS, SCOPE_DOCS, SCOPE_CONFIG. Used by design-review-lite to skip when no frontend files changed. Dashboard integration for conditional row display is a follow-up.
 
 **Remaining:** Dashboard conditional row display (hide "Design Review: NOT YET RUN" when SCOPE_FRONTEND=false). Extend to Eng Review (skip for docs-only) and CEO Review (skip for config-only).
 
 **Effort:** S
 **Priority:** P3
-**Depends on:** gstack-diff-scope (shipped)
+**Depends on:** torch-diff-scope (shipped)
 
 
 ## Codex
 
 ### Codex→Claude reverse buddy check skill
 
-**What:** A Codex-native skill (`.agents/skills/gstack-claude/SKILL.md`) that runs `claude -p` to get an independent second opinion from Claude — the reverse of what `/codex` does today from Claude Code.
+**What:** A Codex-native skill (`.agents/skills/torch-claude/SKILL.md`) that runs `claude -p` to get an independent second opinion from Claude — the reverse of what `/codex` does today from Claude Code.
 
 **Why:** Codex users deserve the same cross-model challenge that Claude users get via `/codex`. Currently the flow is one-way (Claude→Codex). Codex users have no way to get a Claude second opinion.
 
-**Context:** The `/codex` skill template (`codex/SKILL.md.tmpl`) shows the pattern — it wraps `codex exec` with JSONL parsing, timeout handling, and structured output. The reverse skill would wrap `claude -p` with similar infrastructure. Would be generated into `.agents/skills/gstack-claude/` by `gen-skill-docs --host codex`.
+**Context:** The `/codex` skill template (`codex/SKILL.md.tmpl`) shows the pattern — it wraps `codex exec` with JSONL parsing, timeout handling, and structured output. The reverse skill would wrap `claude -p` with similar infrastructure. Would be generated into `.agents/skills/torch-claude/` by `gen-skill-docs --host codex`.
 
 **Effort:** M (human: ~2 weeks / CC: ~30 min)
 **Priority:** P1
@@ -1871,7 +1871,7 @@ Shipped in v0.8.3. Step 8.5 added to `/ship` — after creating the PR, `/ship` 
 
 ### Completeness metrics dashboard
 
-**What:** Track how often Claude chooses the complete option vs shortcut across gstack sessions. Aggregate into a dashboard showing completeness trend over time.
+**What:** Track how often Claude chooses the complete option vs shortcut across torch sessions. Aggregate into a dashboard showing completeness trend over time.
 
 **Why:** Without measurement, we can't know if the Completeness Principle is working. Could surface patterns (e.g., certain skills still bias toward shortcuts).
 
@@ -1908,7 +1908,7 @@ Shipped in v0.6.5. TemplateContext in gen-skill-docs.ts bakes skill name into pr
 2. Freeze boundary widening (ask to widen instead of hard-block when hitting boundary)
 3. Post-fix auto-unfreeze + full test suite run
 4. Debug instrumentation cleanup (tag with DEBUG-TEMP, remove before commit)
-5. Debug session persistence (~/.gstack/investigate-sessions/ — save investigation for reuse)
+5. Debug session persistence (~/.torch/investigate-sessions/ — save investigation for reuse)
 6. Investigation timeline in debug report (hypothesis log with timing)
 
 **Effort:** M (all 6 combined)
@@ -1919,11 +1919,11 @@ Shipped in v0.6.5. TemplateContext in gen-skill-docs.ts bakes skill name into pr
 
 ### Context recovery preamble
 
-**What:** Add ~10 lines of prose to the preamble telling the agent to re-read gstack artifacts (CEO plans, design reviews, eng reviews, checkpoints) after compaction or context degradation.
+**What:** Add ~10 lines of prose to the preamble telling the agent to re-read torch artifacts (CEO plans, design reviews, eng reviews, checkpoints) after compaction or context degradation.
 
-**Why:** gstack skills produce valuable artifacts stored at `~/.gstack/projects/$SLUG/`. When Claude's auto-compaction fires, it preserves a generic summary but doesn't know these artifacts exist. The plans and reviews that shaped the current work silently vanish from context, even though they're still on disk. This is the thing nobody else in the Claude Code ecosystem is solving, because nobody else has gstack's artifact architecture.
+**Why:** torch skills produce valuable artifacts stored at `~/.torch/projects/$SLUG/`. When Claude's auto-compaction fires, it preserves a generic summary but doesn't know these artifacts exist. The plans and reviews that shaped the current work silently vanish from context, even though they're still on disk. This is the thing nobody else in the Claude Code ecosystem is solving, because nobody else has torch's artifact architecture.
 
-**Context:** Inspired by Anthropic's `claude-progress.txt` pattern for long-running agents. Also informed by claude-mem's "progressive disclosure" approach. See `docs/designs/SESSION_INTELLIGENCE.md` for the broader vision. CEO plan: `~/.gstack/projects/garrytan-gstack/ceo-plans/2026-03-31-session-intelligence-layer.md`.
+**Context:** Inspired by Anthropic's `claude-progress.txt` pattern for long-running agents. Also informed by claude-mem's "progressive disclosure" approach. See `docs/designs/SESSION_INTELLIGENCE.md` for the broader vision. CEO plan: `~/.torch/projects/garrytan-torch/ceo-plans/2026-03-31-session-intelligence-layer.md`.
 
 **Effort:** S (human: ~30 min / CC: ~5 min)
 **Priority:** P1
@@ -1932,7 +1932,7 @@ Shipped in v0.6.5. TemplateContext in gen-skill-docs.ts bakes skill name into pr
 
 ### Session timeline
 
-**What:** Append one-line JSONL entry to `~/.gstack/projects/$SLUG/timeline.jsonl` after every skill run (timestamp, skill, branch, outcome). `/retro` renders the timeline.
+**What:** Append one-line JSONL entry to `~/.torch/projects/$SLUG/timeline.jsonl` after every skill run (timestamp, skill, branch, outcome). `/retro` renders the timeline.
 
 **Why:** Makes AI-assisted work history visible. `/retro` can show "this week: 3 /review, 2 /ship, 1 /investigate." Provides the observability layer for the session intelligence architecture.
 
@@ -1943,7 +1943,7 @@ Shipped in v0.6.5. TemplateContext in gen-skill-docs.ts bakes skill name into pr
 
 ### Cross-session context injection
 
-**What:** When a new gstack session starts on a branch with recent checkpoints or plans, the preamble prints a one-line summary: "Last session: implemented JWT auth, 3/5 tasks done." Agent knows where you left off before reading any files.
+**What:** When a new torch session starts on a branch with recent checkpoints or plans, the preamble prints a one-line summary: "Last session: implemented JWT auth, 3/5 tasks done." Agent knows where you left off before reading any files.
 
 **Why:** Claude starts every session fresh. This one-liner orients the agent immediately. Similar to claude-mem's SessionStart hook pattern but simpler and integrated.
 
@@ -1953,7 +1953,7 @@ Shipped in v0.6.5. TemplateContext in gen-skill-docs.ts bakes skill name into pr
 
 ### /checkpoint skill
 
-**What:** Manual skill to snapshot current working state: what's being done and why, files being edited, decisions made (and rationale), what's done vs. remaining, critical types/signatures. Saved to `~/.gstack/projects/$SLUG/checkpoints/<timestamp>.md`.
+**What:** Manual skill to snapshot current working state: what's being done and why, files being edited, decisions made (and rationale), what's done vs. remaining, critical types/signatures. Saved to `~/.torch/projects/$SLUG/checkpoints/<timestamp>.md`.
 
 **Why:** Useful before stepping away from a long session, before known-complex operations that might trigger compaction, for handing off context to a different agent/workspace, or coming back to a project after days away.
 
@@ -1964,7 +1964,7 @@ Shipped in v0.6.5. TemplateContext in gen-skill-docs.ts bakes skill name into pr
 
 ### Session Intelligence Layer design doc
 
-**What:** Write `docs/designs/SESSION_INTELLIGENCE.md` describing the architectural vision: gstack as the persistent brain that survives Claude's ephemeral context. Every skill writes to `~/.gstack/projects/$SLUG/`, preamble re-reads, `/retro` rolls up.
+**What:** Write `docs/designs/SESSION_INTELLIGENCE.md` describing the architectural vision: torch as the persistent brain that survives Claude's ephemeral context. Every skill writes to `~/.torch/projects/$SLUG/`, preamble re-reads, `/retro` rolls up.
 
 **Why:** Connects context recovery, health, checkpoint, and timeline features into a coherent architecture. Nobody else in the ecosystem is building this.
 
@@ -1976,7 +1976,7 @@ Shipped in v0.6.5. TemplateContext in gen-skill-docs.ts bakes skill name into pr
 
 ### /health — Project Health Dashboard
 
-**What:** Skill that runs type-check, lint, test suite, and dead code scan, then reports a composite 0-10 health score with breakdown by category. Tracks over time in `~/.gstack/health/<project-slug>/` for trend detection. Optionally integrates CodeScene MCP for deeper complexity/cohesion/coupling analysis.
+**What:** Skill that runs type-check, lint, test suite, and dead code scan, then reports a composite 0-10 health score with breakdown by category. Tracks over time in `~/.torch/health/<project-slug>/` for trend detection. Optionally integrates CodeScene MCP for deeper complexity/cohesion/coupling analysis.
 
 **Why:** No quick way to get "state of the codebase" before starting work. CodeScene peer-reviewed research shows AI-generated code increases static analysis warnings by 30%, code complexity by 41%, and change failure rates by 30%. Users need guardrails. Like `/qa` but for code quality rather than browser behavior.
 
@@ -2029,9 +2029,9 @@ Shipped in v0.6.5. TemplateContext in gen-skill-docs.ts bakes skill name into pr
 
 ### Browse MCP server for Factory Droid
 
-**What:** Expose gstack's browse binary and key workflows as an MCP server that Factory Droid connects to natively. Factory users would run /mcp, add the gstack server, and get browse, QA, and review capabilities as Factory tools.
+**What:** Expose torch's browse binary and key workflows as an MCP server that Factory Droid connects to natively. Factory users would run /mcp, add the torch server, and get browse, QA, and review capabilities as Factory tools.
 
-**Why:** Factory already supports 40+ MCP servers in its registry. Getting gstack's browse binary listed there is a distribution play. Nobody else has a real compiled browser binary as an MCP tool. This is the thing that makes gstack uniquely valuable on Factory Droid.
+**Why:** Factory already supports 40+ MCP servers in its registry. Getting torch's browse binary listed there is a distribution play. Nobody else has a real compiled browser binary as an MCP tool. This is the thing that makes torch uniquely valuable on Factory Droid.
 
 **Context:** Option A (--host factory compatibility shim) ships first in v0.13.4.0. Option B is the follow-up that provides deeper integration. The browse binary is already a stateless CLI, so wrapping it as an MCP server is straightforward (stdin/stdout JSON-RPC). Each browse command becomes an MCP tool.
 
@@ -2051,15 +2051,15 @@ Shipped in v0.6.5. TemplateContext in gen-skill-docs.ts bakes skill name into pr
 
 ### Custom Droid definitions alongside skills
 
-**What:** Factory has "custom droids" (subagents with tool restrictions, model selection, autonomy levels). Could ship `gstack-qa.md` droid configs alongside skills that restrict tools to read-only + execute for safety.
+**What:** Factory has "custom droids" (subagents with tool restrictions, model selection, autonomy levels). Could ship `torch-qa.md` droid configs alongside skills that restrict tools to read-only + execute for safety.
 
-**Why:** Deeper Factory integration. Droid configs give Factory users tighter control over what gstack skills can do.
+**Why:** Deeper Factory integration. Droid configs give Factory users tighter control over what torch skills can do.
 
 **Effort:** M
 **Priority:** P3
 **Depends on:** --host factory
 
-## GStack Browser
+## torch Browser
 
 ### Anti-bot stealth: Playwright CDP patches (rebrowser-style)
 
@@ -2075,11 +2075,11 @@ Shipped in v0.6.5. TemplateContext in gen-skill-docs.ts bakes skill name into pr
 
 ### Chromium fork (long-term alternative to CDP patches)
 
-**What:** Maintain a Chromium fork where anti-bot stealth, GStack Browser branding, and native sidebar support live in the source code, not as runtime monkey-patches.
+**What:** Maintain a Chromium fork where anti-bot stealth, torch Browser branding, and native sidebar support live in the source code, not as runtime monkey-patches.
 
-**Why:** The CDP patches are brittle. They break on every Playwright upgrade and target compiled JS with fragile string matching. A proper fork means: (1) stealth is permanent, not patched, (2) branding is native (no plist hacking at launch), (3) native sidebar replaces the extension (Phase 4 of V0 roadmap), (4) custom protocols (gstack://) for internal pages. Companies like Brave, Arc, and Vivaldi maintain Chromium forks with small teams. With CC, the rebase-on-upstream maintenance could be largely automated.
+**Why:** The CDP patches are brittle. They break on every Playwright upgrade and target compiled JS with fragile string matching. A proper fork means: (1) stealth is permanent, not patched, (2) branding is native (no plist hacking at launch), (3) native sidebar replaces the extension (Phase 4 of V0 roadmap), (4) custom protocols (torch://) for internal pages. Companies like Brave, Arc, and Vivaldi maintain Chromium forks with small teams. With CC, the rebase-on-upstream maintenance could be largely automated.
 
-**Context:** Trigger criteria from V0 design doc: fork when extension side panel becomes the bottleneck, when anti-bot patches need to live deeper than CDP, or when native UI integration (sidebar, status bar) can't be done via extension. The Chromium build takes ~4 hours on a 32-core machine and produces ~50GB of build artifacts. CI would need dedicated build infra. See `docs/designs/GSTACK_BROWSER_V0.md` Phase 5 for full analysis.
+**Context:** Trigger criteria from V0 design doc: fork when extension side panel becomes the bottleneck, when anti-bot patches need to live deeper than CDP, or when native UI integration (sidebar, status bar) can't be done via extension. The Chromium build takes ~4 hours on a 32-core machine and produces ~50GB of build artifacts. CI would need dedicated build infra. See `docs/designs/torch_BROWSER_V0.md` Phase 5 for full analysis.
 
 **Effort:** XL (human: ~1 quarter / CC: ~2-3 weeks of focused work)
 **Priority:** P2
@@ -2144,7 +2144,7 @@ Shipped in v0.6.5. TemplateContext in gen-skill-docs.ts bakes skill name into pr
 
 ### Pre-existing test failures surfaced during v1.12.0.0 ship — RESOLVED
 
-- `test/brain-sync.test.ts` GSTACK_HOME isolation fixed on main in v1.13.0.0.
+- `test/brain-sync.test.ts` torch_HOME isolation fixed on main in v1.13.0.0.
 - `test/model-overlay-opus-4-7.test.ts` updated on main to match the new overlay content (the v1.10.1.0 removal of "Fan out explicitly" was correct — measured −60pp fanout vs baseline).
 
 **Completed:** v1.13.0.0 (2026-04-25, on main)
@@ -2162,10 +2162,10 @@ Shipped in v0.6.5. TemplateContext in gen-skill-docs.ts bakes skill name into pr
 
 ### Bearer-token secret-scan regression fixed + E2E coverage added for privacy gate + gh auto-create (v1.12.0.0)
 
-- **Fixed the `bearer-token-json` regression in `bin/gstack-brain-sync`** — the value charset `[A-Za-z0-9_./+=-]{16,}` didn't permit spaces, so auth headers with the standard `Bearer <token>` form (literal space after the scheme name) slipped past the scanner. Added an optional `(Bearer |Basic |Token )?` prefix to the pattern. Validated against 5 positive cases (including the regression fixture) + 3 negative cases (short tokens, non-secret keys, random JSON). The 7-pattern secret scanner now passes all fixtures including bearer-json.
-- **Added `test/gstack-brain-init-gh-mock.test.ts`** — 8 tests exercising the `gh` CLI auto-create path that previously had zero coverage. Stubs `gh` on PATH to record every call, asserts `gh repo create --private --description "..." --source <GSTACK_HOME>` fires with the computed `gstack-brain-<user>` default name. Covers: happy path, fall-through-to-`gh repo view` when create hits already-exists, user-provided-URL-bypasses-gh, gh-not-on-path prompts for URL, gh-not-authed prompts for URL, idempotent `--remote` re-runs, conflicting-remote rejection.
+- **Fixed the `bearer-token-json` regression in `bin/torch-brain-sync`** — the value charset `[A-Za-z0-9_./+=-]{16,}` didn't permit spaces, so auth headers with the standard `Bearer <token>` form (literal space after the scheme name) slipped past the scanner. Added an optional `(Bearer |Basic |Token )?` prefix to the pattern. Validated against 5 positive cases (including the regression fixture) + 3 negative cases (short tokens, non-secret keys, random JSON). The 7-pattern secret scanner now passes all fixtures including bearer-json.
+- **Added `test/torch-brain-init-gh-mock.test.ts`** — 8 tests exercising the `gh` CLI auto-create path that previously had zero coverage. Stubs `gh` on PATH to record every call, asserts `gh repo create --private --description "..." --source <torch_HOME>` fires with the computed `torch-brain-<user>` default name. Covers: happy path, fall-through-to-`gh repo view` when create hits already-exists, user-provided-URL-bypasses-gh, gh-not-on-path prompts for URL, gh-not-authed prompts for URL, idempotent `--remote` re-runs, conflicting-remote rejection.
 - **Added `test/skill-e2e-brain-privacy-gate.test.ts`** — periodic-tier E2E (~$0.30-$0.50/run). Stages a fake `gbrain` on PATH + `gbrain_sync_mode_prompted=false` in config, runs a real skill via `runAgentSdkTest`, intercepts tool-use via `canUseTool`, and asserts the preamble fires the 3-option privacy AskUserQuestion with canonical prose ("publish session memory" / "artifact" / "decline"). Second test asserts the gate is silent when `prompted=true` (idempotency-within-session).
-- **Registered `brain-privacy-gate` in `test/helpers/touchfiles.ts`** (periodic tier) with dependency tracking on `scripts/resolvers/preamble/generate-brain-sync-block.ts`, `bin/gstack-brain-sync`, `bin/gstack-brain-init`, `bin/gstack-config`, and the Agent SDK runner. Diff-based selection will re-run the E2E whenever any of those change.
+- **Registered `brain-privacy-gate` in `test/helpers/touchfiles.ts`** (periodic tier) with dependency tracking on `scripts/resolvers/preamble/generate-brain-sync-block.ts`, `bin/torch-brain-sync`, `bin/torch-brain-init`, `bin/torch-config`, and the Agent SDK runner. Diff-based selection will re-run the E2E whenever any of those change.
 
 **Completed:** v1.12.0.0 (2026-04-24)
 
@@ -2200,7 +2200,7 @@ Shipped in v0.6.5. TemplateContext in gen-skill-docs.ts bakes skill name into pr
 **Completed:** v0.9.8.0
 
 ### Phase 1: Foundations (v0.2.0)
-- Rename to gstack
+- Rename to torch
 - Restructure to monorepo layout
 - Setup script for skill symlinks
 - Snapshot command with ref-based element selection
@@ -2233,7 +2233,7 @@ Shipped in v0.6.5. TemplateContext in gen-skill-docs.ts bakes skill name into pr
 **Completed:** v0.3.6
 
 ### Auto-upgrade mode + smart update check
-- Config CLI (`bin/gstack-config`), auto-upgrade via `~/.gstack/config.yaml`, 12h cache TTL, exponential snooze backoff (24h→48h→1wk), "never ask again" option, vendored copy sync on upgrade
+- Config CLI (`bin/torch-config`), auto-upgrade via `~/.torch/config.yaml`, 12h cache TTL, exponential snooze backoff (24h→48h→1wk), "never ask again" option, vendored copy sync on upgrade
 **Completed:** v0.3.8
 
 ---
@@ -2246,10 +2246,10 @@ The foundation (Phase 0 entity model + Phase 0.5 cache + Phase 1 preflight
 + Phase 1.5 trust policy + Phase 2 write-back scaffolding) ships in
 v1.48.0.0. These follow-ups extend it.
 
-### P2: /gstack-reflect nightly synthesis skill (E2)
+### P2: /torch-reflect nightly synthesis skill (E2)
 
-**What:** Scheduled skill that reads weekly `gstack/skill-run` + takes +
-`get_recent_salience` and synthesizes a `gstack/insight` page surfaced at
+**What:** Scheduled skill that reads weekly `torch/skill-run` + takes +
+`get_recent_salience` and synthesizes a `torch/insight` page surfaced at
 next skill preflight.
 
 **Why:** Cross-time pattern detection is the compounding move. "You ran 4
@@ -2263,17 +2263,17 @@ become actionable.
 opt-out per project, careful insight templates.
 
 **Context:** Deferred from v1.48.0.0 cherry-pick (D4) — wait 4-6 weeks for
-real `gstack/skill-run` data to accumulate before designing the reflection
+real `torch/skill-run` data to accumulate before designing the reflection
 layer against real patterns instead of imagined ones.
 
 **Effort:** L (human ~1-2 days, CC ~4-6h)
 
-**Depends on:** Phase 0 (gstack/skill-run page type from v1.48.0.0) +
+**Depends on:** Phase 0 (torch/skill-run page type from v1.48.0.0) +
 ~6 weeks of accumulated data
 
 ### P3: Cross-machine brain-cache sync (E3)
 
-**What:** Push compressed digests through the gstack-brain-sync git pipeline
+**What:** Push compressed digests through the torch-brain-sync git pipeline
 so the brain-cache survives moving between Macs / Conductor workspaces.
 
 **Why:** Eliminates the cold-miss tax on every new machine (~1-2s once per
@@ -2291,10 +2291,10 @@ cache is fine for V1; correctness risk needs its own design pass.
 
 **Depends on:** Brain-cache layer from v1.48.0.0
 
-### P3: /gstack-onboarding dedicated skill (E4)
+### P3: /torch-onboarding dedicated skill (E4)
 
-**What:** Guided 5-minute setup skill for new gstack installs: walks user
-through reading CLAUDE.md + README + recent commits to build `gstack/product`
+**What:** Guided 5-minute setup skill for new torch installs: walks user
+through reading CLAUDE.md + README + recent commits to build `torch/product`
 and active goals with explicit AUQs.
 
 **Why:** Better UX than the inline bootstrap (which only fires when a
@@ -2404,7 +2404,7 @@ runs).
 carved skills. When a real user session drives a carved skill and the
 agent does NOT Read a section the skeleton's STOP directive pointed it
 at, log it (salted, content-free) to
-`~/.gstack/analytics/section-reads.jsonl` and surface drift via
+`~/.torch/analytics/section-reads.jsonl` and surface drift via
 `bun run eval:summary`. Non-blocking alert, never a merge gate
 (real-session data is non-deterministic).
 
@@ -2431,7 +2431,7 @@ from there.
 
 **What:** `captureSectionReads` in `test/helpers/auq-sdk-capture.ts` accepts ANY
 Read whose path matches `sections/<file>.md`. The skeleton's STOP-Read directive
-points at the gstack-root install path (`scripts/resolvers/sections.ts` builds it
+points at the torch-root install path (`scripts/resolvers/sections.ts` builds it
 from `ctx.paths.skillRoot`), not the planted fixture copy. So a run can satisfy
 the section-read assertion by reading the GLOBAL install's section instead of the
 hermetic fixture.
@@ -2451,7 +2451,7 @@ path to the fixture during the run.
 
 ### P3: Content-hash diagram render cache for make-pdf
 
-**What:** Cache rendered diagram SVG/PNG in `~/.gstack/cache/diagram-render/`,
+**What:** Cache rendered diagram SVG/PNG in `~/.torch/cache/diagram-render/`,
 keyed on `sha256(fence source + bundle version + render options)`, so repeat
 `make-pdf` runs skip the browse render tab for unchanged diagrams.
 

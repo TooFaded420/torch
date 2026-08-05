@@ -106,7 +106,7 @@ describeIfSelected('/diagram skill E2E', ['diagram-triplet', 'diagram-authoring-
       const result = await runSkillTest({
         prompt: basePrompt(
           dir,
-          'how gstack renders diagrams in PDFs: markdown containing mermaid fences goes through a pre-pass that extracts the fences, renders them in a browse daemon tab using an offline bundle, substitutes the SVG back in, inlines local images, and prints via Chromium. Failures become visible diagnostic blocks.',
+          'how torch renders diagrams in PDFs: markdown containing mermaid fences goes through a pre-pass that extracts the fences, renders them in a browse daemon tab using an offline bundle, substitutes the SVG back in, inlines local images, and prints via Chromium. Failures become visible diagnostic blocks.',
         ),
         workingDirectory: dir,
         maxTurns: 25,
@@ -125,7 +125,7 @@ describeIfSelected('/diagram skill E2E', ['diagram-triplet', 'diagram-authoring-
       const verdict = await callJudge<{ score: number; reasoning: string }>(
         `You are judging the quality of an agent-authored mermaid diagram.
 
-THE ASK: a diagram of gstack's PDF diagram-rendering flow — mermaid fences are
+THE ASK: a diagram of torch's PDF diagram-rendering flow — mermaid fences are
 extracted by a pre-pass, rendered in a browse tab via an offline bundle,
 substituted back as SVG, images inlined, printed by Chromium, with render
 failures becoming visible diagnostic blocks.

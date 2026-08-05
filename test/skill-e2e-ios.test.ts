@@ -5,7 +5,7 @@
 //      against a SwiftUI fixture, verifies output is correct, no daemon
 //      hardware required. Catches regression in source-read + codegen +
 //      cache + render paths without an iPhone.
-//   2. WITH_DEVICE (periodic-tier, requires GSTACK_HAS_IOS_DEVICE=1): full
+//   2. WITH_DEVICE (periodic-tier, requires torch_HAS_IOS_DEVICE=1): full
 //      daemon + tailnet + USB tunnel loop. Skipped in CI.
 //
 // Note: The detailed daemon HTTP unit/integration tests live next to the
@@ -22,14 +22,14 @@ import type { DeviceTunnel } from '../ios-qa/daemon/src/proxy';
 import { grantIdentity } from '../ios-qa/daemon/src/allowlist';
 import { generate } from '../ios-qa/scripts/gen-accessors';
 
-const HAS_DEVICE = process.env.GSTACK_HAS_IOS_DEVICE === '1';
+const HAS_DEVICE = process.env.torch_HAS_IOS_DEVICE === '1';
 
 const DEVICE_TOKEN = 'rotated-mock-bearer-token';
 
 // Per-test isolation under `bun test --concurrent`: a single module-level
 // `workDir` reassigned in beforeEach is clobbered by parallel tests, so they
 // collide on the same daemon pidfile (`already_running`) and stomp each
-// other's GSTACK_IOS_* env paths. Each test calls makeWorkDir() for its own
+// other's torch_IOS_* env paths. Each test calls makeWorkDir() for its own
 // dir instead; afterEach cleans up every dir created during the test.
 const createdWorkDirs: string[] = [];
 function makeWorkDir(): string {
@@ -363,9 +363,9 @@ describe('ios-qa E2E (agent-flow simulation)', () => {
       const attemptsPath = join(workDir, 'attempts.jsonl');
       // Pass paths as daemon OPTIONS, not process.env — env is process-global
       // and races across concurrent tests (the cause of the original
-      // intermittent failures). GSTACK_IOS_TAILNET_BIND is read from env but
+      // intermittent failures). torch_IOS_TAILNET_BIND is read from env but
       // is the same constant for every tailnet test, so it can't diverge.
-      process.env.GSTACK_IOS_TAILNET_BIND = '127.0.0.1';
+      process.env.torch_IOS_TAILNET_BIND = '127.0.0.1';
 
       const tunnel: DeviceTunnel = {
         udid: 'TAILNET-UDID',
@@ -433,7 +433,7 @@ describe('ios-qa E2E (agent-flow simulation)', () => {
         expect(attempts).toMatch(/"reason":"identity_not_allowed"/);
       } finally {
         await daemon.close();
-        delete process.env.GSTACK_IOS_TAILNET_BIND;
+        delete process.env.torch_IOS_TAILNET_BIND;
       }
     } finally {
       stub.server.close();

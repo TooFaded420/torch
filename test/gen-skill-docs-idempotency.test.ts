@@ -30,7 +30,7 @@ const STABLE_OUTPUTS = [
   'ship/SKILL.md',
   'plan-ceo-review/SKILL.md',
   'office-hours/SKILL.md',
-  'gstack/llms.txt',
+  'torch/llms.txt',
 ];
 
 /**
@@ -43,10 +43,10 @@ const STABLE_HOST_ALL_OUTPUTS = [
   'scripts/proactive-suggestions.json',
   'SKILL.md',
   'ship/SKILL.md',
-  '.agents/skills/gstack-ship/SKILL.md',
-  '.cursor/skills/gstack-ship/SKILL.md',
-  '.factory/skills/gstack-ship/SKILL.md',
-  '.gbrain/skills/gstack-ship/SKILL.md',
+  '.agents/skills/torch-ship/SKILL.md',
+  '.cursor/skills/torch-ship/SKILL.md',
+  '.factory/skills/torch-ship/SKILL.md',
+  '.gbrain/skills/torch-ship/SKILL.md',
 ];
 
 function runGen(extraArgs: string[] = []): { exitCode: number; stderr: string } {

@@ -79,11 +79,11 @@ required for our hook to fire there.
 > deduplicated automatically.
 
 **For our use case:**
-- gstack registers exactly one PreToolUse hook and one PostToolUse hook on
+- torch registers exactly one PreToolUse hook and one PostToolUse hook on
   AUQ-shaped tool names.
 - If a user has THEIR own hook that also returns `updatedInput` on
   AskUserQuestion, the merge order is undefined.
-- Mitigation: document this constraint in `bin/gstack-settings-hook`
+- Mitigation: document this constraint in `bin/torch-settings-hook`
   install prompt. User can detect the conflict from the diff preview before
   accepting.
 
@@ -170,7 +170,7 @@ guaranteed path.
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/skills/gstack/hosts/claude/hooks/question-preference-hook",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/skills/torch/hosts/claude/hooks/question-preference-hook",
             "timeout": 5
           }
         ]
@@ -182,7 +182,7 @@ guaranteed path.
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/skills/gstack/hosts/claude/hooks/question-log-hook",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/skills/torch/hosts/claude/hooks/question-log-hook",
             "timeout": 5
           }
         ]
@@ -210,7 +210,7 @@ shells into bun.
    PostToolUse hook will see the resolved input and log a normal event.
    Need an extra field on the PostToolUse payload (e.g.,
    `was_auto_decided: true`) that the hook can set via session state
-   tracking — write a marker file in `~/.gstack/sessions/<id>/.auto-decided-<tool_use_id>`
+   tracking — write a marker file in `~/.torch/sessions/<id>/.auto-decided-<tool_use_id>`
    from PreToolUse, read it from PostToolUse, delete on read.
 
 3. **Timeout behavior.** Default hook timeout is 60s but the docs are
@@ -221,5 +221,5 @@ shells into bun.
 
 - https://code.claude.com/docs/en/hooks (canonical, latest as of 2026-04)
 - WebSearch results 2026-05-27
-- Existing `bin/gstack-settings-hook` (SessionStart-only impl, to be
+- Existing `bin/torch-settings-hook` (SessionStart-only impl, to be
   superseded by T3 schema-aware rewrite)

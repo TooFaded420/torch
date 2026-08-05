@@ -4,7 +4,7 @@
  * helper — the skill follows AI-readable instructions.
  *
  * Contract (asserted here):
- *   1. When VOYAGE_API_KEY is set, gstack's PGLite init passes
+ *   1. When VOYAGE_API_KEY is set, torch's PGLite init passes
  *      --embedding-model voyage:voyage-code-3 --embedding-dimensions 1024
  *   2. When VOYAGE_API_KEY is unset, those flags are omitted (gbrain's
  *      auto-selected provider chain takes over)
@@ -119,7 +119,7 @@ gbrain init --pglite --json $GBRAIN_EMBED_FLAGS
   return readFileSync(env.argvLog, "utf-8").trim().split("\n");
 }
 
-describe("voyage-code-3 default for gstack-driven PGLite init", () => {
+describe("voyage-code-3 default for torch-driven PGLite init", () => {
   it("passes voyage-code-3 flags when VOYAGE_API_KEY is set", () => {
     const env = makeFakeEnv();
     try {

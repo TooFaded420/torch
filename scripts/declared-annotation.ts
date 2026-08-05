@@ -62,9 +62,9 @@ interface DeveloperProfile {
 
 function stateRoot(): string {
   return (
-    process.env.GSTACK_STATE_ROOT ||
-    process.env.GSTACK_HOME ||
-    path.join(os.homedir(), '.gstack')
+    process.env.torch_STATE_ROOT ||
+    process.env.torch_HOME ||
+    path.join(os.homedir(), '.torch')
   );
 }
 

@@ -1,8 +1,8 @@
 /**
  * redact-patterns — the canonical redaction taxonomy.
  *
- * Single source of truth shared by `lib/redact-engine.ts`, `bin/gstack-redact`,
- * `bin/gstack-redact-prepush`, and (via `scripts/resolvers/redact-doc.ts`) the
+ * Single source of truth shared by `lib/redact-engine.ts`, `bin/torch-redact`,
+ * `bin/torch-redact-prepush`, and (via `scripts/resolvers/redact-doc.ts`) the
  * generated SKILL.md docs for /spec, /ship, /cso, /document-release, and
  * /document-generate.
  *
@@ -228,7 +228,7 @@ export const PATTERNS: RedactPattern[] = [
     category: "secret",
     description: "GitLab token (personal/pipeline-trigger/deploy)",
     // glpat- personal access, glptt- pipeline trigger, gldt- deploy token.
-    // gstack drives glab first-class — these were a coverage gap (#1946).
+    // torch drives glab first-class — these were a coverage gap (#1946).
     regex: /\b(gl(?:pat|ptt|dt)-[A-Za-z0-9_-]{20,})\b/,
   },
   {

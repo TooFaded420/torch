@@ -11,7 +11,7 @@ description: |
   Tailscale so remote agents (OpenClaw, Codex, any HTTP-capable agent) can
   run iOS QA from anywhere without touching the hardware.
   Use when asked to "ios qa", "test my iPhone app", "find bugs on the device",
-  or "qa the iOS app". (gstack)
+  or "qa the iOS app". (torch)
 voice-triggers:
   - "iOS quality check"
   - "test the iPhone app"
@@ -44,7 +44,7 @@ find→fix→verify loop. No simulator, no XCTest, no WebDriverAgent.
 
 ```
        ┌──────────────────────┐   USB CoreDevice (IPv6)   ┌──────────────────┐
-       │ gstack-ios-qa daemon │ ────────────────────────▶ │ iOS app          │
+       │ torch-ios-qa daemon │ ────────────────────────▶ │ iOS app          │
        │ (Mac, bun/TS)        │   bearer + X-Session-Id   │ StateServer      │
        │                      │                           │ (loopback only)  │
        │ - boot token rotate  │                           │ - /tap /swipe    │
@@ -75,7 +75,7 @@ tokens (default 1h) for remote agents.
 
 ## Phase 0: Session warm-start (optional)
 
-If `~/.gstack/ios-qa-session.json` exists and the device is still connected,
+If `~/.torch/ios-qa-session.json` exists and the device is still connected,
 skip Phase 1-2 and jump to Phase 3. The session cache holds the rotated token,
 UDID, tunnel address, and accessor hash. Invalidate the cache when:
 
@@ -84,7 +84,7 @@ UDID, tunnel address, and accessor hash. Invalidate the cache when:
 - The daemon reports the cached UDID is no longer connected.
 
 ```bash
-SESSION="$HOME/.gstack/ios-qa-session.json"
+SESSION="$HOME/.torch/ios-qa-session.json"
 if [ -f "$SESSION" ] && [ "$COLD" != "1" ]; then
   CACHED_UDID=$(python3 -c "import json,os; d=json.load(open(os.path.expanduser('$SESSION'))); print(d['udid'])")
   CACHED_PORT=$(python3 -c "import json,os; d=json.load(open(os.path.expanduser('$SESSION'))); print(d['daemon_port'])")
@@ -115,7 +115,7 @@ fi
 1. Generate the canonical local bridge package, typed accessors, and installed
    version marker with one deterministic command:
    ```bash
-   ~/.claude/skills/gstack/bin/gstack-ios-qa-regen \
+   ~/.claude/skills/torch/bin/torch-ios-qa-regen \
      --app-source "<source-dir>" \
      --bridge-dir "<source-dir>/DebugBridge"
    ```
@@ -153,8 +153,8 @@ fi
    -destination 'platform=iOS,id=<UDID>' build install`.
 5. Launch via `devicectl device process launch --device <UDID> --console <bundle-id>`.
    Capture the boot token printed to `os_log` on first run.
-6. Spawn the Mac-side daemon (on-demand) — `gstack-ios-qa-daemon`. Daemon
-   acquires an exclusive flock on `~/.gstack/ios-qa-daemon.pid`. If another
+6. Spawn the Mac-side daemon (on-demand) — `torch-ios-qa-daemon`. Daemon
+   acquires an exclusive flock on `~/.torch/ios-qa-daemon.pid`. If another
    daemon is alive, the second invocation discovers its port and connects.
 7. Daemon immediately calls `POST /auth/rotate` on the iOS StateServer with a
    fresh in-memory-only token. The boot token becomes useless ~5s later.
@@ -178,7 +178,7 @@ Each iteration:
 
 Each authenticated mutating request through the tailnet listener (if remote
 mode is active) writes an audit row to
-`~/.gstack/security/ios-qa-audit.jsonl`.
+`~/.torch/security/ios-qa-audit.jsonl`.
 
 ## Modes
 
@@ -203,7 +203,7 @@ session token. See `ios-qa/docs/tailscale-acl-example.md`.
 - **mutate:** interact + `POST /state/<key>`.
 - **restore:** mutate + `POST /state/restore`.
 
-Owner mints via `gstack-ios-qa-mint --remote <identity> --capability <tier>`
+Owner mints via `torch-ios-qa-mint --remote <identity> --capability <tier>`
 on the Mac. Self-service mint over tailnet only succeeds for already-allowlisted
 identities.
 
@@ -231,7 +231,7 @@ live.
 | Symptom | Likely cause | Action |
 |---|---|---|
 | `curl: connection refused` to daemon | daemon crashed | Re-run `/ios-qa`; spawn-race lock will fail closed |
-| `403 identity_not_allowed` from `/auth/mint` | identity missing from allowlist | Run `gstack-ios-qa-mint --remote <identity>` on the Mac |
+| `403 identity_not_allowed` from `/auth/mint` | identity missing from allowlist | Run `torch-ios-qa-mint --remote <identity>` on the Mac |
 | `409 schema_mismatch` on `/state/restore` | snapshot from older app build | Discard the snapshot; re-capture |
 | `503 device_disconnected` from proxy | USB route dropped or app relaunched | Daemon invalidates the stale tunnel and retries one fresh bootstrap; reconnect/unlock the iPhone if it persists |
 | `429 rate_limited` from `/auth/mint` | >10 mints/min from one identity | Wait 60s; check audit log for anomalies |

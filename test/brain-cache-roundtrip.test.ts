@@ -13,7 +13,7 @@
  * separately in brain-cache-stale-but-usable.test.ts using a mocked
  * spawnGbrain. T2a focuses on the cache-state machine.
  *
- * Uses tmp GSTACK_HOME per-test to avoid polluting the real ~/.gstack/.
+ * Uses tmp torch_HOME per-test to avoid polluting the real ~/.torch/.
  * Gate-tier, free, ~50ms.
  */
 
@@ -23,33 +23,33 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 
 let TMP_HOME: string;
-const ORIGINAL_HOME = process.env.GSTACK_HOME;
+const ORIGINAL_HOME = process.env.torch_HOME;
 
 beforeEach(() => {
-  TMP_HOME = mkdtempSync(join(tmpdir(), 'gstack-cache-test-'));
-  process.env.GSTACK_HOME = TMP_HOME;
+  TMP_HOME = mkdtempSync(join(tmpdir(), 'torch-cache-test-'));
+  process.env.torch_HOME = TMP_HOME;
   // Reload the cache module fresh per test so it picks up the new HOME.
-  delete require.cache[require.resolve('../bin/gstack-brain-cache')];
+  delete require.cache[require.resolve('../bin/torch-brain-cache')];
 });
 
 afterEach(() => {
-  if (ORIGINAL_HOME) process.env.GSTACK_HOME = ORIGINAL_HOME;
-  else delete process.env.GSTACK_HOME;
+  if (ORIGINAL_HOME) process.env.torch_HOME = ORIGINAL_HOME;
+  else delete process.env.torch_HOME;
   try { rmSync(TMP_HOME, { recursive: true, force: true }); } catch { /* best effort */ }
 });
 
-async function importCache(): Promise<typeof import('../bin/gstack-brain-cache')> {
-  return (await import('../bin/gstack-brain-cache')) as typeof import('../bin/gstack-brain-cache');
+async function importCache(): Promise<typeof import('../bin/torch-brain-cache')> {
+  return (await import('../bin/torch-brain-cache')) as typeof import('../bin/torch-brain-cache');
 }
 
 describe('brain-cache paths', () => {
-  test('cross-project entity (user-profile) lives in ~/.gstack/brain-cache/', async () => {
+  test('cross-project entity (user-profile) lives in ~/.torch/brain-cache/', async () => {
     const mod = await importCache();
     const path = mod.entityPath('user-profile', null);
     expect(path).toBe(join(TMP_HOME, 'brain-cache', 'user-profile.md'));
   });
 
-  test('per-project entity (product) lives in ~/.gstack/projects/<slug>/brain-cache/', async () => {
+  test('per-project entity (product) lives in ~/.torch/projects/<slug>/brain-cache/', async () => {
     const mod = await importCache();
     const path = mod.entityPath('product', 'helsinki');
     expect(path).toBe(join(TMP_HOME, 'projects', 'helsinki', 'brain-cache', 'product.md'));
@@ -164,7 +164,7 @@ describe('brain-cache state machine', () => {
     const productContent = '# Product: helsinki\n\nA test product.\n';
     writeFileSync(join(cacheDir, 'product.md'), productContent);
     writeFileSync(join(cacheDir, '_meta.json'), JSON.stringify({
-      schema_version: '1.0.0', // matches GSTACK_SCHEMA_PACK_VERSION
+      schema_version: '1.0.0', // matches torch_SCHEMA_PACK_VERSION
       endpoint_hash: mod.detectEndpointHash(),
       last_refresh: { product: Date.now() }, // fresh
       last_attempt: {},

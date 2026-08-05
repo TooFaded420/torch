@@ -36,7 +36,7 @@ afterEach(() => {
 });
 
 function copyIntoFakeInstall(workDir: string): { root: string; launcher: string } {
-  const root = join(workDir, 'fake gstack install');
+  const root = join(workDir, 'fake torch install');
   const binDir = join(root, 'bin');
   const scriptsDir = join(root, 'ios-qa', 'scripts');
   const templatesDir = join(root, 'ios-qa', 'templates');
@@ -44,8 +44,8 @@ function copyIntoFakeInstall(workDir: string): { root: string; launcher: string 
   mkdirSync(scriptsDir, { recursive: true });
   mkdirSync(templatesDir, { recursive: true });
 
-  const launcher = join(binDir, 'gstack-ios-qa-regen');
-  copyFileSync(join(ROOT, 'bin', 'gstack-ios-qa-regen'), launcher);
+  const launcher = join(binDir, 'torch-ios-qa-regen');
+  copyFileSync(join(ROOT, 'bin', 'torch-ios-qa-regen'), launcher);
   chmodSync(launcher, 0o755);
   copyFileSync(join(ROOT, 'ios-qa', 'scripts', 'gen-accessors.ts'), join(scriptsDir, 'gen-accessors.ts'));
   for (const [template] of SAFE_TEMPLATE_MAP) {
@@ -96,9 +96,9 @@ function allFileContents(root: string): string {
   return contents;
 }
 
-describe('gstack-ios-qa-regen', () => {
+describe('torch-ios-qa-regen', () => {
   test('repository launcher is executable', () => {
-    expect(statSync(join(ROOT, 'bin', 'gstack-ios-qa-regen')).mode & 0o111).not.toBe(0);
+    expect(statSync(join(ROOT, 'bin', 'torch-ios-qa-regen')).mode & 0o111).not.toBe(0);
   });
 
   test('requires the documented app-source and bridge-dir contract', () => {
@@ -122,7 +122,7 @@ describe('gstack-ios-qa-regen', () => {
     mkdirSync(generatedDir, { recursive: true });
     mkdirSync(fakeBin, { recursive: true });
     writeFileSync(join(appSource, 'AppState.swift'), '@Observable final class AppState {}\n');
-    writeFileSync(join(generatedDir, '.gstack-version'), 'stale-complete-marker\n');
+    writeFileSync(join(generatedDir, '.torch-version'), 'stale-complete-marker\n');
     const fakeBun = join(fakeBin, 'bun');
     writeFileSync(fakeBun, '#!/bin/sh\nexit 17\n');
     chmodSync(fakeBun, 0o755);
@@ -137,7 +137,7 @@ describe('gstack-ios-qa-regen', () => {
     });
 
     expect(result.status).toBe(17);
-    expect(existsSync(join(generatedDir, '.gstack-version'))).toBe(false);
+    expect(existsSync(join(generatedDir, '.torch-version'))).toBe(false);
   });
 
   test('regenerates the allowlisted package and accessors idempotently', () => {
@@ -179,7 +179,7 @@ final class AppState {
 
     const env = {
       ...process.env,
-      GSTACK_IOS_CACHE_ROOT: cacheRoot,
+      torch_IOS_CACHE_ROOT: cacheRoot,
       SWIFT_VERSION: '6.3.3',
       GEN_ACCESSORS_REV: 'regen-test',
     };
@@ -209,7 +209,7 @@ final class AppState {
     expect(accessor).toContain('return true');
     expect(accessor).not.toContain('atomicRestore: { _ in .ok }');
     expect(accessor).not.toContain('write: { _ in false }');
-    expect(readFileSync(join(generatedDir, '.gstack-version'), 'utf8')).toBe(
+    expect(readFileSync(join(generatedDir, '.torch-version'), 'utf8')).toBe(
       readFileSync(join(root, 'VERSION'), 'utf8'),
     );
 

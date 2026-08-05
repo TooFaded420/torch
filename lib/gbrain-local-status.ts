@@ -1,14 +1,14 @@
 /**
  * gbrain-local-status — classify the local gbrain engine into 6 states.
  *
- * Shared between bin/gstack-gbrain-detect (preamble probe on every skill start)
- * and bin/gstack-gbrain-sync.ts (orchestrator SKIP-when-not-ok semantics).
+ * Shared between bin/torch-gbrain-detect (preamble probe on every skill start)
+ * and bin/torch-gbrain-sync.ts (orchestrator SKIP-when-not-ok semantics).
  * Single source of truth: same probe, same classification, same cache.
  *
  * Per the split-engine plan (D2 + D8):
  *   - Probe: `gbrain sources list --json`. Cheap (~80ms), actually hits the DB.
  *     Uses the same stderr patterns as lib/gbrain-sources.ts:66-67.
- *   - Cache: 60s TTL at ~/.gstack/.gbrain-local-status-cache.json, keyed on
+ *   - Cache: 60s TTL at ~/.torch/.gbrain-local-status-cache.json, keyed on
  *     {home, gbrain_home, path_hash, gbrain_bin_path, gbrain_version,
  *     config_mtime, probe_timeout_ms}.
  *   - --no-cache bypass: /setup-gbrain and /sync-gbrain pass it after any
@@ -21,7 +21,7 @@
  * Broken-db → config exists, DB unreachable per stderr classification.
  * Engine-locked → PGLite probe hit gbrain's own connect timeout, usually
  *                 because another `gbrain serve` process owns the embedded DB.
- * Timeout → probe exceeded GSTACK_GBRAIN_PROBE_TIMEOUT_MS (default 15s) with no
+ * Timeout → probe exceeded torch_GBRAIN_PROBE_TIMEOUT_MS (default 15s) with no
  *           recognized error — engine is likely healthy but slow (e.g. a cold
  *           pooler connection, #1964). Consumers treat this as usable.
  * Ok → DB reachable, sources list returned valid JSON.
@@ -60,10 +60,10 @@ export interface ClassifyOptions {
 }
 
 interface CacheEntry {
-  // Local-cache schema version, controlled by gstack. Not to be confused
+  // Local-cache schema version, controlled by torch. Not to be confused
   // with `gbrain doctor --json` output schema_version (gbrain v0.25+ emits
   // schema_version: 2). Doctor-output parsing lives in
-  // lib/gstack-memory-helpers.ts:freshDetectEngineTier and accepts both
+  // lib/torch-memory-helpers.ts:freshDetectEngineTier and accepts both
   // doctor-output versions. This cache stays strictly at version 1 — a
   // future shape change here requires an explicit migration.
   schema_version: 1;
@@ -86,12 +86,12 @@ export const CACHE_TTL_MS = 60_000;
 export const DEFAULT_PROBE_TIMEOUT_MS = 15_000;
 
 /**
- * Effective probe timeout. `GSTACK_GBRAIN_PROBE_TIMEOUT_MS` overrides the
+ * Effective probe timeout. `torch_GBRAIN_PROBE_TIMEOUT_MS` overrides the
  * 15s default (tests set it low; users with slow poolers raise it).
  * Non-numeric or non-positive values fall back to the default.
  */
 export function probeTimeoutMs(env?: NodeJS.ProcessEnv): number {
-  const raw = (env ?? process.env).GSTACK_GBRAIN_PROBE_TIMEOUT_MS;
+  const raw = (env ?? process.env).torch_GBRAIN_PROBE_TIMEOUT_MS;
   if (!raw) return DEFAULT_PROBE_TIMEOUT_MS;
   const parsed = Number(raw);
   if (!Number.isFinite(parsed) || parsed <= 0) return DEFAULT_PROBE_TIMEOUT_MS;
@@ -106,10 +106,10 @@ function userHome(env?: NodeJS.ProcessEnv): string {
   return (env ?? process.env).HOME || homedir();
 }
 
-/** Cache path computed fresh on each call so tests can mutate GSTACK_HOME per case. */
+/** Cache path computed fresh on each call so tests can mutate torch_HOME per case. */
 export function cacheFilePath(): string {
   return join(
-    process.env.GSTACK_HOME || join(userHome(), ".gstack"),
+    process.env.torch_HOME || join(userHome(), ".torch"),
     ".gbrain-local-status-cache.json",
   );
 }

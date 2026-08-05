@@ -14,14 +14,14 @@ import * as fs from 'fs';
  * Approach: spawn a fresh Bun subprocess that imports the module and emits a
  * structured snapshot (initial vs post-import process state). Parent asserts
  * that no listeners were bound, no Bun.serve started, and no SIGINT handlers
- * were registered. The subprocess uses HOME=tmp + GSTACK_HOME=tmp so any
+ * were registered. The subprocess uses HOME=tmp + torch_HOME=tmp so any
  * accidental state-dir write lands in a place we can verify is empty.
  */
 describe('server.ts module import has no auto-start side effects', () => {
   test('importing server.ts does not bind Bun.serve, register signal handlers, or write state', async () => {
     const tmpHome = path.join(os.tmpdir(), `browse-no-sfx-${Date.now()}-${process.pid}`);
     fs.mkdirSync(tmpHome, { recursive: true });
-    const tmpGstack = path.join(tmpHome, '.gstack');
+    const tmptorch = path.join(tmpHome, '.torch');
 
     const childScript = `
 const sigintBefore = process.listenerCount('SIGINT');
@@ -41,11 +41,11 @@ const sigintAfter = process.listenerCount('SIGINT');
 const sigtermAfter = process.listenerCount('SIGTERM');
 const uncaughtAfter = process.listenerCount('uncaughtException');
 
-// Check that the gstack home directory wasn't populated as a side effect.
-let gstackPopulated = false;
+// Check that the torch home directory wasn't populated as a side effect.
+let torchPopulated = false;
 try {
-  const entries = fs.readdirSync(${JSON.stringify(tmpGstack)});
-  gstackPopulated = entries.length > 0;
+  const entries = fs.readdirSync(${JSON.stringify(tmptorch)});
+  torchPopulated = entries.length > 0;
 } catch {
   // Doesn't exist — that's the win we want.
 }
@@ -54,7 +54,7 @@ console.log(JSON.stringify({
   sigintBefore, sigintAfter,
   sigtermBefore, sigtermAfter,
   uncaughtBefore, uncaughtAfter,
-  gstackPopulated,
+  torchPopulated,
 }));
 // Force exit so any background intervals don't keep this child alive
 // (the test framework would see a hang otherwise — which itself is a
@@ -66,12 +66,12 @@ process.exit(0);
       env: {
         ...process.env,
         HOME: tmpHome,
-        GSTACK_HOME: tmpGstack,
+        torch_HOME: tmptorch,
         // Empty so the AUTH_TOKEN env path doesn't deterministically set a token.
         AUTH_TOKEN: '',
         // Force a stub state file so resolveConfig() at module load (if it
-        // happens) won't crawl the host's real .gstack/.
-        BROWSE_STATE_FILE: path.join(tmpGstack, 'browse.json'),
+        // happens) won't crawl the host's real .torch/.
+        BROWSE_STATE_FILE: path.join(tmptorch, 'browse.json'),
       },
       stdout: 'pipe',
       stderr: 'pipe',
@@ -93,12 +93,12 @@ process.exit(0);
     expect(snapshot.sigtermAfter).toBe(snapshot.sigtermBefore);
     expect(snapshot.uncaughtAfter).toBe(snapshot.uncaughtBefore);
 
-    // gstack home should remain empty — initRegistry/initAuditLog/etc. side
+    // torch home should remain empty — initRegistry/initAuditLog/etc. side
     // effects from module load are acceptable (they happen at module level),
     // but only insofar as they don't bind listeners or write project state.
     // The presence/absence test here proves we didn't bind Bun.serve (which
     // would also try to write the state file).
-    expect(snapshot.gstackPopulated).toBe(false);
+    expect(snapshot.torchPopulated).toBe(false);
 
     // Cleanup
     try { fs.rmSync(tmpHome, { recursive: true, force: true }); } catch { /* best effort */ }

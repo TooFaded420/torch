@@ -1,4 +1,4 @@
-# gstack memory ingest — what it does, what stays local, what you can do with it
+# torch memory ingest — what it does, what stays local, what you can do with it
 
 This is the user-facing reference for the V1 transcript + memory ingest
 feature in `/setup-gbrain`. If you ran `/setup-gbrain` and it asked
@@ -12,20 +12,20 @@ happens after you say yes.
 | Claude Code session JSONL | `transcript` | `~/.claude/projects/*/` | High — full conversations including tool I/O |
 | Codex CLI session JSONL | `transcript` | `~/.codex/sessions/YYYY/MM/DD/` | High |
 | Cursor session SQLite (V1.0.1) | `transcript` | `~/Library/Application Support/Cursor/` | Same — deferred V1.0.1 |
-| Eureka log | `eureka` | `~/.gstack/analytics/eureka.jsonl` | Medium — your insights, often non-secret |
-| Project learnings | `learning` | `~/.gstack/projects/<slug>/learnings.jsonl` | Medium |
-| Project timeline | `timeline` | `~/.gstack/projects/<slug>/timeline.jsonl` | Low |
-| CEO plans | `ceo-plan` | `~/.gstack/projects/<slug>/ceo-plans/*.md` | Medium |
-| Design docs | `design-doc` | `~/.gstack/projects/<slug>/*-design-*.md` | Medium |
-| Retros | `retro` | `~/.gstack/projects/<slug>/retros/*.md` | Medium |
-| Builder profile | `builder-profile-entry` | `~/.gstack/builder-profile.jsonl` | Low |
+| Eureka log | `eureka` | `~/.torch/analytics/eureka.jsonl` | Medium — your insights, often non-secret |
+| Project learnings | `learning` | `~/.torch/projects/<slug>/learnings.jsonl` | Medium |
+| Project timeline | `timeline` | `~/.torch/projects/<slug>/timeline.jsonl` | Low |
+| CEO plans | `ceo-plan` | `~/.torch/projects/<slug>/ceo-plans/*.md` | Medium |
+| Design docs | `design-doc` | `~/.torch/projects/<slug>/*-design-*.md` | Medium |
+| Retros | `retro` | `~/.torch/projects/<slug>/retros/*.md` | Medium |
+| Builder profile | `builder-profile-entry` | `~/.torch/builder-profile.jsonl` | Low |
 
 ## What stays local
 
-- **State files** (`~/.gstack/.gbrain-sync-state.json`,
-  `~/.gstack/.transcript-ingest-state.json`,
-  `~/.gstack/.gbrain-engine-cache.json`,
-  `~/.gstack/.gbrain-errors.jsonl`) are local-only per ED1 (state file
+- **State files** (`~/.torch/.gbrain-sync-state.json`,
+  `~/.torch/.transcript-ingest-state.json`,
+  `~/.torch/.gbrain-engine-cache.json`,
+  `~/.torch/.gbrain-errors.jsonl`) are local-only per ED1 (state file
   sync semantics decision). They are not synced via the brain remote.
 
 - **Sessions with no resolvable git remote** (running in `/tmp/`, scratch
@@ -37,7 +37,7 @@ happens after you say yes.
 
 ## What gets scanned for secrets
 
-The cross-machine secret boundary is `gstack-brain-sync` (the git push
+The cross-machine secret boundary is `torch-brain-sync` (the git push
 to your private artifacts repo), which runs its own scanner before any
 content leaves this Mac. Local PGLite ingest doesn't change the exposure
 surface for content that already lives on disk in plaintext.
@@ -47,9 +47,9 @@ v1.33.0.0 — off by default. To re-enable it (adds ~4-8 min to cold runs
 on a large transcript corpus), use either:
 
 ```bash
-gstack-memory-ingest --bulk --scan-secrets
+torch-memory-ingest --bulk --scan-secrets
 # or
-GSTACK_MEMORY_INGEST_SCAN_SECRETS=1 gstack-memory-ingest --bulk
+torch_MEMORY_INGEST_SCAN_SECRETS=1 torch-memory-ingest --bulk
 ```
 
 When enabled, gitleaks covers:
@@ -61,7 +61,7 @@ When enabled, gitleaks covers:
 
 A session with a positive finding is **skipped entirely** — not partially
 redacted. The match line + rule ID are logged to stderr; you can see what
-was skipped via `bun run bin/gstack-memory-ingest.ts --probe` (which
+was skipped via `bun run bin/torch-memory-ingest.ts --probe` (which
 shows new vs. updated counts) or by reviewing the helper's output during
 `/sync-gbrain --full`.
 
@@ -75,7 +75,7 @@ Storage tier depends on your gbrain engine (set during `/setup-gbrain`):
 
 - **Supabase configured:** code + transcripts go to Supabase Storage
   (multi-Mac native). Curated memory (eureka/learnings/etc.) goes to the
-  brain-linked git repo via `gstack-brain-sync`.
+  brain-linked git repo via `torch-brain-sync`.
 - **Local PGLite only:** everything stays on this Mac. Curated memory
   syncs via git if you've enabled brain-sync.
 
@@ -99,7 +99,7 @@ replaceable from disk on each Mac.
 
 - **Read a specific page:**
   ```bash
-  gbrain get_page transcripts/claude-code/garrytan-gstack/2026-05-01-abc123
+  gbrain get_page transcripts/claude-code/garrytan-torch/2026-05-01-abc123
   ```
 
 - **Delete a page:**
@@ -110,20 +110,20 @@ replaceable from disk on each Mac.
   index but git history retains it. For hard-delete, run `git filter-repo`
   on the brain remote.
 
-- **Bulk-delete by criteria** (V1.0.1 follow-up — `gstack-transcript-prune`
+- **Bulk-delete by criteria** (V1.0.1 follow-up — `torch-transcript-prune`
   helper). For V1.0, use `gbrain delete_page <slug>` per-page or write
   a small loop over `gbrain list_pages` output.
 
 - **Disable entirely:**
   ```bash
-  gstack-config set transcript_ingest_mode off
-  gstack-config set gbrain_context_load off  # also disables retrieval
+  torch-config set transcript_ingest_mode off
+  torch-config set gbrain_context_load off  # also disables retrieval
   ```
 
 ## How the agent uses it
 
-At every gstack skill start, the preamble runs
-`gstack-brain-context-load` which:
+At every torch skill start, the preamble runs
+`torch-brain-context-load` which:
 
 1. Reads the active skill's `gbrain.context_queries:` frontmatter
 2. Dispatches each query to gbrain (vector / list / filesystem)
@@ -155,7 +155,7 @@ verdict block. If a row is RED, the row tells you what to do.
 Common cases:
 
 - **Salience block is empty** — your transcripts may not be ingested
-  yet. Run `gstack-gbrain-sync --full` to do a full pass.
+  yet. Run `torch-gbrain-sync --full` to do a full pass.
 
 - **"gbrain CLI missing" in the preamble output** — gbrain isn't on
   your PATH. Run `/setup-gbrain` to install/wire it.
@@ -166,15 +166,15 @@ Common cases:
   --pglite && gbrain import <brain-remote-clone-dir>`.
 
 - **A page has stale or wrong content** — `gbrain delete_page <slug>`,
-  then re-run `gstack-gbrain-sync --incremental` to re-ingest from
+  then re-run `torch-gbrain-sync --incremental` to re-ingest from
   source if the source file is still on disk and unchanged.
 
 ## Privacy + audit
 
 - Every `secretScanFile` finding is logged to stderr at ingest time.
-- Every gbrain put/delete is logged to `~/.gstack/.gbrain-errors.jsonl`
+- Every gbrain put/delete is logged to `~/.torch/.gbrain-errors.jsonl`
   with `{ts, op, duration_ms, outcome}` for forensic tracing.
-- `~/.gstack/.gbrain-engine-cache.json` shows which storage tier is
+- `~/.torch/.gbrain-engine-cache.json` shows which storage tier is
   active (PGLite vs Supabase).
 - Brain-sync git history shows every curated artifact push with the
   user's git identity.
@@ -199,7 +199,7 @@ You provide:
 - A bearer token (issued by the brain admin via `gbrain access-token issue`)
 
 What `/setup-gbrain` does:
-1. Verifies the URL + token via `gstack-gbrain-mcp-verify`. Three failure
+1. Verifies the URL + token via `torch-gbrain-mcp-verify`. Three failure
    modes get classified with one-line remediation hints:
    **NETWORK** ("check Tailscale/DNS"), **AUTH** ("rotate token"),
    **MALFORMED** ("Accept-header gotcha — pass both `application/json`
@@ -212,7 +212,7 @@ What `/setup-gbrain` does:
 3. Skips local install, local doctor, transcript ingest, and federated
    source registration. All four require a local `gbrain` CLI that Path 4
    doesn't install.
-4. Optionally provisions a `gstack-artifacts-$USER` private repo on
+4. Optionally provisions a `torch-artifacts-$USER` private repo on
    GitHub or GitLab and prints the one-line `gbrain sources add` command
    for your brain admin to run on the brain host.
 
@@ -235,7 +235,7 @@ Mitigations we've considered:
 
 ### Why Path 4 is "always print" for the brain-admin hookup
 
-`gstack-artifacts-init` always prints the `gbrain sources add` command
+`torch-artifacts-init` always prints the `gbrain sources add` command
 labeled "Send this to your brain admin" — even when the user IS the
 brain admin (consistent UX, no mode-detection fragility).
 
@@ -282,6 +282,6 @@ token), the helper says: "rotate token on the brain host, re-run
 gbrain access-token rotate    # invalidates old, issues new
 ```
 
-(See `gstack/setup-gbrain/SKILL.md.tmpl` for the full Path 4 flow plus
+(See `torch/setup-gbrain/SKILL.md.tmpl` for the full Path 4 flow plus
 the gbrain enhancement requests around scoped tokens that would let
-gstack auto-rotate in V2.)
+torch auto-rotate in V2.)

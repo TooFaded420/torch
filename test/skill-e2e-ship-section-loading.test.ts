@@ -55,7 +55,7 @@ describeE2E('/ship section-loading E2E (periodic, SDK capture)', () => {
         skillMd,
         sectionsFrom,
         fixtures: FIXTURES,
-        tmpPrefix: 'gstack-ship-secload-',
+        tmpPrefix: 'torch-ship-secload-',
       });
 
       const { readSections, reportProduced, output } = await captureSectionReads({

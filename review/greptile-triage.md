@@ -34,8 +34,8 @@ The `position != null` filter on line-level comments automatically skips outdate
 
 Derive the project-specific history path:
 ```bash
-REMOTE_SLUG=$(browse/bin/remote-slug 2>/dev/null || ~/.claude/skills/gstack/browse/bin/remote-slug 2>/dev/null || basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")
-PROJECT_HISTORY="$HOME/.gstack/projects/$REMOTE_SLUG/greptile-history.md"
+REMOTE_SLUG=$(browse/bin/remote-slug 2>/dev/null || ~/.claude/skills/torch/browse/bin/remote-slug 2>/dev/null || basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")
+PROJECT_HISTORY="$HOME/.torch/projects/$REMOTE_SLUG/greptile-history.md"
 ```
 
 Read `$PROJECT_HISTORY` if it exists (per-project suppressions). Each line records a previous triage outcome:
@@ -134,7 +134,7 @@ Use these templates for every Greptile reply. Always include concrete evidence â
 
 ### Tier 2 (Greptile re-flags after prior reply) â€” Firm, overwhelming evidence
 
-Use Tier 2 when escalation detection (below) identifies a prior GStack reply on the same thread. Include maximum evidence to close the discussion.
+Use Tier 2 when escalation detection (below) identifies a prior torch reply on the same thread. Include maximum evidence to close the discussion.
 
 ```
 **This has been reviewed and confirmed as [intentional/already-fixed/not-a-bug].**
@@ -155,15 +155,15 @@ Use Tier 2 when escalation detection (below) identifies a prior GStack reply on 
 
 ## Escalation Detection
 
-Before composing a reply, check if a prior GStack reply already exists on this comment thread:
+Before composing a reply, check if a prior torch reply already exists on this comment thread:
 
-1. **For line-level comments:** Fetch replies via `gh api repos/$REPO/pulls/$PR_NUMBER/comments/$COMMENT_ID/replies`. Check if any reply body contains GStack markers: `**Fixed**`, `**Not a bug.**`, `**Already fixed**`.
+1. **For line-level comments:** Fetch replies via `gh api repos/$REPO/pulls/$PR_NUMBER/comments/$COMMENT_ID/replies`. Check if any reply body contains torch markers: `**Fixed**`, `**Not a bug.**`, `**Already fixed**`.
 
-2. **For top-level comments:** Scan the fetched issue comments for replies posted after the Greptile comment that contain GStack markers.
+2. **For top-level comments:** Scan the fetched issue comments for replies posted after the Greptile comment that contain torch markers.
 
-3. **If a prior GStack reply exists AND Greptile posted again on the same file+category:** Use Tier 2 (firm) templates.
+3. **If a prior torch reply exists AND Greptile posted again on the same file+category:** Use Tier 2 (firm) templates.
 
-4. **If no prior GStack reply exists:** Use Tier 1 (friendly) templates.
+4. **If no prior torch reply exists:** Use Tier 1 (friendly) templates.
 
 If escalation detection fails (API error, ambiguous thread): default to Tier 1. Never escalate on ambiguity.
 
@@ -183,14 +183,14 @@ When classifying comments, also assess whether Greptile's implied severity match
 
 Before writing, ensure both directories exist:
 ```bash
-REMOTE_SLUG=$(browse/bin/remote-slug 2>/dev/null || ~/.claude/skills/gstack/browse/bin/remote-slug 2>/dev/null || basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")
-mkdir -p "$HOME/.gstack/projects/$REMOTE_SLUG"
-mkdir -p ~/.gstack
+REMOTE_SLUG=$(browse/bin/remote-slug 2>/dev/null || ~/.claude/skills/torch/browse/bin/remote-slug 2>/dev/null || basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")
+mkdir -p "$HOME/.torch/projects/$REMOTE_SLUG"
+mkdir -p ~/.torch
 ```
 
 Append one line per triage outcome to **both** files (per-project for suppressions, global for retro):
-- `~/.gstack/projects/$REMOTE_SLUG/greptile-history.md` (per-project)
-- `~/.gstack/greptile-history.md` (global aggregate)
+- `~/.torch/projects/$REMOTE_SLUG/greptile-history.md` (per-project)
+- `~/.torch/greptile-history.md` (global aggregate)
 
 Format:
 ```

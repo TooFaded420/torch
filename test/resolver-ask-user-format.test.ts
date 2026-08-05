@@ -148,7 +148,7 @@ describe('generateAskUserFormat — 5+ option split rule (slim inline + docs poi
   });
 
   test('AUTO_DECIDE is gated at runtime, not just collision-resistance', () => {
-    expect(out).toContain('bin/gstack-question-preference');
+    expect(out).toContain('bin/torch-question-preference');
     expect(out).toContain('*-split-*');
     expect(out).toContain('never AUTO_DECIDE-eligible');
   });
@@ -237,7 +237,7 @@ describe('generateAskUserFormat — runtime-failure prose fallback', () => {
     expect(out).toMatch(/CONDUCTOR_SESSION: true/);
     expect(out).toMatch(/do NOT call AskUserQuestion at all/);
     expect(out).toMatch(/Auto-decide preferences still apply first/);
-    expect(out).toMatch(/gstack-question-log/);
+    expect(out).toMatch(/torch-question-log/);
   });
 
   test('Conductor: one-way prose rule + continuation protocol present', () => {

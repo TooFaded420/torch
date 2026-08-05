@@ -1,4 +1,4 @@
-# gstack development
+# torch development
 
 ## Commands
 
@@ -17,7 +17,7 @@ bun run build        # gen docs + compile binaries
 bun run gen:skill-docs  # regenerate SKILL.md files from templates
 bun run skill:check  # health dashboard for all skills
 bun run dev:skill    # watch mode: auto-regen + validate on change
-bun run eval:list    # list all eval runs from ~/.gstack-dev/evals/
+bun run eval:list    # list all eval runs from ~/.torch-dev/evals/
 bun run eval:compare # compare two eval runs (auto-picks most recent)
 bun run eval:summary # aggregate stats across all eval runs
 bun run slop          # full slop-scan report (all files)
@@ -27,10 +27,10 @@ bun run slop:diff     # slop findings in files changed on this branch only
 `test:evals` requires `ANTHROPIC_API_KEY`. Codex E2E tests (`test/codex-e2e.test.ts`)
 use Codex's own auth from `~/.codex/` config — no `OPENAI_API_KEY` env var needed.
 
-**Env keys in Conductor workspaces.** The `GSTACK_*` env-shim (v1.39.2.0+,
-`lib/conductor-env-shim.ts`) promotes `GSTACK_ANTHROPIC_API_KEY` /
-`GSTACK_OPENAI_API_KEY` to their canonical names inside gstack's TS binaries.
-Tests run through gstack entrypoints inherit this promotion automatically.
+**Env keys in Conductor workspaces.** The `torch_*` env-shim (v1.39.2.0+,
+`lib/conductor-env-shim.ts`) promotes `torch_ANTHROPIC_API_KEY` /
+`torch_OPENAI_API_KEY` to their canonical names inside torch's TS binaries.
+Tests run through torch entrypoints inherit this promotion automatically.
 Don't echo the key value to stdout, logs, or shell history. The historical
 "never pass `env:` to `runAgentSdkTest`" rule is retired: the failure was
 partial-env replacement (the SDK's `Options.env` REPLACES the child's entire
@@ -41,19 +41,19 @@ still works (the env builder reads process.env at call time).
 
 **Hermetic local E2E (default).** Every E2E runner (claude -p, PTY, Agent
 SDK, codex, gemini) spawns children through `test/helpers/hermetic-env.ts`:
-allowlist-scrubbed env (operator `CONDUCTOR_*`, `CLAUDE_*`, `GSTACK_*`,
+allowlist-scrubbed env (operator `CONDUCTOR_*`, `CLAUDE_*`, `torch_*`,
 `MCP_*`, `GBRAIN_*`, and credentials like `GH_TOKEN` never reach children),
 a fresh seeded `CLAUDE_CONFIG_DIR` (no operator `~/.claude` CLAUDE.md /
-MCP servers / skills), a temp `GSTACK_HOME`, and `--strict-mcp-config`.
+MCP servers / skills), a temp `torch_HOME`, and `--strict-mcp-config`.
 Local eval signal matches CI. Debug against real operator state with
 `EVALS_HERMETIC=0` (restores the legacy env AND drops the strict-MCP flag).
 Per-test `env:` overrides merge last, so deliberate contamination
-(`CONDUCTOR_WORKSPACE_PATH`, per-test `GSTACK_HOME`) keeps working. Wiring
+(`CONDUCTOR_WORKSPACE_PATH`, per-test `torch_HOME`) keeps working. Wiring
 is pinned by `test/hermetic-wiring.test.ts` (static tripwire) and two
 gate-tier canaries in `test/skill-e2e-hermetic-canary.test.ts`.
 
 E2E tests stream progress in real-time (tool-by-tool via `--output-format stream-json
---verbose`). Results are persisted to `~/.gstack-dev/evals/` with auto-comparison
+--verbose`). Results are persisted to `~/.torch-dev/evals/` with auto-comparison
 against the previous run.
 
 **Diff-based test selection:** `test:evals` and `test:e2e` auto-select tests based
@@ -84,7 +84,7 @@ tests via `claude -p`. Both must pass before creating a PR.
 ## Project structure
 
 ```
-gstack/
+torch/
 ├── browse/          # Headless browser CLI (Playwright)
 │   ├── src/         # CLI + server + commands
 │   │   ├── commands.ts  # Command registry (single source of truth)
@@ -124,18 +124,18 @@ gstack/
 ├── canary/          # /canary skill (post-deploy monitoring loop)
 ├── codex/           # /codex skill (multi-AI second opinion via OpenAI Codex CLI)
 ├── land-and-deploy/ # /land-and-deploy skill (merge → deploy → canary verify)
-├── office-hours/    # /office-hours skill (YC Office Hours — startup diagnostic + builder brainstorm)
+├── office-hours/    # /office-hours skill (hecz.dev office hours — startup diagnostic + builder brainstorm)
 ├── investigate/     # /investigate skill (systematic root-cause debugging)
 ├── spec/            # /spec skill (five-phase spec → GitHub issue, optional agent spawn, /ship auto-closes)
 ├── retro/           # Retrospective skill (includes /retro global cross-project mode)
-├── bin/             # CLI utilities (gstack-repo-mode, gstack-slug, gstack-config, etc.)
+├── bin/             # CLI utilities (torch-repo-mode, torch-slug, torch-config, etc.)
 ├── document-release/ # /document-release skill (post-ship doc updates + Diataxis coverage map)
 ├── document-generate/ # /document-generate skill (Diataxis doc generator: tutorial/how-to/reference/explanation)
 ├── cso/             # /cso skill (OWASP Top 10 + STRIDE security audit)
 ├── design-consultation/ # /design-consultation skill (design system from scratch)
 ├── design-shotgun/  # /design-shotgun skill (visual design exploration)
-├── open-gstack-browser/  # /open-gstack-browser skill (launch GStack Browser)
-├── connect-chrome/  # symlink → open-gstack-browser (backwards compat)
+├── open-torch-browser/  # /open-torch-browser skill (launch torch Browser)
+├── connect-chrome/  # symlink → open-torch-browser (backwards compat)
 ├── design/          # Design binary CLI (GPT Image API)
 │   ├── src/         # CLI + commands (generate, variants, compare, serve, etc.)
 │   ├── test/        # Integration tests
@@ -148,7 +148,7 @@ gstack/
 │   ├── workflows/   # evals.yml (E2E on Ubicloud), skill-docs.yml, actionlint.yml
 │   └── docker/      # Dockerfile.ci (pre-baked toolchain + Playwright/Chromium)
 ├── contrib/         # Contributor-only tools (never installed for users)
-│   └── add-host/    # /gstack-contrib-add-host skill
+│   └── add-host/    # /torch-contrib-add-host skill
 ├── setup            # One-time setup: build binary + symlink skills
 ├── SKILL.md         # Generated from SKILL.md.tmpl (don't edit directly)
 ├── SKILL.md.tmpl    # Template: edit this, run gen:skill-docs
@@ -190,11 +190,11 @@ Skills must NEVER hardcode framework-specific commands, file patterns, or direct
 structures. Instead:
 
 1. **Read CLAUDE.md** for project-specific config (test commands, eval commands, etc.)
-2. **If missing, AskUserQuestion** — let the user tell you or let gstack search the repo
+2. **If missing, AskUserQuestion** — let the user tell you or let torch search the repo
 3. **Persist the answer to CLAUDE.md** so we never have to ask again
 
 This applies to test commands, eval commands, deploy commands, and any other
-project-specific behavior. The project owns its config; gstack reads it.
+project-specific behavior. The project owns its config; torch reads it.
 
 ## Writing SKILL templates
 
@@ -220,7 +220,7 @@ Default output from every tier-≥2 skill follows the Writing Style section in
 `scripts/jargon-list.json`, baked at gen-skill-docs time), questions framed in
 outcome terms ("what breaks for your users if...") not implementation terms,
 short sentences, decisions close with user impact. Power users who want the
-tighter V0 prose set `gstack-config set explain_level terse` (binary switch,
+tighter V0 prose set `torch-config set explain_level terse` (binary switch,
 no middle mode). See `docs/designs/PLAN_TUNING_V1.md` for the full design
 rationale. The review pacing overhaul that originally tried to ride alongside
 writing-style was extracted to V1.1 — see `docs/designs/PACING_UPDATES_V0.md`.
@@ -251,13 +251,13 @@ identity-based kill via `killAgentByRecord(readAgentRecord(stateDir))` from
 `<stateDir>/terminal-port`, `<stateDir>/terminal-internal-token`, and
 `<stateDir>/terminal-agent-pid` (the per-boot agent record introduced in v1.44).
 Embedders (e.g. the gbrowser phoenix overlay) that pre-launch their own PTY
-server must pass `false` so their discovery files survive gstack teardown cycles.
+server must pass `false` so their discovery files survive torch teardown cycles.
 The flag is the third caller-owned teardown gate in `ServerConfig` (alongside
 `xvfb?` and `proxyBridge?`); polarity is inverted (explicit bool vs presence) and
 documented in the field's JSDoc. CLI `start()` always passes `true` explicitly —
 the static-grep test in `browse/test/server-embedder-terminal-port.test.ts` fails
 CI if a refactor drops it. Pre-v1.44 used `pkill -f terminal-agent\.ts` (regex
-match) which would kill sibling gstack sessions on the same host; the new
+match) which would kill sibling torch sessions on the same host; the new
 `browse/test/terminal-agent-pid-identity.test.ts` static-grep tripwire fails CI
 if any source file re-introduces `pkill ... terminal-agent` or `spawnSync('pkill', ...)`.
 
@@ -266,13 +266,13 @@ can't set `Authorization` on a WebSocket upgrade, but they CAN set
 `Sec-WebSocket-Protocol` via `new WebSocket(url, [token])`. The agent
 reads it, validates against `validTokens`, and MUST echo the protocol
 back in the upgrade response — without the echo, Chromium closes the
-connection immediately. `Set-Cookie: gstack_pty=...` is kept as a
+connection immediately. `Set-Cookie: torch_pty=...` is kept as a
 fallback for non-browser callers (the cross-port `SameSite=Strict`
 cookie path doesn't survive from a chrome-extension origin).
 
 **Cross-pane PTY injection.** The toolbar's Cleanup button and the
 Inspector's "Send to Code" action both pipe text into the live claude
-PTY via `window.gstackInjectToTerminal(text)`, exposed by
+PTY via `window.torchInjectToTerminal(text)`, exposed by
 `sidepanel-terminal.js`. No `/sidebar-command` POST — the live REPL is
 the only execution surface in the sidebar now.
 
@@ -286,9 +286,9 @@ the daemon binds two HTTP listeners: a local listener (127.0.0.1, full command
 surface, never forwarded) and a tunnel listener (locked allowlist: `/connect`,
 `/command` with a scoped token + 26-command browser-driving allowlist,
 `/sidebar-chat`). ngrok forwards only the tunnel port. Root tokens over the tunnel
-return 403. SSE endpoints use a 30-minute HttpOnly `gstack_sse` cookie minted via
+return 403. SSE endpoints use a 30-minute HttpOnly `torch_sse` cookie minted via
 `POST /sse-session` (never valid against `/command`). Tunnel-surface rejections go
-to `~/.gstack/security/attempts.jsonl` via `tunnel-denial-log.ts`. Before editing
+to `~/.torch/security/attempts.jsonl` via `tunnel-denial-log.ts`. Before editing
 `server.ts`, `sse-session-cookie.ts`, or `tunnel-denial-log.ts`, read
 [ARCHITECTURE.md](ARCHITECTURE.md#dual-listener-tunnel-architecture-v1600) —
 the module boundary (no imports from `token-registry.ts` into `sse-session-cookie.ts`)
@@ -353,7 +353,7 @@ every `git pull`.
 compiled browse binary. `@huggingface/transformers` v4 requires `onnxruntime-node`
 which fails to `dlopen` from Bun compile's temp extract dir. Only `security.ts`
 (pure-string operations — canary, verdict combiner, attack log, status) is safe
-for `server.ts`. See `~/.gstack/projects/garrytan-gstack/ceo-plans/2026-04-19-prompt-injection-guard.md`
+for `server.ts`. See `~/.torch/projects/garrytan-torch/ceo-plans/2026-04-19-prompt-injection-guard.md`
 §"Pre-Impl Gate 1 Outcome" for full architectural decision.
 
 **Thresholds** (in `security.ts`):
@@ -371,53 +371,53 @@ this is the Stack Overflow instruction-writing FP mitigation. Canary leak
 always BLOCKs (deterministic).
 
 **Env knobs:**
-- `GSTACK_SECURITY_OFF=1` — emergency kill switch. Classifier stays off even if
+- `torch_SECURITY_OFF=1` — emergency kill switch. Classifier stays off even if
   warmed. Canary is still injected; just the ML scan is skipped.
-- `GSTACK_SECURITY_ENSEMBLE=deberta` — opt-in DeBERTa-v3 ensemble. Adds
+- `torch_SECURITY_ENSEMBLE=deberta` — opt-in DeBERTa-v3 ensemble. Adds
   ProtectAI DeBERTa-v3-base-injection-onnx as L4c classifier for cross-model
   agreement. 721MB first-run download. With ensemble enabled, BLOCK requires
   2-of-3 ML classifiers agreeing at >= WARN (testsavant, deberta, transcript).
   Without ensemble (default), BLOCK requires testsavant + transcript at >= WARN.
-- Classifier model cache: `~/.gstack/models/testsavant-small/` (112MB, first run only)
-  plus `~/.gstack/models/deberta-v3-injection/` (721MB, only when ensemble enabled)
-- Attack log: `~/.gstack/security/attempts.jsonl` (salted sha256 + domain only,
+- Classifier model cache: `~/.torch/models/testsavant-small/` (112MB, first run only)
+  plus `~/.torch/models/deberta-v3-injection/` (721MB, only when ensemble enabled)
+- Attack log: `~/.torch/security/attempts.jsonl` (salted sha256 + domain only,
   rotates at 10MB, 5 generations)
-- Per-device salt: `~/.gstack/security/device-salt` (0600)
-- Session state: `~/.gstack/security/session-state.json` (cross-process, atomic)
+- Per-device salt: `~/.torch/security/device-salt` (0600)
+- Session state: `~/.torch/security/session-state.json` (cross-process, atomic)
 
 ## Dev symlink awareness
 
-When developing gstack, `.claude/skills/gstack` may be a symlink back to this
+When developing torch, `.claude/skills/torch` may be a symlink back to this
 working directory (gitignored). This means skill changes are **live immediately**,
 great for rapid iteration, risky during big refactors where half-written skills
-could break other Claude Code sessions using gstack concurrently.
+could break other Claude Code sessions using torch concurrently.
 
-**Check once per session:** Run `ls -la .claude/skills/gstack` to see if it's a
+**Check once per session:** Run `ls -la .claude/skills/torch` to see if it's a
 symlink or a real copy. If it's a symlink to your working directory, be aware that:
-- Template changes + `bun run gen:skill-docs` immediately affect all gstack invocations
-- Breaking changes to SKILL.md.tmpl files can break concurrent gstack sessions
-- During large refactors, remove the symlink (`rm .claude/skills/gstack`) so the
-  global install at `~/.claude/skills/gstack/` is used instead
+- Template changes + `bun run gen:skill-docs` immediately affect all torch invocations
+- Breaking changes to SKILL.md.tmpl files can break concurrent torch sessions
+- During large refactors, remove the symlink (`rm .claude/skills/torch`) so the
+  global install at `~/.claude/skills/torch/` is used instead
 
 **Prefix setting:** Setup creates real directories (not symlinks) at the top level
-with a SKILL.md symlink inside (e.g., `qa/SKILL.md -> gstack/qa/SKILL.md`). This
-ensures Claude discovers them as top-level skills, not nested under `gstack/`.
-Names are either short (`qa`) or namespaced (`gstack-qa`), controlled by
-`skill_prefix` in `~/.gstack/config.yaml`. Pass `--no-prefix` or `--prefix` to
+with a SKILL.md symlink inside (e.g., `qa/SKILL.md -> torch/qa/SKILL.md`). This
+ensures Claude discovers them as top-level skills, not nested under `torch/`.
+Names are either short (`qa`) or namespaced (`torch-qa`), controlled by
+`skill_prefix` in `~/.torch/config.yaml`. Pass `--no-prefix` or `--prefix` to
 skip the interactive prompt.
 
-**Note:** Vendoring gstack into a project's repo is deprecated. Use global install
+**Note:** Vendoring torch into a project's repo is deprecated. Use global install
 + `./setup --team` instead. See README.md for team mode instructions.
 
 **For plan reviews:** When reviewing plans that modify skill templates or the
 gen-skill-docs pipeline, consider whether the changes should be tested in isolation
-before going live (especially if the user is actively using gstack in other windows).
+before going live (especially if the user is actively using torch in other windows).
 
 **Upgrade migrations:** When a change modifies on-disk state (directory structure,
 config format, stale files) in ways that could break existing user installs, add a
-migration script to `gstack-upgrade/migrations/`. Read CONTRIBUTING.md's "Upgrade
+migration script to `torch-upgrade/migrations/`. Read CONTRIBUTING.md's "Upgrade
 migrations" section for the format and testing requirements. The upgrade skill runs
-these automatically after `./setup` during `/gstack-upgrade`.
+these automatically after `./setup` during `/torch-upgrade`.
 
 ## Compiled binaries — NEVER commit browse/dist/ or design/dist/
 
@@ -438,7 +438,7 @@ always use specific filenames (`git add file1 file2`) — never `git add .` or
 Shared redaction engine catches credentials, PII, and legal/damaging content
 before it reaches an external sink (codex dispatch, GitHub issue/PR body, pushed
 commit). It is a **guardrail, not airtight enforcement** — `git push --no-verify`,
-direct `gh issue create`, and `GSTACK_REDACT_PREPUSH=skip` all bypass it. It
+direct `gh issue create`, and `torch_REDACT_PREPUSH=skip` all bypass it. It
 catches accidents and carelessness, the 99% case. Do not claim it stops a
 determined leaker (a CHANGELOG line that does would fail a hostile screenshotter).
 
@@ -448,8 +448,8 @@ determined leaker (a CHANGELOG line that does would fail a hostile screenshotter
   FYI) and `lib/redact-engine.ts` (pure `scan()` + `applyRedactions()`).
   Calibration matters: a gate that cries wolf gets ignored, so context-variable
   shapes (Stripe `pk_live_`, Google `AIza`, JWT, env `*_KEY=`) sit at MEDIUM.
-- **CLI:** `bin/gstack-redact` (exit 0 clean / 2 MEDIUM / 3 HIGH; `--json`,
-  `--auto-redact`, `--repo-visibility`, `--from-file`). `bin/gstack-redact-prepush`
+- **CLI:** `bin/torch-redact` (exit 0 clean / 2 MEDIUM / 3 HIGH; `--json`,
+  `--auto-redact`, `--repo-visibility`, `--from-file`). `bin/torch-redact-prepush`
   is the opt-in git hook.
 - **Skill docs are generated** from `scripts/resolvers/redact-doc.ts`
   (`{{REDACT_TAXONOMY_TABLE}}`, `{{REDACT_INVOCATION_BLOCK:<sink>}}`) so /spec,
@@ -458,7 +458,7 @@ determined leaker (a CHANGELOG line that does would fail a hostile screenshotter
   temp file, scan that file, pass the SAME file to `gh`/`git`. Never scan a string
   then re-render (that reopens a scan-vs-send gap).
 - **Visibility (no tier promotion):** resolve once per run, order = local config
-  (`gstack-config get redact_repo_visibility`, ~/.gstack so never committed) → gh
+  (`torch-config get redact_repo_visibility`, ~/.torch so never committed) → gh
   → glab → unknown(=public-strict). Public repos get STERNER per-finding
   confirmation (no batch-acknowledge, no silent-proceed); MEDIUM is never
   auto-promoted to HIGH.
@@ -469,7 +469,7 @@ determined leaker (a CHANGELOG line that does would fail a hostile screenshotter
   override for repos gh/glab can't read), `redact_prepush_hook` (true|false).
   There is intentionally NO key to disable HIGH blocking.
 - **Audit:** the /spec semantic pass appends a content-free record (categories +
-  body sha256, no spec text) to `~/.gstack/security/semantic-reviews.jsonl` (0600).
+  body sha256, no spec text) to `~/.torch/security/semantic-reviews.jsonl` (0600).
 
 ## Commit style
 
@@ -563,7 +563,7 @@ No auto-merging. No "I'll just clean this up."
 
 ## Checking out PRs from garrytan-agents
 
-When the user says "check out <PR link>" and the PR is from `garrytan-agents/gstack`
+When the user says "check out <PR link>" and the PR is from `garrytan-agents/torch`
 (or any other fork that is NOT a collaborator on `garrytan/gstack`), do NOT just
 `gh pr checkout`. Fork PRs don't receive base-repo secrets (`ANTHROPIC_API_KEY`,
 `OPENAI_API_KEY`, etc.), so the eval/E2E CI jobs fail with empty-env auth errors
@@ -600,7 +600,7 @@ claimed version within the same bump level is explicitly permitted — if branch
 claims v1.7.0.0 as a MINOR and branch B is also a MINOR, B lands at v1.8.0.0
 (still a MINOR relative to main). Downstream consumers must NOT rely on
 "MINOR = feature-only, PATCH = fix-only" as a strict contract. This is why
-`bin/gstack-next-version` advances within the chosen bump level rather than
+`bin/torch-next-version` advances within the chosen bump level rather than
 repicking the level when collisions happen.
 
 **Scale-aware bumps — use common sense.** When the diff is big, bump MINOR (or
@@ -726,7 +726,7 @@ the branch's history. When real work lands, the entry will replace this at /ship
 ### Release-summary format (every `## [X.Y.Z]` entry)
 
 Every version entry in `CHANGELOG.md` MUST start with a release-summary section in
-the GStack/Garry voice, one viewport's worth of prose + tables that lands like a
+the torch/Garry voice, one viewport's worth of prose + tables that lands like a
 verdict, not marketing. The itemized changelog (subsections, bullets, files) goes
 BELOW that summary, separated by a `### Itemized changes` header.
 
@@ -779,9 +779,9 @@ above, plus:
 
 ## AI effort compression
 
-When estimating or discussing effort, always show both human-team and CC+gstack time:
+When estimating or discussing effort, always show both human-team and CC+torch time:
 
-| Task type | Human team | CC+gstack | Compression |
+| Task type | Human team | CC+torch | Compression |
 |-----------|-----------|-----------|-------------|
 | Boilerplate / scaffolding | 2 days | 15 min | ~100x |
 | Test writing | 1 day | 15 min | ~50x |
@@ -811,7 +811,7 @@ builder philosophy.
 
 ## Local plans
 
-Contributors can store long-range vision docs and design documents in `~/.gstack-dev/plans/`.
+Contributors can store long-range vision docs and design documents in `~/.torch-dev/plans/`.
 These are local-only (not checked in). When reviewing TODOS.md, check `plans/` for candidates
 that may be ready to promote to TODOs or implement.
 
@@ -846,23 +846,23 @@ you'll check later.
 ## Running evals as an agent: always detach (SIGTERM-proof)
 
 When **you (an agent/harness)** launch a long eval/benchmark run, run it through
-`bin/gstack-detach` — NEVER as a plain backgrounded Bash task. A plain background
+`bin/torch-detach` — NEVER as a plain backgrounded Bash task. A plain background
 task lives in the harness's process group, so a SIGTERM ("polite quit") on a turn
 boundary, a stopped Monitor, or an interruption kills the run mid-flight (observed:
 `script "test:gate" was terminated by signal SIGTERM` ~40 min into a run). On macOS
-the run can also die to idle-sleep. `gstack-detach` fixes both: a fresh session
+the run can also die to idle-sleep. `torch-detach` fixes both: a fresh session
 (escapes the group SIGTERM) wrapped in `caffeinate -i` (blocks idle-sleep).
 
 - Use the `eval:bg*` scripts (`eval:bg`, `eval:bg:all`, `eval:bg:gate`,
-  `eval:bg:periodic`) — they wrap the eval command in `gstack-detach` with the
-  machine-wide `gstack-evals` lock (concurrent worktrees serialize instead of
+  `eval:bg:periodic`) — they wrap the eval command in `torch-detach` with the
+  machine-wide `torch-evals` lock (concurrent worktrees serialize instead of
   saturating the shared model API), a per-tier watchdog, and a **run-scoped** log
-  under `~/.gstack-dev/eval-runs/` (no shared-`/tmp` collision). Each prints its
-  log path. Or call `gstack-detach [--lock NAME] [--timeout SECS] [--label LBL] --
+  under `~/.torch-dev/eval-runs/` (no shared-`/tmp` collision). Each prints its
+  log path. Or call `torch-detach [--lock NAME] [--timeout SECS] [--label LBL] --
   <cmd>` directly for any long agent job. Export `ANTHROPIC_API_KEY` first (never
   pass keys in argv).
 - Then **poll the printed logfile** with a death-aware watcher: break on the
-  guaranteed `### gstack-detach EXIT=<code> ###` sentinel (success AND failure are
+  guaranteed `### torch-detach EXIT=<code> ###` sentinel (success AND failure are
   both marked, so silence is never mistaken for success). The detached run survives
   even if your watcher gets reaped, so re-checking the log always works.
 - Why the lock: a shared dev box with several Conductor worktrees will rate-limit
@@ -897,44 +897,44 @@ Also when running targeted E2E tests to debug failures:
 
 ## Publishing native OpenClaw skills to ClawHub
 
-Native OpenClaw skills live in `openclaw/skills/gstack-openclaw-*/SKILL.md`. These are
+Native OpenClaw skills live in `openclaw/skills/torch-openclaw-*/SKILL.md`. These are
 hand-crafted methodology skills (not generated by the pipeline) published to ClawHub
 so any OpenClaw user can install them.
 
 **Publishing:** The command is `clawhub publish` (NOT `clawhub skill publish`):
 
 ```bash
-clawhub publish openclaw/skills/gstack-openclaw-office-hours \
-  --slug gstack-openclaw-office-hours --name "gstack Office Hours" \
+clawhub publish openclaw/skills/torch-openclaw-office-hours \
+  --slug torch-openclaw-office-hours --name "torch Office Hours" \
   --version 1.0.0 --changelog "description of changes"
 ```
 
-Repeat for each skill: `gstack-openclaw-ceo-review`, `gstack-openclaw-investigate`,
-`gstack-openclaw-retro`. Bump `--version` on each update.
+Repeat for each skill: `torch-openclaw-ceo-review`, `torch-openclaw-investigate`,
+`torch-openclaw-retro`. Bump `--version` on each update.
 
 **Auth:** `clawhub login` (opens browser for GitHub auth). `clawhub whoami` to verify.
 
 **Updating:** Same `clawhub publish` command with a higher `--version` and `--changelog`.
 
-**Verification:** `clawhub search gstack` to confirm they're live.
+**Verification:** `clawhub search torch` to confirm they're live.
 
 ## Deploying to the active skill
 
-The active skill lives at `~/.claude/skills/gstack/`. After making changes:
+The active skill lives at `~/.claude/skills/torch/`. After making changes:
 
 1. Push your branch
-2. Fetch and reset in the skill directory: `cd ~/.claude/skills/gstack && git fetch origin && git reset --hard origin/main`
-3. Rebuild: `cd ~/.claude/skills/gstack && bun run build`
+2. Fetch and reset in the skill directory: `cd ~/.claude/skills/torch && git fetch origin && git reset --hard origin/main`
+3. Rebuild: `cd ~/.claude/skills/torch && bun run build`
 
 **If you use gbrain:** the `git reset --hard` in step 2 reverts the brain-aware
-(`GBRAIN_CONTEXT_LOAD` / `GBRAIN_SAVE_RESULTS`) blocks that `gstack-config
+(`GBRAIN_CONTEXT_LOAD` / `GBRAIN_SAVE_RESULTS`) blocks that `torch-config
 gbrain-refresh` renders into the install (those generated blocks differ from
-`main` by design). After deploying, re-run `gstack-config gbrain-refresh` to
+`main` by design). After deploying, re-run `torch-config gbrain-refresh` to
 restore them across all your projects' Claude sessions. It's idempotent.
 
 Or copy the binaries directly:
-- `cp browse/dist/browse ~/.claude/skills/gstack/browse/dist/browse`
-- `cp design/dist/design ~/.claude/skills/gstack/design/dist/design`
+- `cp browse/dist/browse ~/.claude/skills/torch/browse/dist/browse`
+- `cp design/dist/design ~/.claude/skills/torch/design/dist/design`
 
 ## Skill routing
 
@@ -957,12 +957,12 @@ Key routing rules:
 ## Cross-session decision memory
 
 Durable decisions and their rationale are captured in an append-only, event-sourced
-store at `~/.gstack/projects/<slug>/decisions.jsonl` so neither you nor the user
+store at `~/.torch/projects/<slug>/decisions.jsonl` so neither you nor the user
 re-litigates a settled call or loses the "why" across sessions. This is the reliable,
 file-only path: it works with gbrain OFF. (gbrain semantic recall is an optional
 enhancement layered on top, never a dependency.)
 
-- **Resurface** active decisions before re-deciding: `bin/gstack-decision-search`
+- **Resurface** active decisions before re-deciding: `bin/torch-decision-search`
   (`--recent N`, `--scope repo|branch|issue`, `--query KW`, `--all`, `--json`).
   Add `--semantic` (with `--query`) to append related hits from gbrain memory when
   it's up; it degrades silently to the reliable file results when gbrain is off.
@@ -970,7 +970,7 @@ enhancement layered on top, never a dependency.)
   If a decision is listed, treat it as settled with its rationale; if you're about to
   reverse it, say so explicitly.
 - **Capture** a DURABLE decision when you or the user make one:
-  `bin/gstack-decision-log '{"decision":"...","rationale":"...","scope":"repo|branch|issue","source":"user|skill|agent","confidence":1-10}'`.
+  `bin/torch-decision-log '{"decision":"...","rationale":"...","scope":"repo|branch|issue","source":"user|skill|agent","confidence":1-10}'`.
   Reverse a prior call with `--supersede <id>`; expunge an accidental secret with
   `--redact <id>`; rewrite the log to the active set with `--compact`. Non-interactive
   (never prompts), injection-sanitized, and HIGH-secret-blocking on write.
@@ -980,7 +980,7 @@ enhancement layered on top, never a dependency.)
   store becomes noise.
 
 ## GBrain Search Guidance (configured by /sync-gbrain)
-<!-- gstack-gbrain-search-guidance:start -->
+<!-- torch-gbrain-search-guidance:start -->
 
 GBrain is set up and synced on this machine. The agent should prefer gbrain
 over Grep when the question is semantic or when you don't know the exact
@@ -996,7 +996,7 @@ match the actual code on disk in this worktree.
 
 Two indexed corpora available via the `gbrain` CLI:
 - This worktree's code (auto-pinned via `.gbrain-source`).
-- `~/.gstack/` curated memory (registered as `gstack-brain-<user>` source via
+- `~/.torch/` curated memory (registered as `torch-brain-<user>` source via
   the existing federation pipeline).
 
 Prefer gbrain when:
@@ -1007,7 +1007,7 @@ Prefer gbrain when:
 - "What calls Y?" / "What does Y depend on?":
     `gbrain code-callers <symbol>` / `gbrain code-callees <symbol>`
 - "What did we decide last time?" / past plans, retros, learnings:
-    `gbrain search "<terms>" --source gstack-brain-<user>`
+    `gbrain search "<terms>" --source torch-brain-<user>`
 
 Grep is still right for known exact strings, regex, multiline patterns, and
 file globs. Run `/sync-gbrain` after meaningful code changes; for ongoing
@@ -1020,4 +1020,4 @@ to avoid racing it (#1734). Prefer registering user repos with `gbrain sources
 add --path <dir>` (no `--url`): URL-managed sources can auto-reclone, and the
 sync code walk for them requires an explicit `--allow-reclone` opt-in.
 
-<!-- gstack-gbrain-search-guidance:end -->
+<!-- torch-gbrain-search-guidance:end -->

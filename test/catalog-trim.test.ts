@@ -10,7 +10,7 @@
  *   "Use when asked to..." silently disappeared from the body section.
  *
  *   v1.45.0.0 CI freshness: the root-skill key leaked the checkout directory
- *   name ("seville-v3" vs "gstack") and aggregate order was filesystem-
+ *   name ("seville-v3" vs "torch") and aggregate order was filesystem-
  *   iteration order. Two machines produced two different JSON files.
  *
  * Both are regression-tested here. Future bugs in these functions surface as
@@ -31,18 +31,18 @@ describe('splitCatalogDescription', () => {
       'Pre-landing PR review. Analyzes diff against the base branch for SQL safety, LLM trust\n' +
       'boundary violations, conditional side effects, and other structural issues. Use when\n' +
       'asked to "review this PR", "code review", "pre-landing review", or "check my diff".\n' +
-      'Proactively suggest when the user is about to merge or land code changes. (gstack)';
+      'Proactively suggest when the user is about to merge or land code changes. (torch)';
 
     const parts = splitCatalogDescription(desc);
 
     expect(parts.lead).toBe('Pre-landing PR review.');
-    expect(parts.hasGstackTag).toBe(true);
+    expect(parts.hastorchTag).toBe(true);
     expect(parts.voiceLine).toBeNull();
     expect(parts.routingProse).toContain('Use when');
     expect(parts.routingProse).toContain('Proactively suggest');
     expect(parts.routingProse).toContain('Analyzes diff');
-    // (gstack) tag stripped from routingProse
-    expect(parts.routingProse).not.toContain('(gstack)');
+    // (torch) tag stripped from routingProse
+    expect(parts.routingProse).not.toContain('(torch)');
   });
 
   test('REGRESSION (design-consultation v1.45.0.0): >200 char first sentence keeps routing', () => {
@@ -58,7 +58,7 @@ describe('splitCatalogDescription', () => {
       'For existing sites, use /plan-design-review to infer the system instead. ' +
       'Use when asked to "design system", "brand guidelines", or "create DESIGN.md". ' +
       'Proactively suggest when starting a new project\'s UI with no existing ' +
-      'design system or DESIGN.md. (gstack)';
+      'design system or DESIGN.md. (torch)';
 
     const parts = splitCatalogDescription(desc);
 
@@ -75,7 +75,7 @@ describe('splitCatalogDescription', () => {
     const desc =
       'Quick fix. Use when asked to fix the bug. ' +
       'Voice triggers (speech-to-text aliases): "fix it", "patch this", "make it work". ' +
-      '(gstack)';
+      '(torch)';
 
     const parts = splitCatalogDescription(desc);
 
@@ -87,11 +87,11 @@ describe('splitCatalogDescription', () => {
     expect(parts.routingProse).not.toContain('speech-to-text');
   });
 
-  test('handles description without (gstack) tag', () => {
+  test('handles description without (torch) tag', () => {
     const desc = 'Single sentence description. With routing prose afterward.';
     const parts = splitCatalogDescription(desc);
     expect(parts.lead).toBe('Single sentence description.');
-    expect(parts.hasGstackTag).toBe(false);
+    expect(parts.hastorchTag).toBe(false);
     expect(parts.routingProse).toBe('With routing prose afterward.');
   });
 
@@ -130,33 +130,33 @@ describe('splitCatalogDescription', () => {
   });
 
   test('idempotent: calling on already-trimmed output returns the same parts', () => {
-    const desc = 'Already trimmed. (gstack)';
+    const desc = 'Already trimmed. (torch)';
     const parts1 = splitCatalogDescription(desc);
     const parts2 = splitCatalogDescription(buildTrimmedDescription(parts1));
     // Re-split of a one-line trimmed result keeps lead identical, routing empty.
     expect(parts2.lead).toBe(parts1.lead);
-    expect(parts2.hasGstackTag).toBe(true);
+    expect(parts2.hastorchTag).toBe(true);
     expect(parts2.routingProse).toBe('');
   });
 });
 
 describe('buildTrimmedDescription', () => {
-  test('appends (gstack) when hasGstackTag is true', () => {
+  test('appends (torch) when hastorchTag is true', () => {
     const out = buildTrimmedDescription({
       lead: 'Some lead.',
       routingProse: 'routing',
       voiceLine: null,
-      hasGstackTag: true,
+      hastorchTag: true,
     });
-    expect(out).toBe('Some lead. (gstack)');
+    expect(out).toBe('Some lead. (torch)');
   });
 
-  test('omits (gstack) when hasGstackTag is false', () => {
+  test('omits (torch) when hastorchTag is false', () => {
     const out = buildTrimmedDescription({
       lead: 'No tag.',
       routingProse: '',
       voiceLine: null,
-      hasGstackTag: false,
+      hastorchTag: false,
     });
     expect(out).toBe('No tag.');
   });
@@ -166,9 +166,9 @@ describe('buildTrimmedDescription', () => {
       lead: '   Lead with whitespace.   ',
       routingProse: '',
       voiceLine: null,
-      hasGstackTag: true,
+      hastorchTag: true,
     });
-    expect(out).toBe('Lead with whitespace. (gstack)');
+    expect(out).toBe('Lead with whitespace. (torch)');
   });
 });
 
@@ -178,7 +178,7 @@ describe('buildWhenToInvokeSection', () => {
       lead: 'Lead.',
       routingProse: 'Use when asked to ship.',
       voiceLine: 'Voice triggers (speech-to-text aliases): "ship it".',
-      hasGstackTag: true,
+      hastorchTag: true,
     });
     expect(out).toContain('## When to invoke this skill');
     expect(out).toContain('Use when asked to ship.');
@@ -190,7 +190,7 @@ describe('buildWhenToInvokeSection', () => {
       lead: 'Lead.',
       routingProse: '',
       voiceLine: null,
-      hasGstackTag: true,
+      hastorchTag: true,
     });
     expect(out).toContain('## When to invoke this skill');
     expect(out).not.toContain('Use when');
@@ -201,7 +201,7 @@ describe('buildWhenToInvokeSection', () => {
       lead: 'Lead.',
       routingProse: '',
       voiceLine: 'Voice triggers: x.',
-      hasGstackTag: true,
+      hastorchTag: true,
     });
     expect(out).toContain('Voice triggers: x.');
   });
@@ -213,7 +213,7 @@ name: example
 description: |
   Example skill: this is the first sentence of the description, intended to be
   the lead displayed in the catalog. Use when asked to do an example task.
-  Proactively suggest when the user mentions examples. (gstack)
+  Proactively suggest when the user mentions examples. (torch)
 preamble-tier: 2
 ---
 <!-- AUTO-GENERATED from SKILL.md.tmpl — do not edit directly -->
@@ -227,10 +227,10 @@ Original body content here.
     const result = applyCatalogTrim(minimalSkill, 'example');
     expect(result).not.toBeNull();
     const { content, parts } = result!;
-    // Frontmatter description is now ONE line ending with (gstack). #1778: a
+    // Frontmatter description is now ONE line ending with (torch). #1778: a
     // description with an interior colon ("Example skill:") is YAML-quoted, so
     // the value is wrapped in double quotes — tolerate the optional quotes.
-    expect(content).toMatch(/^description: "?Example skill:[^\n]*\(gstack\)"?\n/m);
+    expect(content).toMatch(/^description: "?Example skill:[^\n]*\(torch\)"?\n/m);
     // Body has the When to invoke section
     expect(content).toContain('## When to invoke this skill');
     expect(content).toContain('Use when asked to do an example task.');
@@ -240,13 +240,13 @@ Original body content here.
     expect(content).toContain('Original body content here.');
     // parts is populated for the aggregator
     expect(parts.lead).toContain('Example skill');
-    expect(parts.hasGstackTag).toBe(true);
+    expect(parts.hastorchTag).toBe(true);
   });
 
   test('returns null for already-short descriptions (no-op)', () => {
     const shortSkill = minimalSkill.replace(
       /description: \|[\s\S]*?(?=preamble-tier:)/,
-      'description: Already short. (gstack)\n',
+      'description: Already short. (torch)\n',
     );
     const result = applyCatalogTrim(shortSkill, 'example');
     expect(result).toBeNull();
@@ -254,13 +254,13 @@ Original body content here.
 
   test('keeps the newline between description and next YAML field (no field collision)', () => {
     // Bug shape from v1.45.0.0 first attempt: produced
-    // `description: ... (gstack)preamble-tier:` with no newline.
+    // `description: ... (torch)preamble-tier:` with no newline.
     const result = applyCatalogTrim(minimalSkill, 'example');
     expect(result).not.toBeNull();
-    expect(result!.content).not.toMatch(/\(gstack\)preamble-tier/);
-    expect(result!.content).not.toMatch(/\(gstack\)allowed-tools/);
+    expect(result!.content).not.toMatch(/\(torch\)preamble-tier/);
+    expect(result!.content).not.toMatch(/\(torch\)allowed-tools/);
     // #1778: optional closing quote when the description was YAML-quoted.
-    expect(result!.content).toMatch(/\(gstack\)"?\n[a-z-]+:/);
+    expect(result!.content).toMatch(/\(torch\)"?\n[a-z-]+:/);
   });
 
   test('returns null on content without proper frontmatter', () => {
@@ -283,19 +283,19 @@ describe('proactive-suggestions.json determinism (regression for v1.45.0.0 CI fr
     expect(keys).toEqual(sorted);
   });
 
-  test('root skill is keyed as "gstack" (not the checkout directory name)', () => {
+  test('root skill is keyed as "torch" (not the checkout directory name)', () => {
     // Catches the bug where the root SKILL.md.tmpl's catalog parts get
     // registered under the directory basename ("seville-v3" in a Conductor
-    // worktree, "gstack" on CI).
+    // worktree, "torch" on CI).
     const fs = require('fs');
     const path = require('path');
     const json = JSON.parse(
       fs.readFileSync(path.join(__dirname, '..', 'scripts', 'proactive-suggestions.json'), 'utf-8'),
     );
-    expect(json.skills).toHaveProperty('gstack');
+    expect(json.skills).toHaveProperty('torch');
     // The directory the test runs in must NOT appear as a key.
     const repoDir = path.basename(path.resolve(__dirname, '..'));
-    if (repoDir !== 'gstack') {
+    if (repoDir !== 'torch') {
       expect(json.skills).not.toHaveProperty(repoDir);
     }
   });

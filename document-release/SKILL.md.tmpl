@@ -9,7 +9,7 @@ description: |
   detects architecture diagram drift, polishes CHANGELOG voice with a sell-test
   rubric, cleans up TODOS, and optionally bumps VERSION. Surfaces documentation
   debt in the PR body. Use when asked to "update the docs", "sync documentation",
-  or "post-ship docs". Proactively suggest after a PR is merged or code is shipped. (gstack)
+  or "post-ship docs". Proactively suggest after a PR is merged or code is shipped. (torch)
 allowed-tools:
   - Bash
   - Read
@@ -84,7 +84,7 @@ git diff <base>...HEAD --name-only
 3. Discover all documentation files in the repo:
 
 ```bash
-find . -maxdepth 2 -name "*.md" -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./.gstack/*" -not -path "./.context/*" | sort
+find . -maxdepth 2 -name "*.md" -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./.torch/*" -not -path "./.context/*" | sort
 ```
 
 4. Classify the changes into categories relevant to documentation:

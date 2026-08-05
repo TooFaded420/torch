@@ -10,7 +10,7 @@ description: |
   fixture, so the bug can never recur silently.
   Use when /ios-qa reports a bug and you want it fixed automatically, or
   when asked to "fix this iOS bug", "patch the iPhone app", or "auto-fix
-  the iOS issue". (gstack)
+  the iOS issue". (torch)
 voice-triggers:
   - "fix the iOS bug"
   - "patch the iPhone app"
@@ -87,7 +87,7 @@ Write a test in `test/fixtures/ios-fix/<bug-slug>.test.ts` that:
 1. Loads the pre-bug snapshot.
 2. Restores it via `POST /state/restore`.
 3. Asserts the post-fix behavior on a real device (gated
-   `GSTACK_HAS_IOS_DEVICE=1`, periodic tier).
+   `torch_HAS_IOS_DEVICE=1`, periodic tier).
 
 Commit the snapshot fixture + test file alongside the fix.
 

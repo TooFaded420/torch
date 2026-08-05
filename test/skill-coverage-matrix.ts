@@ -1,7 +1,7 @@
 /**
  * Skill coverage matrix (v1.45.0.0 T1, cathedral Phase 0).
  *
- * Single source of truth mapping each gstack skill to its E2E test files.
+ * Single source of truth mapping each torch skill to its E2E test files.
  * The CI gate at test/skill-coverage-matrix.test.ts fails if a skill has
  * no gate-tier entry, ensuring the eval-first foundation holds: every
  * skill has at least one CI-blocking check that asserts must-have
@@ -154,7 +154,7 @@ export const SKILL_COVERAGE: Record<string, SkillCoverage> = {
     gate: ['test/skill-coverage-floor.test.ts'],
     periodic: ['test/regression-1624-retro-stale-base.test.ts'],
   },
-  'gstack-upgrade': { gate: ['test/skill-coverage-floor.test.ts'], periodic: [] },
+  'torch-upgrade': { gate: ['test/skill-coverage-floor.test.ts'], periodic: [] },
   'context-save': { gate: ['test/skill-e2e-context-skills.test.ts', 'test/skill-coverage-floor.test.ts'], periodic: [] },
   'context-restore': { gate: ['test/skill-e2e-context-skills.test.ts', 'test/skill-coverage-floor.test.ts'], periodic: [] },
   'setup-deploy': { gate: ['test/skill-coverage-floor.test.ts'], periodic: [] },
@@ -172,7 +172,7 @@ export const SKILL_COVERAGE: Record<string, SkillCoverage> = {
     gate: ['test/skill-coverage-floor.test.ts'],
     periodic: ['test/regression-1611-gbrain-sync-resume.test.ts'],
   },
-  'open-gstack-browser': { gate: ['test/skill-coverage-floor.test.ts'], periodic: [] },
+  'open-torch-browser': { gate: ['test/skill-coverage-floor.test.ts'], periodic: [] },
   'pair-agent': { gate: ['test/skill-coverage-floor.test.ts'], periodic: [] },
   scrape: { gate: ['test/skill-coverage-floor.test.ts'], periodic: [] },
   skillify: { gate: ['test/skill-e2e-skillify.test.ts', 'test/skill-coverage-floor.test.ts'], periodic: [] },

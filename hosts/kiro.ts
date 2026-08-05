@@ -6,8 +6,8 @@ const kiro: HostConfig = {
   cliCommand: 'kiro-cli',
   cliAliases: [],
 
-  globalRoot: '.kiro/skills/gstack',
-  localSkillRoot: '.kiro/skills/gstack',
+  globalRoot: '.kiro/skills/torch',
+  localSkillRoot: '.kiro/skills/torch',
   hostSubdir: '.kiro',
   usesEnvVars: true,
 
@@ -23,17 +23,17 @@ const kiro: HostConfig = {
   },
 
   pathRewrites: [
-    { from: '~/.claude/skills/gstack', to: '~/.kiro/skills/gstack' },
-    { from: '.claude/skills/gstack', to: '.kiro/skills/gstack' },
+    { from: '~/.claude/skills/torch', to: '~/.kiro/skills/torch' },
+    { from: '.claude/skills/torch', to: '.kiro/skills/torch' },
     { from: '.claude/skills', to: '.kiro/skills' },
-    { from: '~/.codex/skills/gstack', to: '~/.kiro/skills/gstack' },
+    { from: '~/.codex/skills/torch', to: '~/.kiro/skills/torch' },
     { from: '.codex/skills', to: '.kiro/skills' },
   ],
 
   suppressedResolvers: ['GBRAIN_CONTEXT_LOAD', 'GBRAIN_SAVE_RESULTS'],
 
   runtimeRoot: {
-    globalSymlinks: ['bin', 'browse/dist', 'browse/bin', 'gstack-upgrade', 'ETHOS.md'],
+    globalSymlinks: ['bin', 'browse/dist', 'browse/bin', 'torch-upgrade', 'ETHOS.md'],
     globalFiles: {
       'review': ['checklist.md', 'TODOS-format.md'],
     },

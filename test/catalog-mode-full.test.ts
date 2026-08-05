@@ -13,7 +13,7 @@
  *      the conditional gate is in the pipeline.
  *   2. Smoke: running with --catalog-mode=full produces a frontmatter
  *      `description: |` block (multi-line) instead of the trim'd one-line
- *      `description: ...(gstack)` form.
+ *      `description: ...(torch)` form.
  *
  * The smoke test mutates the working tree mid-run. It restores the default
  * trim'd state in a finally block so a crash mid-test still leaves a clean
@@ -62,7 +62,7 @@ describe('--catalog-mode=full opt-out behavior (smoke)', () => {
     const trimmedShip = fs.readFileSync(SHIP_SKILL, 'utf-8');
     // #1778: the trimmed ship description has an interior colon ("Ship workflow:")
     // and is now YAML-quoted — tolerate the optional surrounding quotes.
-    expect(trimmedShip).toMatch(/^description: "?Ship workflow:[^\n]*\(gstack\)"?\n/m);
+    expect(trimmedShip).toMatch(/^description: "?Ship workflow:[^\n]*\(torch\)"?\n/m);
 
     try {
       // Run with --catalog-mode=full. Mutates working tree.
@@ -103,7 +103,7 @@ describe('--catalog-mode=full opt-out behavior (smoke)', () => {
       // Sanity-check the restored state matches what we saw at the start.
       const restoredShip = fs.readFileSync(SHIP_SKILL, 'utf-8');
       // #1778: restored trim state has the YAML-quoted (interior-colon) description.
-      expect(restoredShip).toMatch(/^description: "?Ship workflow:[^\n]*\(gstack\)"?\n/m);
+      expect(restoredShip).toMatch(/^description: "?Ship workflow:[^\n]*\(torch\)"?\n/m);
     }
   }, 180_000);
 

@@ -7,7 +7,7 @@ description: |
   update CHANGELOG, commit, push, create PR. Use when asked to "ship", "deploy",
   "push to main", "create a PR", "merge and push", or "get it deployed".
   Proactively invoke this skill (do NOT push/PR directly) when the user says code
-  is ready, asks about deploying, wants to push code up, or asks to create a PR. (gstack)
+  is ready, asks about deploying, wants to push code up, or asks to create a PR. (torch)
 allowed-tools:
   - Bash
   - Read
@@ -95,7 +95,7 @@ Check diff size: `git diff <base>...HEAD --stat | tail -1`. If the diff is >200 
 
 If CEO Review is missing, mention as informational ("CEO Review not run — recommended for product changes") but do NOT block.
 
-For Design Review: run `source <(~/.claude/skills/gstack/bin/gstack-diff-scope <base> 2>/dev/null)`. If `SCOPE_FRONTEND=true` and no design review (plan-design-review or design-review-lite) exists in the dashboard, mention: "Design Review not run — this PR changes frontend code. The lite design check will run automatically in Step 9, but consider running /design-review for a full visual audit post-implementation." Still never block.
+For Design Review: run `source <(~/.claude/skills/torch/bin/torch-diff-scope <base> 2>/dev/null)`. If `SCOPE_FRONTEND=true` and no design review (plan-design-review or design-review-lite) exists in the dashboard, mention: "Design Review not run — this PR changes frontend code. The lite design check will run automatically in Step 9, but consider running /design-review for a full visual audit post-implementation." Still never block.
 
 Continue to Step 2 — do NOT block or ask. Ship runs its own review in Step 9.
 
@@ -157,18 +157,18 @@ git fetch origin <base> && git merge origin/<base> --no-edit
 
 ## Step 12: Version bump (auto-decide)
 
-The deterministic version-state logic is the tested **`gstack-version-bump`** CLI
+The deterministic version-state logic is the tested **`torch-version-bump`** CLI
 (classify / write / repair). The bump-LEVEL decision and queue-collision handling
-stay agent judgment; the slot pick stays `gstack-next-version`.
+stay agent judgment; the slot pick stays `torch-next-version`.
 
 1. **Classify state** — pure reader, never writes:
    ```bash
-   bun run ~/.claude/skills/gstack/bin/gstack-version-bump classify --base <base>
+   bun run ~/.claude/skills/torch/bin/torch-version-bump classify --base <base>
    ```
    Read the JSON `state` and dispatch:
    - **FRESH** → do the bump (steps 2-4).
    - **ALREADY_BUMPED** → skip the bump, but run the queue-drift check (step 3) with the reported `currentVersion`. If the queue moved (next free version differs), **AskUserQuestion**: rebump to the new version (rewrites CHANGELOG header + PR title) or keep current (CI version-gate will reject until resolved).
-   - **DRIFT_STALE_PKG** → run `gstack-version-bump repair` (syncs package.json to VERSION). No re-bump; reuse `currentVersion` for CHANGELOG + PR.
+   - **DRIFT_STALE_PKG** → run `torch-version-bump repair` (syncs package.json to VERSION). No re-bump; reuse `currentVersion` for CHANGELOG + PR.
    - **DRIFT_UNEXPECTED** → **STOP**. package.json disagrees with VERSION while VERSION matches base — a manual edit bypassed /ship. Reconcile manually, then re-run.
 
 2. **Decide the bump level** from the diff (agent judgment):
@@ -178,20 +178,20 @@ stay agent judgment; the slot pick stays `gstack-next-version`.
 
 3. **Queue-aware pick** (workspace-aware ship):
    ```bash
-   QUEUE_JSON=$(bun run ~/.claude/skills/gstack/bin/gstack-next-version --base <base> --bump "$BUMP_LEVEL" --current-version "$BASE_VERSION" 2>/dev/null || echo '{"offline":true}')
+   QUEUE_JSON=$(bun run ~/.claude/skills/torch/bin/torch-next-version --base <base> --bump "$BUMP_LEVEL" --current-version "$BASE_VERSION" 2>/dev/null || echo '{"offline":true}')
    NEW_VERSION=$(echo "$QUEUE_JSON" | jq -r '.version // empty')
    ```
    If `offline`/util fails: fall back to local `BUMP_LEVEL` arithmetic and print `⚠ workspace-aware ship offline — using local bump only`. If `claimed` is non-empty, render the queue table so the user sees landing order. If an active sibling workspace holds a version `>= NEW_VERSION`, **AskUserQuestion**: advance past (unrelated work) or abort and sync with the sibling.
 
 4. **Write the bump** (FRESH, or an approved rebump):
    ```bash
-   bun run ~/.claude/skills/gstack/bin/gstack-version-bump write --version "$NEW_VERSION"
+   bun run ~/.claude/skills/torch/bin/torch-version-bump write --version "$NEW_VERSION"
    ```
    The CLI validates the 4-digit `MAJOR.MINOR.PATCH.MICRO` pattern and writes **both** VERSION and package.json. On a half-write (VERSION written, package.json failed) it exits 3 — re-run, and classify will report DRIFT_STALE_PKG for `repair` to fix.
 
 5. **Record the release decision** (durable cross-session memory). The bump level is a real decision the next session should not re-derive blind:
    ```bash
-   ~/.claude/skills/gstack/bin/gstack-decision-log '{"decision":"Ship NEW_VERSION (BUMP_LEVEL)","rationale":"WHY","scope":"repo","source":"skill","confidence":9}' 2>/dev/null || true
+   ~/.claude/skills/torch/bin/torch-decision-log '{"decision":"Ship NEW_VERSION (BUMP_LEVEL)","rationale":"WHY","scope":"repo","source":"skill","confidence":9}' 2>/dev/null || true
    ```
    Substitute `NEW_VERSION`, `BUMP_LEVEL`, and a one-line `WHY` (the signal that set the level: diff scale, a new feature, a breaking change). Best-effort and non-interactive; never blocks the ship. Skip on the ALREADY_BUMPED path (the decision was logged on the run that did the bump).
 
@@ -206,7 +206,7 @@ Read `.claude/skills/review/TODOS-format.md` for the canonical format reference.
 **1. Check if TODOS.md exists** in the repository root.
 
 **If TODOS.md does not exist:** Use AskUserQuestion:
-- Message: "GStack recommends maintaining a TODOS.md organized by skill/component, then priority (P0 at top through P4, then Completed at bottom). See TODOS-format.md for the full format. Would you like to create one?"
+- Message: "torch recommends maintaining a TODOS.md organized by skill/component, then priority (P0 at top through P4, then Completed at bottom). See TODOS-format.md for the full format. Would you like to create one?"
 - Options: A) Create it now, B) Skip for now
 - If A: Create `TODOS.md` with a skeleton (# TODOS heading + ## Completed section). Continue to step 3.
 - If B: Skip the rest of Step 14. Continue to Step 15.
@@ -272,11 +272,11 @@ If `WIP_COUNT` is 0: skip this sub-step entirely.
 If `WIP_COUNT` > 0, collect the WIP context first so it survives the squash:
 
 ```bash
-# Export [gstack-context] blocks from all WIP commits on this branch.
+# Export [torch-context] blocks from all WIP commits on this branch.
 # This file becomes input to the CHANGELOG entry and may inform PR body context.
-mkdir -p "$(git rev-parse --show-toplevel)/.gstack"
+mkdir -p "$(git rev-parse --show-toplevel)/.torch"
 git log <base>..HEAD --grep="^WIP:" --format="%H%n%B%n---END---" > \
-  "$(git rev-parse --show-toplevel)/.gstack/wip-context-before-squash.md" 2>/dev/null || true
+  "$(git rev-parse --show-toplevel)/.torch/wip-context-before-squash.md" 2>/dev/null || true
 ```
 
 **Non-destructive squash strategy:**
@@ -384,10 +384,10 @@ Claiming work is complete without verification is dishonesty, not efficiency.
 **Credential pre-push guard (#1946) — run before the push:**
 
 ```bash
-_REDACT_PREPUSH=$(~/.claude/skills/gstack/bin/gstack-config get redact_prepush_hook 2>/dev/null || echo "false")
+_REDACT_PREPUSH=$(~/.claude/skills/torch/bin/torch-config get redact_prepush_hook 2>/dev/null || echo "false")
 _HOOK_PATH=$(git rev-parse --git-path hooks/pre-push 2>/dev/null || echo "")
 _HOOK_INSTALLED="no"
-[ -n "$_HOOK_PATH" ] && [ -f "$_HOOK_PATH" ] && grep -q "gstack-redact" "$_HOOK_PATH" 2>/dev/null && _HOOK_INSTALLED="yes"
+[ -n "$_HOOK_PATH" ] && [ -f "$_HOOK_PATH" ] && grep -q "torch-redact" "$_HOOK_PATH" 2>/dev/null && _HOOK_INSTALLED="yes"
 # Custom hooks dirs (core.hooksPath — e.g. husky's COMMITTED .husky/) must
 # never get a silent install: the chaining installer would rename the team's
 # committed hook and write a machine-local wrapper into the working tree.
@@ -397,7 +397,7 @@ _HOOKS_IN_GIT_DIR="no"
 case "$_HOOKS_DIR" in
   "$_GIT_DIR"/*|hooks|.git/hooks) _HOOKS_IN_GIT_DIR="yes" ;;
 esac
-_PREPUSH_PROMPTED=$([ -f "${GSTACK_HOME:-$HOME/.gstack}/.redact-prepush-prompted" ] && echo "yes" || echo "no")
+_PREPUSH_PROMPTED=$([ -f "${torch_HOME:-$HOME/.torch}/.redact-prepush-prompted" ] && echo "yes" || echo "no")
 echo "REDACT_PREPUSH: $_REDACT_PREPUSH"
 echo "HOOK_INSTALLED: $_HOOK_INSTALLED"
 echo "HOOKS_IN_GIT_DIR: $_HOOKS_IN_GIT_DIR"
@@ -409,31 +409,31 @@ Branch on the echoed values:
 1. **`REDACT_PREPUSH: true` and `HOOK_INSTALLED: no` and `HOOKS_IN_GIT_DIR: yes`** —
    consent already given; install silently (no question) and continue:
    ```bash
-   ~/.claude/skills/gstack/bin/gstack-redact install-prepush-hook
+   ~/.claude/skills/torch/bin/torch-redact install-prepush-hook
    ```
    If `HOOKS_IN_GIT_DIR: no` (husky or another committed hooks dir), do NOT
    install silently — print one line: "redact pre-push guard not installed:
    this repo uses a custom core.hooksPath; run
-   `gstack-redact install-prepush-hook` manually if you want it chained."
+   `torch-redact install-prepush-hook` manually if you want it chained."
 2. **`REDACT_PREPUSH` not true AND `PREPUSH_PROMPTED: no`** — one-time
    offer (fires once EVER, machine-wide). AskUserQuestion:
 
-   > gstack can install a per-repo git pre-push hook that blocks pushes
+   > torch can install a per-repo git pre-push hook that blocks pushes
    > containing credentials (API keys, tokens, private keys). It's a
-   > guardrail, not enforcement — `GSTACK_REDACT_PREPUSH=skip` bypasses it.
+   > guardrail, not enforcement — `torch_REDACT_PREPUSH=skip` bypasses it.
    > Install it for repos you ship from?
 
    Options:
    - A) Yes — install the credential guard (recommended)
    - B) No — never ask again
 
-   If A: run `~/.claude/skills/gstack/bin/gstack-config set redact_prepush_hook true`
-   then `~/.claude/skills/gstack/bin/gstack-redact install-prepush-hook`.
-   If B: run `~/.claude/skills/gstack/bin/gstack-config set redact_prepush_hook false`.
+   If A: run `~/.claude/skills/torch/bin/torch-config set redact_prepush_hook true`
+   then `~/.claude/skills/torch/bin/torch-redact install-prepush-hook`.
+   If B: run `~/.claude/skills/torch/bin/torch-config set redact_prepush_hook false`.
    ALWAYS (after either answer, but NOT if the question itself failed to
    render — a failed AskUserQuestion must re-offer next time):
    ```bash
-   touch "${GSTACK_HOME:-$HOME/.gstack}/.redact-prepush-prompted"
+   touch "${torch_HOME:-$HOME/.torch}/.redact-prepush-prompted"
    ```
 3. **Anything else** (declined earlier, or already installed) — continue
    without comment.
@@ -458,7 +458,7 @@ git push -u origin <branch-name>
 
 ---
 
-**PR/MR title invariant (always applies — do not skip even if you don't open the section below):** Any PR or MR you create OR update in the next step MUST have a title that starts with `v$NEW_VERSION` (the version bumped in Step 12), in the format `v<NEW_VERSION> <type>: <summary>`. Never create or edit a PR/MR title without this prefix. Compute the correct title with the single source of truth helper: `~/.claude/skills/gstack/bin/gstack-pr-title-rewrite.sh "$NEW_VERSION" "<current title>"`. The full create/update procedure (idempotency, redaction scan, self-check) is in the section below.
+**PR/MR title invariant (always applies — do not skip even if you don't open the section below):** Any PR or MR you create OR update in the next step MUST have a title that starts with `v$NEW_VERSION` (the version bumped in Step 12), in the format `v<NEW_VERSION> <type>: <summary>`. Never create or edit a PR/MR title without this prefix. Compute the correct title with the single source of truth helper: `~/.claude/skills/torch/bin/torch-pr-title-rewrite.sh "$NEW_VERSION" "<current title>"`. The full create/update procedure (idempotency, redaction scan, self-check) is in the section below.
 
 {{SECTION:pr-body}}
 
@@ -467,13 +467,13 @@ git push -u origin <branch-name>
 Log coverage and plan completion data so `/retro` can track trends:
 
 ```bash
-eval "$(~/.claude/skills/gstack/bin/gstack-slug 2>/dev/null)" && mkdir -p ~/.gstack/projects/$SLUG
+eval "$(~/.claude/skills/torch/bin/torch-slug 2>/dev/null)" && mkdir -p ~/.torch/projects/$SLUG
 ```
 
-Append to `~/.gstack/projects/$SLUG/$BRANCH-reviews.jsonl`:
+Append to `~/.torch/projects/$SLUG/$BRANCH-reviews.jsonl`:
 
 ```bash
-echo '{"skill":"ship","timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","coverage_pct":COVERAGE_PCT,"plan_items_total":PLAN_TOTAL,"plan_items_done":PLAN_DONE,"verification_result":"VERIFY_RESULT","version":"VERSION","branch":"BRANCH"}' >> ~/.gstack/projects/$SLUG/$BRANCH-reviews.jsonl
+echo '{"skill":"ship","timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","coverage_pct":COVERAGE_PCT,"plan_items_total":PLAN_TOTAL,"plan_items_done":PLAN_DONE,"verification_result":"VERIFY_RESULT","version":"VERSION","branch":"BRANCH"}' >> ~/.torch/projects/$SLUG/$BRANCH-reviews.jsonl
 ```
 
 Substitute from earlier steps:
@@ -494,11 +494,11 @@ Plan-tune cathedral T15. After a successful ship, surface /plan-tune once
 per machine. Single line, non-blocking, marker-gated so it never re-fires.
 
 ```bash
-_NUDGE_MARKER="$HOME/.gstack/.plan-tune-nudge-shown"
-_QT=$(~/.claude/skills/gstack/bin/gstack-config get question_tuning 2>/dev/null || echo "false")
+_NUDGE_MARKER="$HOME/.torch/.plan-tune-nudge-shown"
+_QT=$(~/.claude/skills/torch/bin/torch-config get question_tuning 2>/dev/null || echo "false")
 if [ ! -f "$_NUDGE_MARKER" ] && [ "$_QT" = "false" ]; then
   echo ""
-  echo "gstack can learn from your AskUserQuestion answers. Run /plan-tune to opt in"
+  echo "torch can learn from your AskUserQuestion answers. Run /plan-tune to opt in"
   echo "— it captures which prompts you find valuable vs noisy and (with hooks installed)"
   echo "auto-decides your never-ask preferences."
   touch "$_NUDGE_MARKER"
@@ -507,7 +507,7 @@ fi
 
 If the marker exists, OR question_tuning is already on, the nudge is a
 no-op. The marker guarantees at-most-once per machine. To re-enable:
-`rm ~/.gstack/.plan-tune-nudge-shown` before next ship.
+`rm ~/.torch/.plan-tune-nudge-shown` before next ship.
 
 ---
 
@@ -517,7 +517,7 @@ You ran a carved skill. For your situation, list every section the Section index
 named as applying, and confirm you issued a Read for each one. If you executed any
 of those steps from memory without reading its section, you skipped the source of
 truth — STOP, Read it now, and redo that step. Deterministic version work goes
-through `gstack-version-bump`; never hand-roll the VERSION/package.json write.
+through `torch-version-bump`; never hand-roll the VERSION/package.json write.
 
 ---
 

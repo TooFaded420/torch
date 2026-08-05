@@ -23,7 +23,7 @@ setopt +o nomatch 2>/dev/null || true  # zsh compat
 ls jest.config.* vitest.config.* playwright.config.* .rspec pytest.ini pyproject.toml phpunit.xml 2>/dev/null
 ls -d test/ tests/ spec/ __tests__/ cypress/ e2e/ 2>/dev/null
 # Check opt-out marker
-[ -f .gstack/no-test-bootstrap ] && echo "BOOTSTRAP_DECLINED"
+[ -f .torch/no-test-bootstrap ] && echo "BOOTSTRAP_DECLINED"
 ```
 
 **If test framework detected** (config files or test directories found):
@@ -36,7 +36,7 @@ Store conventions as prose context for use in Phase 8e.5 or Step 7. **Skip the r
 **If NO runtime detected** (no config files found): Use AskUserQuestion:
 "I couldn't detect your project's language. What runtime are you using?"
 Options: A) Node.js/TypeScript B) Ruby/Rails C) Python D) Go E) Rust F) PHP G) Elixir H) This project doesn't need tests.
-If user picks H → write `.gstack/no-test-bootstrap` and continue without tests.
+If user picks H → write `.torch/no-test-bootstrap` and continue without tests.
 
 **If runtime detected but no test framework — bootstrap:**
 
@@ -68,7 +68,7 @@ B) [Alternative] — [rationale]. Includes: [packages]
 C) Skip — don't set up testing right now
 RECOMMENDATION: Choose A because [reason based on project context]"
 
-If user picks C → write `.gstack/no-test-bootstrap`. Tell user: "If you change your mind later, delete `.gstack/no-test-bootstrap` and re-run." Continue without tests.
+If user picks C → write `.torch/no-test-bootstrap`. Tell user: "If you change your mind later, delete `.torch/no-test-bootstrap` and re-run." Continue without tests.
 
 If multiple runtimes detected (monorepo) → ask which runtime to set up first, with option to do both sequentially.
 
@@ -263,14 +263,14 @@ Use AskUserQuestion:
     ```bash
     gh issue create \
       --title "Pre-existing test failure: <test-name>" \
-      --body "Found failing on branch <current-branch>. Failure is pre-existing.\n\n**Error:**\n```\n<first 10 lines>\n```\n\n**Last modified by:** <author>\n**Noticed by:** gstack /ship on <date>" \
+      --body "Found failing on branch <current-branch>. Failure is pre-existing.\n\n**Error:**\n```\n<first 10 lines>\n```\n\n**Last modified by:** <author>\n**Noticed by:** torch /ship on <date>" \
       --assignee "<github-username>"
     ```
   - **If GitLab:**
     ```bash
     glab issue create \
       -t "Pre-existing test failure: <test-name>" \
-      -d "Found failing on branch <current-branch>. Failure is pre-existing.\n\n**Error:**\n```\n<first 10 lines>\n```\n\n**Last modified by:** <author>\n**Noticed by:** gstack /ship on <date>" \
+      -d "Found failing on branch <current-branch>. Failure is pre-existing.\n\n**Error:**\n```\n<first 10 lines>\n```\n\n**Last modified by:** <author>\n**Noticed by:** torch /ship on <date>" \
       -a "<gitlab-username>"
     ```
 - If neither CLI is available or `--assignee`/`-a` fails (user not in org, etc.), create the issue without assignee and note who should look at it in the body.
@@ -336,12 +336,12 @@ If multiple suites need to run, run them sequentially (each needs a test lane). 
 A plain backgrounded eval lives in the harness's process group and dies to a
 SIGTERM ("polite quit") on a turn boundary, a stopped monitor, or an interruption
 (observed mid-`/ship`: `script terminated by signal SIGTERM`). Run it through
-`~/.claude/skills/gstack/bin/gstack-detach` instead — it survives in its own
+`~/.claude/skills/torch/bin/torch-detach` instead — it survives in its own
 session, serializes against other worktrees via a machine lock (no API
-saturation), and writes a guaranteed `### gstack-detach EXIT=<code> ###` sentinel:
+saturation), and writes a guaranteed `### torch-detach EXIT=<code> ###` sentinel:
 
 ```bash
-~/.claude/skills/gstack/bin/gstack-detach --label ship-evals --lock gstack-evals --timeout 5400 -- <project eval command>
+~/.claude/skills/torch/bin/torch-detach --label ship-evals --lock torch-evals --timeout 5400 -- <project eval command>
 ```
 
 Then poll the printed log path; break on the `EXIT=` sentinel (covers both pass

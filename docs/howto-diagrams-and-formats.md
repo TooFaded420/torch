@@ -24,7 +24,7 @@ make-pdf generate doc.md out.pdf
 
 The fence renders as a **vector** diagram (crisp at any zoom, selectable
 text), with the `title` as caption and accessibility label. The raw mermaid
-source is preserved base64-encoded in a `data-gstack-source` attribute on the
+source is preserved base64-encoded in a `data-torch-source` attribute on the
 figure for debugging and round-trips (an HTML comment would corrupt mermaid's
 `-->` arrows). One catch: the fence must start at **column 0** — indented
 fences (inside lists, for example) stay plain code blocks by design.
@@ -133,7 +133,7 @@ break the build.
 ## Troubleshooting
 
 - **"diagram-render bundle not found"** → run `bun run build:diagram-render`
-  in the gstack repo, or re-run `./setup`.
+  in the torch repo, or re-run `./setup`.
 - **Diagram renders but looks squished inline** → it's wide; give it room
   with `page=landscape` on the fence.
 - **A two-row "racetrack" loop instead of one long line:** mermaid subgraph

@@ -61,7 +61,7 @@ interface ShipFixture {
  * Returns the work-tree dir for /ship to operate on.
  */
 function buildShippedFixture(): ShipFixture {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'gstack-ship-fixture-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'torch-ship-fixture-'));
   const workTree = path.join(root, 'workspace');
   const bareRemote = path.join(root, 'origin.git');
   fs.mkdirSync(workTree, { recursive: true });
@@ -198,7 +198,7 @@ describeE2E('/ship idempotency E2E (periodic, real-PTY)', () => {
           }
 
           // Positive: idempotency classify reported ALREADY_BUMPED. Post-carve
-          // (T9), Step 12 runs `gstack-version-bump classify` which emits JSON
+          // (T9), Step 12 runs `torch-version-bump classify` which emits JSON
           // (`"state":"ALREADY_BUMPED"`); the legacy inline bash echoed
           // `STATE: ALREADY_BUMPED`. Accept either so the test survives the carve.
           if (/STATE:\s*ALREADY_BUMPED|"state":\s*"ALREADY_BUMPED"/.test(visible)) {
@@ -211,12 +211,12 @@ describeE2E('/ship idempotency E2E (periodic, real-PTY)', () => {
           //   - classify reported FRESH (CLI JSON or legacy echo) → would re-bump
           //   - agent attempted git commit -m "chore: bump version"
           //   - agent attempted git push
-          //   - agent ran the CLI write path (gstack-version-bump write) — a
+          //   - agent ran the CLI write path (torch-version-bump write) — a
           //     re-bump on an already-shipped branch
           if (
             /"state":\s*"FRESH"/.test(visible) ||
             /STATE:\s*FRESH(?![\w-])/i.test(visible) ||
-            /gstack-version-bump\s+write/i.test(visible) ||
+            /torch-version-bump\s+write/i.test(visible) ||
             /git\s+commit\s+.*chore:\s*bump\s+version/i.test(visible) ||
             /git\s+push.*origin/i.test(visible)
           ) {

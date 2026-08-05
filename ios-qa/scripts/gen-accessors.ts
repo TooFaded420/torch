@@ -770,7 +770,7 @@ function detectBuildId(): string {
 }
 
 export function defaultCacheRoot(): string {
-  return process.env.GSTACK_IOS_CACHE_ROOT ?? join(homedir(), '.gstack', 'cache', 'gen-accessors');
+  return process.env.torch_IOS_CACHE_ROOT ?? join(homedir(), '.torch', 'cache', 'gen-accessors');
 }
 
 export function generate(inputs: GenInputs): GenResult {

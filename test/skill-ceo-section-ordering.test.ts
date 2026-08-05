@@ -12,7 +12,7 @@
  *     stays in the always-loaded skeleton, never stranded in the on-demand file.
  *  2. The heavy review body (Sections 1-11) is NOT in the skeleton — it moved to
  *     the section. A regression that inlines it back would re-bloat the skeleton.
- *  3. The review report writer ("GSTACK REVIEW REPORT") lives in the section, and
+ *  3. The review report writer ("torch REVIEW REPORT") lives in the section, and
  *     the blocking EXIT PLAN MODE GATE that verifies it lives in the skeleton
  *     AFTER the STOP — so the gate fires once the section work returns.
  *  4. Nothing review-governing sits in the skeleton below the STOP (Codex P1):
@@ -36,7 +36,7 @@ describe('plan-ceo-review carve — static ordering', () => {
 
   const STEP0 = '## Step 0: Nuclear Scope Challenge + Mode Selection';
   const STOP = 'sections/review-sections.md'; // appears in the index row + STOP directive
-  const GATE = 'GSTACK REVIEW REPORT';
+  const GATE = 'torch REVIEW REPORT';
 
   test('skeleton emits a STOP-Read directive pointing at the section', () => {
     expect(skeleton).toContain('> **STOP.**');

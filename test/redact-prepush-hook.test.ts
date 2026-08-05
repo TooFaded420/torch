@@ -4,7 +4,7 @@
  * MEDIUM warns (non-blocking), correct remote..local diff direction, new-branch
  * zero-SHA handling, branch-delete skip, escape valve, and hook chaining.
  *
- * We invoke bin/gstack-redact-prepush directly with the git pre-push stdin
+ * We invoke bin/torch-redact-prepush directly with the git pre-push stdin
  * protocol rather than going through `git push`, which keeps the test fast and
  * deterministic while exercising the exact code path git would.
  */
@@ -14,8 +14,8 @@ import * as os from "os";
 import * as path from "path";
 import { spawnSync } from "child_process";
 
-const PREPUSH = path.resolve(import.meta.dir, "..", "bin", "gstack-redact-prepush");
-const REDACT = path.resolve(import.meta.dir, "..", "bin", "gstack-redact");
+const PREPUSH = path.resolve(import.meta.dir, "..", "bin", "torch-redact-prepush");
+const REDACT = path.resolve(import.meta.dir, "..", "bin", "torch-redact");
 
 let repo: string;
 
@@ -118,7 +118,7 @@ describe("fail closed on unscannable diffs (#1946)", () => {
     );
     expect(code).toBe(1);
     expect(stderr).toContain("could not compute the pushed diff");
-    expect(stderr).toContain("GSTACK_REDACT_PREPUSH=skip");
+    expect(stderr).toContain("torch_REDACT_PREPUSH=skip");
   });
 
   test("an empty-but-successful diff still passes (no-op push)", () => {
@@ -160,7 +160,7 @@ describe("fail closed on unscannable diffs (#1946)", () => {
       });
       expect(code).toBe(1);
       expect(stderr).toContain("could not compute the pushed diff");
-      expect(stderr).toContain("GSTACK_REDACT_PREPUSH=skip");
+      expect(stderr).toContain("torch_REDACT_PREPUSH=skip");
     } finally {
       fs.rmSync(stubDir, { recursive: true, force: true });
     }
@@ -186,13 +186,13 @@ describe("install UX surfaces (#1946 / eng review D3+D10)", () => {
 });
 
 describe("escape valve", () => {
-  test("GSTACK_REDACT_PREPUSH=skip bypasses + logs", () => {
+  test("torch_REDACT_PREPUSH=skip bypasses + logs", () => {
     const base = git(["rev-parse", "HEAD"]);
     const head = commit("config.txt", "key AKIA1234567890ABCDEF\n", "add key");
     const home = fs.mkdtempSync(path.join(os.tmpdir(), "ghome-"));
     const { code } = runHook(`refs/heads/main ${head} refs/heads/main ${base}\n`, {
-      GSTACK_REDACT_PREPUSH: "skip",
-      GSTACK_HOME: home,
+      torch_REDACT_PREPUSH: "skip",
+      torch_HOME: home,
     });
     expect(code).toBe(0);
     const log = fs.readFileSync(path.join(home, "security", "prepush-skip.jsonl"), "utf8");
@@ -211,7 +211,7 @@ describe("install / chaining", () => {
     const r = spawnSync("bun", [REDACT, "install-prepush-hook"], { cwd: repo, encoding: "utf8" });
     expect(r.status).toBe(0);
     const installed = fs.readFileSync(existing, "utf8");
-    expect(installed).toContain("gstack-redact pre-push (managed)");
+    expect(installed).toContain("torch-redact pre-push (managed)");
     expect(fs.existsSync(path.join(hookDir, "pre-push.local"))).toBe(true);
     expect(fs.readFileSync(path.join(hookDir, "pre-push.local"), "utf8")).toContain("echo mine");
   });

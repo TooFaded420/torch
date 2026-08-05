@@ -15,11 +15,11 @@
  *   spec-quality-gate-fallback   — codex timeout/unavailable skip-with-warn
  *   spec-quality-gate-redaction  — fail-closed secret regex list + BLOCKED
  *   spec-quality-gate-secret-sink — invariant: raw spec not persisted on block
- *   spec-archive            — gstack-paths eval + atomic tmp/mv + PID suffix
+ *   spec-archive            — torch-paths eval + atomic tmp/mv + PID suffix
  *   spec-archive-sync-exclusion  — /specs/ auto-exclude from sync allowlist
  *   spec-audit-flag         — flag routes to Audit/Cleanup template
  *   spec-concurrency        — PID suffix in branch + atomic archive write
- *   spec-plan-mode-detection — reads GSTACK_PLAN_MODE env
+ *   spec-plan-mode-detection — reads torch_PLAN_MODE env
  */
 import { describe, test, expect } from 'bun:test';
 import * as fs from 'fs';
@@ -130,8 +130,8 @@ describe('/spec fail-closed redaction (shared engine)', () => {
     expect(GEN).toMatch(/Full taxonomy.*lib\/redact-patterns\.ts|\/cso/);
     expect(GEN).toMatch(/~30 secret\/PII\/legal patterns/);
   });
-  test('redaction routes through the shared gstack-redact bin, not inline regex', () => {
-    expect(GEN).toContain('gstack-redact');
+  test('redaction routes through the shared torch-redact bin, not inline regex', () => {
+    expect(GEN).toContain('torch-redact');
     expect(GEN).toContain('--from-file');
     // The old inline 7-regex prose is gone from the template.
     expect(TMPL).not.toMatch(/AWS access key.*regex.*AKIA\[0-9A-Z\]/);
@@ -214,11 +214,11 @@ describe('/spec --no-gate keeps redacting', () => {
 });
 
 describe('/spec archive', () => {
-  test('uses eval $(gstack-paths) not hardcoded ~/.gstack/', () => {
-    expect(TMPL).toMatch(/eval "\$\(.+gstack-paths\)"/);
-    expect(TMPL).toMatch(/\$GSTACK_STATE_ROOT\/projects\/\$SLUG\/specs/);
-    // No hardcoded ~/.gstack/projects path:
-    expect(TMPL).not.toMatch(/~\/\.gstack\/projects\/\$SLUG\/specs/);
+  test('uses eval $(torch-paths) not hardcoded ~/.torch/', () => {
+    expect(TMPL).toMatch(/eval "\$\(.+torch-paths\)"/);
+    expect(TMPL).toMatch(/\$torch_STATE_ROOT\/projects\/\$SLUG\/specs/);
+    // No hardcoded ~/.torch/projects path:
+    expect(TMPL).not.toMatch(/~\/\.torch\/projects\/\$SLUG\/specs/);
   });
   test('atomic write via .tmp + mv', () => {
     expect(TMPL).toMatch(/\$ARCHIVE_PATH\.tmp/);
@@ -257,13 +257,13 @@ describe('/spec --audit flag', () => {
 });
 
 describe('/spec plan-mode-aware Phase 5 (DX7/DX11/F1)', () => {
-  test('reads GSTACK_PLAN_MODE env at Phase 5 dispatch', () => {
-    expect(TMPL).toMatch(/GSTACK_PLAN_MODE/);
+  test('reads torch_PLAN_MODE env at Phase 5 dispatch', () => {
+    expect(TMPL).toMatch(/torch_PLAN_MODE/);
     expect(TMPL).toMatch(/plan-mode-aware default/i);
   });
   test('plan-mode active → file-only path; inactive → file + spawn', () => {
-    expect(TMPL).toMatch(/GSTACK_PLAN_MODE=active.*file-only path/);
-    expect(TMPL).toMatch(/GSTACK_PLAN_MODE=inactive.*file \+ spawn/);
+    expect(TMPL).toMatch(/torch_PLAN_MODE=active.*file-only path/);
+    expect(TMPL).toMatch(/torch_PLAN_MODE=inactive.*file \+ spawn/);
   });
   test('--file-only / --no-execute / --plan-file override flags', () => {
     expect(TMPL).toMatch(/--file-only/);

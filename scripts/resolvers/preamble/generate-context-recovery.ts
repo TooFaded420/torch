@@ -1,15 +1,15 @@
 import type { TemplateContext } from '../types';
 
 export function generateContextRecovery(ctx: TemplateContext): string {
-  const binDir = ctx.host === 'codex' ? '$GSTACK_BIN' : ctx.paths.binDir;
+  const binDir = ctx.host === 'codex' ? '$torch_BIN' : ctx.paths.binDir;
 
   return `## Context Recovery
 
 At session start or after compaction, recover recent project context.
 
 \`\`\`bash
-eval "$(${binDir}/gstack-slug 2>/dev/null)"
-_PROJ="\${GSTACK_HOME:-$HOME/.gstack}/projects/\${SLUG:-unknown}"
+eval "$(${binDir}/torch-slug 2>/dev/null)"
+_PROJ="\${torch_HOME:-$HOME/.torch}/projects/\${SLUG:-unknown}"
 if [ -d "$_PROJ" ]; then
   echo "--- RECENT ARTIFACTS ---"
   find "$_PROJ/ceo-plans" "$_PROJ/checkpoints" -type f -name "*.md" 2>/dev/null | xargs ls -t 2>/dev/null | head -3
@@ -25,7 +25,7 @@ if [ -d "$_PROJ" ]; then
   [ -n "$_LATEST_CP" ] && echo "LATEST_CHECKPOINT: $_LATEST_CP"
   if [ -f "$_PROJ/decisions.active.json" ]; then
     echo "--- ACTIVE DECISIONS (recent, scope-relevant) ---"
-    ${binDir}/gstack-decision-search --recent 5 2>/dev/null
+    ${binDir}/torch-decision-search --recent 5 2>/dev/null
     echo "--- END DECISIONS ---"
   fi
   echo "--- END ARTIFACTS ---"
@@ -34,5 +34,5 @@ fi
 
 If artifacts are listed, read the newest useful one. If \`LAST_SESSION\` or \`LATEST_CHECKPOINT\` appears, give a 2-sentence welcome back summary. If \`RECENT_PATTERN\` clearly implies a next skill, suggest it once.
 
-**Cross-session decisions.** If \`ACTIVE DECISIONS\` are listed, treat them as prior settled calls with their rationale — do not silently re-litigate them; if you're about to reverse one, say so explicitly. Reach for \`${binDir}/gstack-decision-search\` whenever a question touches a past decision ("what did we decide / why / did we try"). When you or the user make a DURABLE decision (architecture, scope, tool/vendor choice, or a reversal) — NOT a turn-level or trivial choice — log it with \`${binDir}/gstack-decision-log\` (\`--supersede <id>\` for a reversal). Reliable and local; gbrain not required.`;
+**Cross-session decisions.** If \`ACTIVE DECISIONS\` are listed, treat them as prior settled calls with their rationale — do not silently re-litigate them; if you're about to reverse one, say so explicitly. Reach for \`${binDir}/torch-decision-search\` whenever a question touches a past decision ("what did we decide / why / did we try"). When you or the user make a DURABLE decision (architecture, scope, tool/vendor choice, or a reversal) — NOT a turn-level or trivial choice — log it with \`${binDir}/torch-decision-log\` (\`--supersede <id>\` for a reversal). Reliable and local; gbrain not required.`;
 }

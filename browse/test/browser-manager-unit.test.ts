@@ -29,20 +29,20 @@ describe('shouldEnableChromiumSandbox', () => {
   const origPlatform = process.platform;
   const origCI = process.env.CI;
   const origContainer = process.env.CONTAINER;
-  const origNoSandbox = process.env.GSTACK_CHROMIUM_NO_SANDBOX;
+  const origNoSandbox = process.env.torch_CHROMIUM_NO_SANDBOX;
   const origGetuid = process.getuid;
 
   beforeEach(() => {
     delete process.env.CI;
     delete process.env.CONTAINER;
-    delete process.env.GSTACK_CHROMIUM_NO_SANDBOX;
+    delete process.env.torch_CHROMIUM_NO_SANDBOX;
   });
 
   afterEach(() => {
     Object.defineProperty(process, 'platform', { value: origPlatform });
     if (origCI === undefined) delete process.env.CI; else process.env.CI = origCI;
     if (origContainer === undefined) delete process.env.CONTAINER; else process.env.CONTAINER = origContainer;
-    if (origNoSandbox === undefined) delete process.env.GSTACK_CHROMIUM_NO_SANDBOX; else process.env.GSTACK_CHROMIUM_NO_SANDBOX = origNoSandbox;
+    if (origNoSandbox === undefined) delete process.env.torch_CHROMIUM_NO_SANDBOX; else process.env.torch_CHROMIUM_NO_SANDBOX = origNoSandbox;
     process.getuid = origGetuid;
   });
 
@@ -95,25 +95,25 @@ describe('shouldEnableChromiumSandbox', () => {
   });
 
   // #1562 — Ubuntu/AppArmor opt-in override
-  it('linux + GSTACK_CHROMIUM_NO_SANDBOX=1 → false (Ubuntu/AppArmor opt-out)', async () => {
+  it('linux + torch_CHROMIUM_NO_SANDBOX=1 → false (Ubuntu/AppArmor opt-out)', async () => {
     setPlatform('linux');
-    process.env.GSTACK_CHROMIUM_NO_SANDBOX = '1';
+    process.env.torch_CHROMIUM_NO_SANDBOX = '1';
     process.getuid = (() => 1000) as typeof process.getuid;
     const { shouldEnableChromiumSandbox } = await import('../src/browser-manager');
     expect(shouldEnableChromiumSandbox()).toBe(false);
   });
 
-  it('darwin + GSTACK_CHROMIUM_NO_SANDBOX=1 → false (env override wins on any platform)', async () => {
+  it('darwin + torch_CHROMIUM_NO_SANDBOX=1 → false (env override wins on any platform)', async () => {
     setPlatform('darwin');
-    process.env.GSTACK_CHROMIUM_NO_SANDBOX = '1';
+    process.env.torch_CHROMIUM_NO_SANDBOX = '1';
     process.getuid = (() => 501) as typeof process.getuid;
     const { shouldEnableChromiumSandbox } = await import('../src/browser-manager');
     expect(shouldEnableChromiumSandbox()).toBe(false);
   });
 
-  it('GSTACK_CHROMIUM_NO_SANDBOX=0 → does NOT trigger override (must be exactly "1")', async () => {
+  it('torch_CHROMIUM_NO_SANDBOX=0 → does NOT trigger override (must be exactly "1")', async () => {
     setPlatform('linux');
-    process.env.GSTACK_CHROMIUM_NO_SANDBOX = '0';
+    process.env.torch_CHROMIUM_NO_SANDBOX = '0';
     process.getuid = (() => 1000) as typeof process.getuid;
     const { shouldEnableChromiumSandbox } = await import('../src/browser-manager');
     expect(shouldEnableChromiumSandbox()).toBe(true);
@@ -267,14 +267,14 @@ describe('stealth injected on every context-creation path', () => {
     expect(recreateBody).toContain('applyStealth(');
   });
 
-  it('buildGStackLaunchArgs() is spread into all 3 launch sites', async () => {
+  it('buildtorchLaunchArgs() is spread into all 3 launch sites', async () => {
     // Same silent-drop regression class as applyStealth: a launch path that
-    // omits buildGStackLaunchArgs() loses the per-install GPU/UA/hardware
+    // omits buildtorchLaunchArgs() loses the per-install GPU/UA/hardware
     // cmdline spoof. launch(), launchHeaded(), and handoff() must all call it.
     const { readFileSync } = await import('node:fs');
     const { join } = await import('node:path');
     const src = readFileSync(join(import.meta.dir, '..', 'src', 'browser-manager.ts'), 'utf-8');
-    const callSites = src.match(/buildGStackLaunchArgs\(\)/g) || [];
+    const callSites = src.match(/buildtorchLaunchArgs\(\)/g) || [];
     expect(callSites.length).toBeGreaterThanOrEqual(3);
   });
 

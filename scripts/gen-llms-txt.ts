@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Generate gstack/llms.txt — a single discoverable index of every gstack
+ * Generate torch/llms.txt — a single discoverable index of every torch
  * capability for AI agents.
  *
  * Inputs:
@@ -9,7 +9,7 @@
  *   - browse/src/commands.ts COMMAND_DESCRIPTIONS
  *   - design/src/commands.ts COMMAND_DESCRIPTIONS (if present)
  *
- * Output: gstack/llms.txt at repo root.
+ * Output: torch/llms.txt at repo root.
  *
  * Refresh: invoked from scripts/gen-skill-docs.ts after SKILL.md generation
  * so it regenerates automatically on every skill change.
@@ -23,7 +23,7 @@ import { discoverTemplates } from './discover-skills';
 import { COMMAND_DESCRIPTIONS as BROWSE_COMMANDS } from '../browse/src/commands';
 
 const ROOT = path.resolve(import.meta.dir, '..');
-const OUTPUT = path.join(ROOT, 'gstack', 'llms.txt');
+const OUTPUT = path.join(ROOT, 'torch', 'llms.txt');
 
 interface SkillEntry {
   name: string;
@@ -33,7 +33,7 @@ interface SkillEntry {
 /**
  * Parse YAML frontmatter at the top of a SKILL.md.tmpl file. We only need
  * `name` and `description`. description: | followed by indented lines is
- * the gstack convention; we collapse those into a single paragraph.
+ * the torch convention; we collapse those into a single paragraph.
  */
 function parseSkillFrontmatter(filePath: string): SkillEntry | null {
   const content = fs.readFileSync(filePath, 'utf-8');
@@ -89,7 +89,7 @@ function parseSkillFrontmatter(filePath: string): SkillEntry | null {
 
 /**
  * Best-effort import of the design CLI's COMMAND_DESCRIPTIONS. Only present
- * in a full gstack checkout; absent on minimal installs. Returns {} if the
+ * in a full torch checkout; absent on minimal installs. Returns {} if the
  * module isn't found rather than throwing.
  */
 async function readDesignCommands(): Promise<Record<string, { category: string; description: string; usage?: string }>> {
@@ -152,9 +152,9 @@ export async function generateLlmsTxt(opts: GenerateOptions = {}): Promise<Gener
   const designCommands = Object.keys(await readDesignCommands()).sort();
 
   const lines: string[] = [];
-  lines.push('# gstack');
+  lines.push('# torch');
   lines.push('');
-  lines.push("> gstack is Garry's Stack: AI coding skills + a fast headless browser binary + a design CLI. This file indexes every capability so agents can discover and invoke them without crawling individual SKILL.md files.");
+  lines.push("> torch is Garry's Stack: AI coding skills + a fast headless browser binary + a design CLI. This file indexes every capability so agents can discover and invoke them without crawling individual SKILL.md files.");
   lines.push('');
   lines.push('Conventions:');
   lines.push('- Skills are invoked by name (e.g. `/ship`, `/plan-ceo-review`).');
@@ -247,7 +247,7 @@ if (import.meta.main) {
     if (dryRun) {
       const existing = fs.existsSync(OUTPUT) ? fs.readFileSync(OUTPUT, 'utf-8') : '';
       if (existing !== result.content) {
-        console.error('[gen-llms-txt] OUT OF DATE — run `bun run gen:skill-docs` to regenerate gstack/llms.txt');
+        console.error('[gen-llms-txt] OUT OF DATE — run `bun run gen:skill-docs` to regenerate torch/llms.txt');
         process.exit(1);
       }
       console.log('[gen-llms-txt] up to date');

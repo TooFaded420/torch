@@ -4,7 +4,7 @@
  * Local E2E runs spawn `claude` (and codex/gemini/SDK) children that, until
  * this module, inherited the operator's full session context: ~/.claude
  * (user CLAUDE.md, .claude.json MCP servers incl. gbrain + Conductor,
- * skills), ~/.gstack decision logs, and CONDUCTOR_-/CLAUDECODE-style env vars.
+ * skills), ~/.torch decision logs, and CONDUCTOR_-/CLAUDECODE-style env vars.
  * CI was hermetic only by accident (fresh Docker /home/runner). This module
  * makes local children see a CI-equivalent clean room by default.
  *
@@ -14,13 +14,13 @@
  *   │ HTTP(S)_PROXY, SSL_CERT_*   │── allowlist ─────────► kept (network)
  *   │ ANTHROPIC_API_KEY/BASE_URL/ │── named list ────────► kept (auth)
  *   │   AUTH_TOKEN                │
- *   │ GSTACK_ANTHROPIC_API_KEY    │── promotedEnv() ─────► ANTHROPIC_API_KEY
+ *   │ torch_ANTHROPIC_API_KEY    │── promotedEnv() ─────► ANTHROPIC_API_KEY
  *   │ CONDUCTOR_*, CLAUDECODE,    │
- *   │ CLAUDE_*, GSTACK_*, MCP_*,  │── dropped ───────────► ∅
+ *   │ CLAUDE_*, torch_*, MCP_*,  │── dropped ───────────► ∅
  *   │ GBRAIN_*, GH_TOKEN, ...     │
  *   └─────────────────────────────┘
  *      + per-runner extraAllow (codex: OpenAI vars; gemini: Google vars)
- *      + CLAUDE_CONFIG_DIR=<runRoot>/.claude  GSTACK_HOME=<runRoot>/gstack-home
+ *      + CLAUDE_CONFIG_DIR=<runRoot>/.claude  torch_HOME=<runRoot>/torch-home
  *      + per-test overrides spread LAST
  *
  * Escape hatch: EVALS_HERMETIC=0 restores the legacy contaminated env
@@ -60,7 +60,7 @@ const ALLOW_EXACT = new Set([
 
 /** Prefix rules: eval-harness knobs + CI metadata. Deliberately NOT here:
  * CONDUCTOR_* / CLAUDE_* (incl. CLAUDECODE, CLAUDE_CODE_ENTRYPOINT) /
- * GSTACK_* / MCP_* / GBRAIN_* — session-context contamination; and operator
+ * torch_* / MCP_* / GBRAIN_* — session-context contamination; and operator
  * credentials (GH_TOKEN, SSH_AUTH_SOCK, GIT_*, OPENAI_API_KEY,
  * VOYAGE_API_KEY) — CI doesn't have them and eval children have no business
  * using them. A test that legitimately needs one opts in via its own env
@@ -81,7 +81,7 @@ export function isHermeticEnabled(env: NodeJS.ProcessEnv = process.env): boolean
 
 /**
  * Pure allowlist scrub. No I/O. Overrides spread LAST so per-test env
- * (GSTACK_HOME, CONDUCTOR_WORKSPACE_PATH, GSTACK_HEADLESS opt-out) always
+ * (torch_HOME, CONDUCTOR_WORKSPACE_PATH, torch_HEADLESS opt-out) always
  * wins over the scrub — that is the documented re-contamination escape and
  * the wiring tripwire forbids passing raw process.env through it.
  */
@@ -167,11 +167,11 @@ export interface HermeticDirs {
    * claude-pty-runner.ts:191 anchors plan-file paths on `.claude/plans/`
    * under a /var|/tmp prefix. Renaming this segment breaks PTY plan tests. */
   configDir: string;
-  gstackHome: string;
+  torchHome: string;
   runRoot: string;
 }
 
-const DIR_PREFIX = 'gstack-hermetic-';
+const DIR_PREFIX = 'torch-hermetic-';
 
 let cachedDirs: HermeticDirs | null = null;
 
@@ -195,7 +195,7 @@ export function getHermeticDirs(): HermeticDirs {
   // Embed our pid so the GC of future processes can check liveness.
   const runRoot = fs.mkdtempSync(path.join(os.tmpdir(), `${DIR_PREFIX}${process.pid}-`));
   const configDir = path.join(runRoot, '.claude');
-  const gstackHome = path.join(runRoot, 'gstack-home');
+  const torchHome = path.join(runRoot, 'torch-home');
 
   // A half-seeded config dir means children hang on first-run prompts until
   // the test timeout — far worse than failing loudly here. So we throw on
@@ -204,9 +204,9 @@ export function getHermeticDirs(): HermeticDirs {
   // process exit, so remove it before rethrowing.
   try {
     fs.mkdirSync(configDir, { recursive: true });
-    fs.mkdirSync(gstackHome, { recursive: true });
+    fs.mkdirSync(torchHome, { recursive: true });
     const seed = buildSeedConfig({
-      apiKey: process.env.ANTHROPIC_API_KEY ?? process.env.GSTACK_ANTHROPIC_API_KEY,
+      apiKey: process.env.ANTHROPIC_API_KEY ?? process.env.torch_ANTHROPIC_API_KEY,
       trustedDirs: [repoRoot()],
     });
     fs.writeFileSync(path.join(configDir, '.claude.json'), JSON.stringify(seed, null, 2));
@@ -221,7 +221,7 @@ export function getHermeticDirs(): HermeticDirs {
     try { fs.rmSync(runRoot, { recursive: true, force: true }); } catch { /* GC reclaims */ }
   });
 
-  cachedDirs = { configDir, gstackHome, runRoot };
+  cachedDirs = { configDir, torchHome, runRoot };
   return cachedDirs;
 }
 
@@ -269,7 +269,7 @@ export function hermeticChildEnv(
   const dirs = getHermeticDirs();
   return buildHermeticEnv(
     process.env,
-    { CLAUDE_CONFIG_DIR: dirs.configDir, GSTACK_HOME: dirs.gstackHome },
+    { CLAUDE_CONFIG_DIR: dirs.configDir, torch_HOME: dirs.torchHome },
     overrides,
     opts,
   );

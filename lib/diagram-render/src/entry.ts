@@ -45,7 +45,7 @@ declare global {
 // Excalidraw's font registry builds URLs from this against the document base.
 // The host must be absolute and never resolves — the page is offline by design;
 // exportToSvg embeds the bundled Excalifont glyphs without fetching.
-window.EXCALIDRAW_ASSET_PATH = "https://gstack-render.localhost/excalidraw-assets/";
+window.EXCALIDRAW_ASSET_PATH = "https://torch-render.localhost/excalidraw-assets/";
 
 // Font stacks must match make-pdf/src/print-css.ts (sans + CJK + emoji) so
 // mermaid's text measurement in this tab matches the print document's layout.
@@ -75,7 +75,7 @@ window.__mermaidToExcalidraw = async (text: string): Promise<string> => {
   const scene = {
     type: "excalidraw",
     version: 2,
-    source: "gstack-diagram-render",
+    source: "torch-diagram-render",
     elements: converted,
     appState: { viewBackgroundColor: "#ffffff" },
     files: files ?? {},
@@ -200,7 +200,7 @@ window.__probeImage = async (src: string): Promise<string> => {
 };
 
 // __BUNDLE_INFO__ is replaced at build time with the pinned dependency map.
-window.__bundleInfo = { name: "gstack-diagram-render", deps: __BUNDLE_INFO_DEPS__ };
+window.__bundleInfo = { name: "torch-diagram-render", deps: __BUNDLE_INFO_DEPS__ };
 
 // Readiness signal: pollable text beats a bare invisible div (Playwright's
 // visibility-based `wait` never fires on an empty element).

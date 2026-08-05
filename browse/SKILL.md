@@ -2,7 +2,7 @@
 name: browse
 preamble-tier: 1
 version: 1.1.0
-description: Fast headless browser for QA testing and site dogfooding. (gstack)
+description: Fast headless browser for QA testing and site dogfooding. (torch)
 triggers:
   - browse a page
   - headless browser
@@ -29,99 +29,99 @@ site", "take a screenshot", or "dogfood this".
 ## Preamble (run first)
 
 ```bash
-_UPD=$(~/.claude/skills/gstack/bin/gstack-update-check 2>/dev/null || .claude/skills/gstack/bin/gstack-update-check 2>/dev/null || true)
+_UPD=$(~/.claude/skills/torch/bin/torch-update-check 2>/dev/null || .claude/skills/torch/bin/torch-update-check 2>/dev/null || true)
 [ -n "$_UPD" ] && echo "$_UPD" || true
-mkdir -p ~/.gstack/sessions
-touch ~/.gstack/sessions/"$PPID"
-_SESSIONS=$(find ~/.gstack/sessions -mmin -120 -type f 2>/dev/null | wc -l | tr -d ' ')
-find ~/.gstack/sessions -mmin +120 -type f -exec rm {} + 2>/dev/null || true
-_PROACTIVE=$(~/.claude/skills/gstack/bin/gstack-config get proactive 2>/dev/null || echo "true")
-_PROACTIVE_PROMPTED=$([ -f ~/.gstack/.proactive-prompted ] && echo "yes" || echo "no")
+mkdir -p ~/.torch/sessions
+touch ~/.torch/sessions/"$PPID"
+_SESSIONS=$(find ~/.torch/sessions -mmin -120 -type f 2>/dev/null | wc -l | tr -d ' ')
+find ~/.torch/sessions -mmin +120 -type f -exec rm {} + 2>/dev/null || true
+_PROACTIVE=$(~/.claude/skills/torch/bin/torch-config get proactive 2>/dev/null || echo "true")
+_PROACTIVE_PROMPTED=$([ -f ~/.torch/.proactive-prompted ] && echo "yes" || echo "no")
 _BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
 echo "BRANCH: $_BRANCH"
-_SKILL_PREFIX=$(~/.claude/skills/gstack/bin/gstack-config get skill_prefix 2>/dev/null || echo "false")
+_SKILL_PREFIX=$(~/.claude/skills/torch/bin/torch-config get skill_prefix 2>/dev/null || echo "false")
 echo "PROACTIVE: $_PROACTIVE"
 echo "PROACTIVE_PROMPTED: $_PROACTIVE_PROMPTED"
 echo "SKILL_PREFIX: $_SKILL_PREFIX"
-source <(~/.claude/skills/gstack/bin/gstack-repo-mode 2>/dev/null) || true
+source <(~/.claude/skills/torch/bin/torch-repo-mode 2>/dev/null) || true
 REPO_MODE=${REPO_MODE:-unknown}
 echo "REPO_MODE: $REPO_MODE"
-_SESSION_KIND=$(~/.claude/skills/gstack/bin/gstack-session-kind 2>/dev/null || echo "interactive")
+_SESSION_KIND=$(~/.claude/skills/torch/bin/torch-session-kind 2>/dev/null || echo "interactive")
 case "$_SESSION_KIND" in spawned|headless|interactive) ;; *) _SESSION_KIND="interactive" ;; esac
 echo "SESSION_KIND: $_SESSION_KIND"
 # Conductor host: AskUserQuestion is unreliable here (native disabled, MCP
 # variant flaky), so skills render decisions as prose instead of calling the
-# tool. Gated on !headless so an eval/CI run INSIDE Conductor (GSTACK_HEADLESS)
+# tool. Gated on !headless so an eval/CI run INSIDE Conductor (torch_HEADLESS)
 # still BLOCKs rather than rendering prose to nobody.
 if [ "$_SESSION_KIND" != "headless" ] && { [ -n "${CONDUCTOR_WORKSPACE_PATH:-}" ] || [ -n "${CONDUCTOR_PORT:-}" ]; }; then
   echo "CONDUCTOR_SESSION: true"
 fi
-_ACTIVATED=$([ -f ~/.gstack/.activated ] && echo "yes" || echo "no")
-_FIRST_LOOP_SHOWN=$([ -f ~/.gstack/.first-loop-tip-shown ] && echo "yes" || echo "no")
+_ACTIVATED=$([ -f ~/.torch/.activated ] && echo "yes" || echo "no")
+_FIRST_LOOP_SHOWN=$([ -f ~/.torch/.first-loop-tip-shown ] && echo "yes" || echo "no")
 echo "ACTIVATED: $_ACTIVATED"
 echo "FIRST_LOOP_SHOWN: $_FIRST_LOOP_SHOWN"
 # First-run project detection: run the detector ONLY on the first-ever skill run
 # (ACTIVATED=no, interactive) so it stays off the hot path for every run after.
 _FIRST_TASK=""
 if [ "$_ACTIVATED" = "no" ] && [ "$_SESSION_KIND" != "headless" ]; then
-  _FIRST_TASK=$(~/.claude/skills/gstack/bin/gstack-first-task-detect 2>/dev/null || true)
+  _FIRST_TASK=$(~/.claude/skills/torch/bin/torch-first-task-detect 2>/dev/null || true)
 fi
 echo "FIRST_TASK: $_FIRST_TASK"
-_LAKE_SEEN=$([ -f ~/.gstack/.completeness-intro-seen ] && echo "yes" || echo "no")
+_LAKE_SEEN=$([ -f ~/.torch/.completeness-intro-seen ] && echo "yes" || echo "no")
 echo "LAKE_INTRO: $_LAKE_SEEN"
-_TEL=$(~/.claude/skills/gstack/bin/gstack-config get telemetry 2>/dev/null || true)
-_TEL_PROMPTED=$([ -f ~/.gstack/.telemetry-prompted ] && echo "yes" || echo "no")
+_TEL=$(~/.claude/skills/torch/bin/torch-config get telemetry 2>/dev/null || true)
+_TEL_PROMPTED=$([ -f ~/.torch/.telemetry-prompted ] && echo "yes" || echo "no")
 _TEL_START=$(date +%s)
 _SESSION_ID="$$-$(date +%s)"
 echo "TELEMETRY: ${_TEL:-off}"
 echo "TEL_PROMPTED: $_TEL_PROMPTED"
-_EXPLAIN_LEVEL=$(~/.claude/skills/gstack/bin/gstack-config get explain_level 2>/dev/null || echo "default")
+_EXPLAIN_LEVEL=$(~/.claude/skills/torch/bin/torch-config get explain_level 2>/dev/null || echo "default")
 if [ "$_EXPLAIN_LEVEL" != "default" ] && [ "$_EXPLAIN_LEVEL" != "terse" ]; then _EXPLAIN_LEVEL="default"; fi
 echo "EXPLAIN_LEVEL: $_EXPLAIN_LEVEL"
-_QUESTION_TUNING=$(~/.claude/skills/gstack/bin/gstack-config get question_tuning 2>/dev/null || echo "false")
+_QUESTION_TUNING=$(~/.claude/skills/torch/bin/torch-config get question_tuning 2>/dev/null || echo "false")
 echo "QUESTION_TUNING: $_QUESTION_TUNING"
-mkdir -p ~/.gstack/analytics
+mkdir -p ~/.torch/analytics
 if [ "$_TEL" != "off" ]; then
-echo '{"skill":"browse","ts":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","repo":"'$(_repo=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)" 2>/dev/null | tr -cd 'a-zA-Z0-9._-'); echo "${_repo:-unknown}")'"}'  >> ~/.gstack/analytics/skill-usage.jsonl 2>/dev/null || true
+echo '{"skill":"browse","ts":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","repo":"'$(_repo=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)" 2>/dev/null | tr -cd 'a-zA-Z0-9._-'); echo "${_repo:-unknown}")'"}'  >> ~/.torch/analytics/skill-usage.jsonl 2>/dev/null || true
 fi
-for _PF in $(find ~/.gstack/analytics -maxdepth 1 -name '.pending-*' 2>/dev/null); do
+for _PF in $(find ~/.torch/analytics -maxdepth 1 -name '.pending-*' 2>/dev/null); do
   if [ -f "$_PF" ]; then
-    if [ "$_TEL" != "off" ] && [ -x "~/.claude/skills/gstack/bin/gstack-telemetry-log" ]; then
-      ~/.claude/skills/gstack/bin/gstack-telemetry-log --event-type skill_run --skill _pending_finalize --outcome unknown --session-id "$_SESSION_ID" 2>/dev/null || true
+    if [ "$_TEL" != "off" ] && [ -x "~/.claude/skills/torch/bin/torch-telemetry-log" ]; then
+      ~/.claude/skills/torch/bin/torch-telemetry-log --event-type skill_run --skill _pending_finalize --outcome unknown --session-id "$_SESSION_ID" 2>/dev/null || true
     fi
     rm -f "$_PF" 2>/dev/null || true
   fi
   break
 done
-eval "$(~/.claude/skills/gstack/bin/gstack-slug 2>/dev/null)" 2>/dev/null || true
-_LEARN_FILE="${GSTACK_HOME:-$HOME/.gstack}/projects/${SLUG:-unknown}/learnings.jsonl"
+eval "$(~/.claude/skills/torch/bin/torch-slug 2>/dev/null)" 2>/dev/null || true
+_LEARN_FILE="${torch_HOME:-$HOME/.torch}/projects/${SLUG:-unknown}/learnings.jsonl"
 if [ -f "$_LEARN_FILE" ]; then
   _LEARN_COUNT=$(wc -l < "$_LEARN_FILE" 2>/dev/null | tr -d ' ')
   echo "LEARNINGS: $_LEARN_COUNT entries loaded"
   if [ "$_LEARN_COUNT" -gt 5 ] 2>/dev/null; then
-    ~/.claude/skills/gstack/bin/gstack-learnings-search --limit 3 2>/dev/null || true
+    ~/.claude/skills/torch/bin/torch-learnings-search --limit 3 2>/dev/null || true
   fi
 else
   echo "LEARNINGS: 0"
 fi
-~/.claude/skills/gstack/bin/gstack-timeline-log '{"skill":"browse","event":"started","branch":"'"$_BRANCH"'","session":"'"$_SESSION_ID"'"}' 2>/dev/null &
+~/.claude/skills/torch/bin/torch-timeline-log '{"skill":"browse","event":"started","branch":"'"$_BRANCH"'","session":"'"$_SESSION_ID"'"}' 2>/dev/null &
 _HAS_ROUTING="no"
 if [ -f CLAUDE.md ] && grep -q "## Skill routing" CLAUDE.md 2>/dev/null; then
   _HAS_ROUTING="yes"
 fi
-_ROUTING_DECLINED=$(~/.claude/skills/gstack/bin/gstack-config get routing_declined 2>/dev/null || echo "false")
+_ROUTING_DECLINED=$(~/.claude/skills/torch/bin/torch-config get routing_declined 2>/dev/null || echo "false")
 echo "HAS_ROUTING: $_HAS_ROUTING"
 echo "ROUTING_DECLINED: $_ROUTING_DECLINED"
 _VENDORED="no"
-if [ -d ".claude/skills/gstack" ] && [ ! -L ".claude/skills/gstack" ]; then
-  if [ -f ".claude/skills/gstack/VERSION" ] || [ -d ".claude/skills/gstack/.git" ]; then
+if [ -d ".claude/skills/torch" ] && [ ! -L ".claude/skills/torch" ]; then
+  if [ -f ".claude/skills/torch/VERSION" ] || [ -d ".claude/skills/torch/.git" ]; then
     _VENDORED="yes"
   fi
 fi
-echo "VENDORED_GSTACK: $_VENDORED"
+echo "VENDORED_torch: $_VENDORED"
 echo "MODEL_OVERLAY: claude"
-_CHECKPOINT_MODE=$(~/.claude/skills/gstack/bin/gstack-config get checkpoint_mode 2>/dev/null || echo "explicit")
-_CHECKPOINT_PUSH=$(~/.claude/skills/gstack/bin/gstack-config get checkpoint_push 2>/dev/null || echo "false")
+_CHECKPOINT_MODE=$(~/.claude/skills/torch/bin/torch-config get checkpoint_mode 2>/dev/null || echo "explicit")
+_CHECKPOINT_PUSH=$(~/.claude/skills/torch/bin/torch-config get checkpoint_push 2>/dev/null || echo "false")
 echo "CHECKPOINT_MODE: $_CHECKPOINT_MODE"
 echo "CHECKPOINT_PUSH: $_CHECKPOINT_PUSH"
 # Plan-mode hint for skills like /spec that branch behavior on plan-mode state.
@@ -129,20 +129,20 @@ echo "CHECKPOINT_PUSH: $_CHECKPOINT_PUSH"
 # from CLAUDE_PLAN_FILE (set by the harness when plan mode is active) and
 # fall back to "inactive". Codex hosts and Claude execution mode both end up
 # inactive, which is the safe default (defaults to file+execute pipeline).
-if [ -n "${CLAUDE_PLAN_FILE:-}${GSTACK_PLAN_MODE_FORCE:-}" ]; then
-  export GSTACK_PLAN_MODE="active"
-elif [ "${GSTACK_PLAN_MODE:-}" = "active" ]; then
-  export GSTACK_PLAN_MODE="active"
+if [ -n "${CLAUDE_PLAN_FILE:-}${torch_PLAN_MODE_FORCE:-}" ]; then
+  export torch_PLAN_MODE="active"
+elif [ "${torch_PLAN_MODE:-}" = "active" ]; then
+  export torch_PLAN_MODE="active"
 else
-  export GSTACK_PLAN_MODE="inactive"
+  export torch_PLAN_MODE="inactive"
 fi
-echo "GSTACK_PLAN_MODE: $GSTACK_PLAN_MODE"
+echo "torch_PLAN_MODE: $torch_PLAN_MODE"
 [ -n "$OPENCLAW_SESSION" ] && echo "SPAWNED_SESSION: true" || true
 ```
 
 ## Plan Mode Safe Operations
 
-In plan mode, allowed because they inform the plan: `$B`, `$D`, `codex exec`/`codex review`, writes to `~/.gstack/`, writes to the plan file, and `open` for generated artifacts.
+In plan mode, allowed because they inform the plan: `$B`, `$D`, `codex exec`/`codex review`, writes to `~/.torch/`, writes to the plan file, and `open` for generated artifacts.
 
 ## Skill Invocation During Plan Mode
 
@@ -150,15 +150,15 @@ If the user invokes a skill in plan mode, the skill takes precedence over generi
 
 If `PROACTIVE` is `"false"`, do not auto-invoke or proactively suggest skills. If a skill seems useful, ask: "I think /skillname might help here — want me to run it?"
 
-If `SKILL_PREFIX` is `"true"`, suggest/invoke `/gstack-*` names. Disk paths stay `~/.claude/skills/gstack/[skill-name]/SKILL.md`.
+If `SKILL_PREFIX` is `"true"`, suggest/invoke `/torch-*` names. Disk paths stay `~/.claude/skills/torch/[skill-name]/SKILL.md`.
 
-If output shows `UPGRADE_AVAILABLE <old> <new>`: read `~/.claude/skills/gstack/gstack-upgrade/SKILL.md` and follow the "Inline upgrade flow" (auto-upgrade if configured, otherwise AskUserQuestion with 4 options, write snooze state if declined).
+If output shows `UPGRADE_AVAILABLE <old> <new>`: read `~/.claude/skills/torch/torch-upgrade/SKILL.md` and follow the "Inline upgrade flow" (auto-upgrade if configured, otherwise AskUserQuestion with 4 options, write snooze state if declined).
 
-If output shows `JUST_UPGRADED <from> <to>`: print "Running gstack v{to} (just updated!)". If `SPAWNED_SESSION` is true, skip feature discovery.
+If output shows `JUST_UPGRADED <from> <to>`: print "Running torch v{to} (just updated!)". If `SPAWNED_SESSION` is true, skip feature discovery.
 
 Feature discovery, max one prompt per session:
-- Missing `~/.claude/skills/gstack/.feature-prompted-continuous-checkpoint`: AskUserQuestion for Continuous checkpoint auto-commits. If accepted, run `~/.claude/skills/gstack/bin/gstack-config set checkpoint_mode continuous`. Always touch marker.
-- Missing `~/.claude/skills/gstack/.feature-prompted-model-overlay`: inform "Model overlays are active. MODEL_OVERLAY shows the patch." Always touch marker.
+- Missing `~/.claude/skills/torch/.feature-prompted-continuous-checkpoint`: AskUserQuestion for Continuous checkpoint auto-commits. If accepted, run `~/.claude/skills/torch/bin/torch-config set checkpoint_mode continuous`. Always touch marker.
+- Missing `~/.claude/skills/torch/.feature-prompted-model-overlay`: inform "Model overlays are active. MODEL_OVERLAY shows the patch." Always touch marker.
 
 After upgrade prompts, continue workflow.
 
@@ -171,34 +171,34 @@ Options:
 - B) Restore V0 prose — set `explain_level: terse`
 
 If A: leave `explain_level` unset (defaults to `default`).
-If B: run `~/.claude/skills/gstack/bin/gstack-config set explain_level terse`.
+If B: run `~/.claude/skills/torch/bin/torch-config set explain_level terse`.
 
 Always run (regardless of choice):
 ```bash
-rm -f ~/.gstack/.writing-style-prompt-pending
-touch ~/.gstack/.writing-style-prompted
+rm -f ~/.torch/.writing-style-prompt-pending
+touch ~/.torch/.writing-style-prompted
 ```
 
 Skip if `WRITING_STYLE_PENDING` is `no`.
 
-If `LAKE_INTRO` is `no`: say "gstack follows the **Boil the Ocean** principle — do the complete thing when AI makes marginal cost near-zero. Read more: https://garryslist.org/posts/boil-the-ocean" Offer to open:
+If `LAKE_INTRO` is `no`: say "torch follows the **Boil the Ocean** principle — do the complete thing when AI makes marginal cost near-zero. Read more: https://garryslist.org/posts/boil-the-ocean" Offer to open:
 
 ```bash
 open https://garryslist.org/posts/boil-the-ocean
-touch ~/.gstack/.completeness-intro-seen
+touch ~/.torch/.completeness-intro-seen
 ```
 
 Only run `open` if yes. Always run `touch`.
 
 If `TEL_PROMPTED` is `no` AND `LAKE_INTRO` is `yes`: ask telemetry once via AskUserQuestion:
 
-> Help gstack get better. Share usage data only: skill, duration, crashes, stable device ID. No code or file paths. Your repo name is recorded locally only and stripped before any upload.
+> Help torch get better. Share usage data only: skill, duration, crashes, stable device ID. No code or file paths. Your repo name is recorded locally only and stripped before any upload.
 
 Options:
-- A) Help gstack get better! (recommended)
+- A) Help torch get better! (recommended)
 - B) No thanks
 
-If A: run `~/.claude/skills/gstack/bin/gstack-config set telemetry community`
+If A: run `~/.claude/skills/torch/bin/torch-config set telemetry community`
 
 If B: ask follow-up:
 
@@ -208,30 +208,30 @@ Options:
 - A) Sure, anonymous is fine
 - B) No thanks, fully off
 
-If B→A: run `~/.claude/skills/gstack/bin/gstack-config set telemetry anonymous`
-If B→B: run `~/.claude/skills/gstack/bin/gstack-config set telemetry off`
+If B→A: run `~/.claude/skills/torch/bin/torch-config set telemetry anonymous`
+If B→B: run `~/.claude/skills/torch/bin/torch-config set telemetry off`
 
 Always run:
 ```bash
-touch ~/.gstack/.telemetry-prompted
+touch ~/.torch/.telemetry-prompted
 ```
 
 Skip if `TEL_PROMPTED` is `yes`.
 
 If `PROACTIVE_PROMPTED` is `no` AND `TEL_PROMPTED` is `yes`: ask once:
 
-> Let gstack proactively suggest skills, like /qa for "does this work?" or /investigate for bugs?
+> Let torch proactively suggest skills, like /qa for "does this work?" or /investigate for bugs?
 
 Options:
 - A) Keep it on (recommended)
 - B) Turn it off — I'll type /commands myself
 
-If A: run `~/.claude/skills/gstack/bin/gstack-config set proactive true`
-If B: run `~/.claude/skills/gstack/bin/gstack-config set proactive false`
+If A: run `~/.claude/skills/torch/bin/torch-config set proactive true`
+If B: run `~/.claude/skills/torch/bin/torch-config set proactive false`
 
 Always run:
 ```bash
-touch ~/.gstack/.proactive-prompted
+touch ~/.torch/.proactive-prompted
 ```
 
 Skip if `PROACTIVE_PROMPTED` is `yes`.
@@ -240,17 +240,17 @@ Skip if `PROACTIVE_PROMPTED` is `yes`.
 
 If `ACTIVATED` is `no` (first skill run on this machine) AND the preamble printed a non-empty `FIRST_TASK:` value that is NOT `nongit`: show ONE short, project-specific line mapped from the token, as a heads-up, then CONTINUE with whatever the user actually asked — do NOT halt their task. Map the token: `greenfield` → "Fresh repo — shape it first with `/spec` or `/office-hours`." `code_node`/`code_python`/`code_rust`/`code_go`/`code_ruby`/`code_ios` → "There's code here — `/qa` to see it work, or `/investigate` if something's off." `branch_ahead` → "Unshipped work on this branch — `/review` then `/ship`." `dirty_default` → "Uncommitted changes — `/review` before committing." `clean_default` → "Pick one: `/spec`, `/investigate`, or `/qa`." Then substitute the token you saw for TASK_TOKEN and run (best-effort), and mark activated:
 ```bash
-~/.claude/skills/gstack/bin/gstack-telemetry-log --event-type first_task_scaffold_shown --skill "TASK_TOKEN" --outcome shown 2>/dev/null || true
-touch ~/.gstack/.activated 2>/dev/null || true
+~/.claude/skills/torch/bin/torch-telemetry-log --event-type first_task_scaffold_shown --skill "TASK_TOKEN" --outcome shown 2>/dev/null || true
+touch ~/.torch/.activated 2>/dev/null || true
 ```
 
-If `ACTIVATED` is `no` but `FIRST_TASK:` is empty or `nongit` (headless, non-git, or nothing actionable): show nothing, just run `touch ~/.gstack/.activated 2>/dev/null || true`.
+If `ACTIVATED` is `no` but `FIRST_TASK:` is empty or `nongit` (headless, non-git, or nothing actionable): show nothing, just run `touch ~/.torch/.activated 2>/dev/null || true`.
 
 Else if `ACTIVATED` is `yes` AND `FIRST_LOOP_SHOWN` is `no`: say once as a heads-up (then continue):
 
-> Tip: gstack pays off when you complete one loop — **plan → review → ship**. A common first loop: `/office-hours` or `/spec` to shape it, `/plan-eng-review` to lock it, then `/ship`.
+> Tip: torch pays off when you complete one loop — **plan → review → ship**. A common first loop: `/office-hours` or `/spec` to shape it, `/plan-eng-review` to lock it, then `/ship`.
 
-Then run `touch ~/.gstack/.first-loop-tip-shown 2>/dev/null || true`.
+Then run `touch ~/.torch/.first-loop-tip-shown 2>/dev/null || true`.
 
 Skip this section if `ACTIVATED` and `FIRST_LOOP_SHOWN` are both `yes`.
 
@@ -259,7 +259,7 @@ Check if a CLAUDE.md file exists in the project root. If it does not exist, crea
 
 Use AskUserQuestion:
 
-> gstack works best when your project's CLAUDE.md includes skill routing rules.
+> torch works best when your project's CLAUDE.md includes skill routing rules.
 
 Options:
 - A) Add routing rules to CLAUDE.md (recommended)
@@ -289,15 +289,15 @@ Key routing rules:
 - Author a backlog-ready spec/issue → invoke /spec
 ```
 
-Then commit the change: `git add CLAUDE.md && git commit -m "chore: add gstack skill routing rules to CLAUDE.md"`
+Then commit the change: `git add CLAUDE.md && git commit -m "chore: add torch skill routing rules to CLAUDE.md"`
 
-If B: run `~/.claude/skills/gstack/bin/gstack-config set routing_declined true` and say they can re-enable with `gstack-config set routing_declined false`.
+If B: run `~/.claude/skills/torch/bin/torch-config set routing_declined true` and say they can re-enable with `torch-config set routing_declined false`.
 
 This only happens once per project. Skip if `HAS_ROUTING` is `yes` or `ROUTING_DECLINED` is `true`.
 
-If `VENDORED_GSTACK` is `yes`, warn once via AskUserQuestion unless `~/.gstack/.vendoring-warned-$SLUG` exists:
+If `VENDORED_torch` is `yes`, warn once via AskUserQuestion unless `~/.torch/.vendoring-warned-$SLUG` exists:
 
-> This project has gstack vendored in `.claude/skills/gstack/`. Vendoring is deprecated.
+> This project has torch vendored in `.claude/skills/torch/`. Vendoring is deprecated.
 > Migrate to team mode?
 
 Options:
@@ -305,18 +305,18 @@ Options:
 - B) No, I'll handle it myself
 
 If A:
-1. Run `git rm -r .claude/skills/gstack/`
-2. Run `echo '.claude/skills/gstack/' >> .gitignore`
-3. Run `~/.claude/skills/gstack/bin/gstack-team-init required` (or `optional`)
-4. Run `git add .claude/ .gitignore CLAUDE.md && git commit -m "chore: migrate gstack from vendored to team mode"`
-5. Tell the user: "Done. Each developer now runs: `cd ~/.claude/skills/gstack && ./setup --team`"
+1. Run `git rm -r .claude/skills/torch/`
+2. Run `echo '.claude/skills/torch/' >> .gitignore`
+3. Run `~/.claude/skills/torch/bin/torch-team-init required` (or `optional`)
+4. Run `git add .claude/ .gitignore CLAUDE.md && git commit -m "chore: migrate torch from vendored to team mode"`
+5. Tell the user: "Done. Each developer now runs: `cd ~/.claude/skills/torch && ./setup --team`"
 
 If B: say "OK, you're on your own to keep the vendored copy up to date."
 
 Always run (regardless of choice):
 ```bash
-eval "$(~/.claude/skills/gstack/bin/gstack-slug 2>/dev/null)" 2>/dev/null || true
-touch ~/.gstack/.vendoring-warned-${SLUG:-unknown}
+eval "$(~/.claude/skills/torch/bin/torch-slug 2>/dev/null)" 2>/dev/null || true
+touch ~/.torch/.vendoring-warned-${SLUG:-unknown}
 ```
 
 If marker exists, skip.
@@ -331,16 +331,16 @@ AI orchestrator (e.g., OpenClaw). In spawned sessions:
 ## Artifacts Sync (skill start)
 
 ```bash
-_GSTACK_HOME="${GSTACK_HOME:-$HOME/.gstack}"
+_torch_HOME="${torch_HOME:-$HOME/.torch}"
 # Prefer the v1.27.0.0 artifacts file; fall back to brain file for users
 # upgrading mid-stream before the migration script runs.
-if [ -f "$HOME/.gstack-artifacts-remote.txt" ]; then
-  _BRAIN_REMOTE_FILE="$HOME/.gstack-artifacts-remote.txt"
+if [ -f "$HOME/.torch-artifacts-remote.txt" ]; then
+  _BRAIN_REMOTE_FILE="$HOME/.torch-artifacts-remote.txt"
 else
-  _BRAIN_REMOTE_FILE="$HOME/.gstack-brain-remote.txt"
+  _BRAIN_REMOTE_FILE="$HOME/.torch-brain-remote.txt"
 fi
-_BRAIN_SYNC_BIN="~/.claude/skills/gstack/bin/gstack-brain-sync"
-_BRAIN_CONFIG_BIN="~/.claude/skills/gstack/bin/gstack-config"
+_BRAIN_SYNC_BIN="~/.claude/skills/torch/bin/torch-brain-sync"
+_BRAIN_CONFIG_BIN="~/.claude/skills/torch/bin/torch-config"
 
 # /sync-gbrain context-load: teach the agent to use gbrain when it's available.
 # Per-worktree pin: post-spike redesign uses kubectl-style `.gbrain-source` in the
@@ -385,16 +385,16 @@ if command -v jq >/dev/null 2>&1 && [ -f "$HOME/.claude.json" ]; then
   esac
 fi
 
-if [ -f "$_BRAIN_REMOTE_FILE" ] && [ ! -d "$_GSTACK_HOME/.git" ] && [ "$_BRAIN_SYNC_MODE" = "off" ]; then
+if [ -f "$_BRAIN_REMOTE_FILE" ] && [ ! -d "$_torch_HOME/.git" ] && [ "$_BRAIN_SYNC_MODE" = "off" ]; then
   _BRAIN_NEW_URL=$(head -1 "$_BRAIN_REMOTE_FILE" 2>/dev/null | tr -d '[:space:]')
   if [ -n "$_BRAIN_NEW_URL" ]; then
     echo "ARTIFACTS_SYNC: artifacts repo detected: $_BRAIN_NEW_URL"
-    echo "ARTIFACTS_SYNC: run 'gstack-brain-restore' to pull your cross-machine artifacts (or 'gstack-config set artifacts_sync_mode off' to dismiss forever)"
+    echo "ARTIFACTS_SYNC: run 'torch-brain-restore' to pull your cross-machine artifacts (or 'torch-config set artifacts_sync_mode off' to dismiss forever)"
   fi
 fi
 
-if [ -d "$_GSTACK_HOME/.git" ] && [ "$_BRAIN_SYNC_MODE" != "off" ]; then
-  _BRAIN_LAST_PULL_FILE="$_GSTACK_HOME/.brain-last-pull"
+if [ -d "$_torch_HOME/.git" ] && [ "$_BRAIN_SYNC_MODE" != "off" ]; then
+  _BRAIN_LAST_PULL_FILE="$_torch_HOME/.brain-last-pull"
   _BRAIN_NOW=$(date +%s)
   _BRAIN_DO_PULL=1
   if [ -f "$_BRAIN_LAST_PULL_FILE" ]; then
@@ -403,7 +403,7 @@ if [ -d "$_GSTACK_HOME/.git" ] && [ "$_BRAIN_SYNC_MODE" != "off" ]; then
     [ "$_BRAIN_AGE" -lt 86400 ] && _BRAIN_DO_PULL=0
   fi
   if [ "$_BRAIN_DO_PULL" = "1" ]; then
-    ( cd "$_GSTACK_HOME" && git fetch origin >/dev/null 2>&1 && git merge --ff-only "origin/$(git rev-parse --abbrev-ref HEAD)" >/dev/null 2>&1 ) || true
+    ( cd "$_torch_HOME" && git fetch origin >/dev/null 2>&1 && git merge --ff-only "origin/$(git rev-parse --abbrev-ref HEAD)" >/dev/null 2>&1 ) || true
     echo "$_BRAIN_NOW" > "$_BRAIN_LAST_PULL_FILE"
   fi
   "$_BRAIN_SYNC_BIN" --once 2>/dev/null || true
@@ -414,11 +414,11 @@ if [ "$_GBRAIN_MCP_MODE" = "remote-http" ]; then
   # pulls from GitHub/GitLab). Show the user this is by design, not broken.
   _GBRAIN_HOST=$(jq -r '.mcpServers.gbrain.url // empty' "$HOME/.claude.json" 2>/dev/null | sed -E 's|^https?://([^/:]+).*|\1|')
   echo "ARTIFACTS_SYNC: remote-mode (managed by brain server ${_GBRAIN_HOST:-remote})"
-elif [ -d "$_GSTACK_HOME/.git" ] && [ "$_BRAIN_SYNC_MODE" != "off" ]; then
+elif [ -d "$_torch_HOME/.git" ] && [ "$_BRAIN_SYNC_MODE" != "off" ]; then
   _BRAIN_QUEUE_DEPTH=0
-  [ -f "$_GSTACK_HOME/.brain-queue.jsonl" ] && _BRAIN_QUEUE_DEPTH=$(wc -l < "$_GSTACK_HOME/.brain-queue.jsonl" | tr -d ' ')
+  [ -f "$_torch_HOME/.brain-queue.jsonl" ] && _BRAIN_QUEUE_DEPTH=$(wc -l < "$_torch_HOME/.brain-queue.jsonl" | tr -d ' ')
   _BRAIN_LAST_PUSH="never"
-  [ -f "$_GSTACK_HOME/.brain-last-push" ] && _BRAIN_LAST_PUSH=$(cat "$_GSTACK_HOME/.brain-last-push" 2>/dev/null || echo never)
+  [ -f "$_torch_HOME/.brain-last-push" ] && _BRAIN_LAST_PUSH=$(cat "$_torch_HOME/.brain-last-push" 2>/dev/null || echo never)
   echo "ARTIFACTS_SYNC: mode=$_BRAIN_SYNC_MODE | last_push=$_BRAIN_LAST_PUSH | queue=$_BRAIN_QUEUE_DEPTH"
 else
   echo "ARTIFACTS_SYNC: off"
@@ -429,7 +429,7 @@ fi
 
 Privacy stop-gate: if output shows `ARTIFACTS_SYNC: off`, `artifacts_sync_mode_prompted` is `false`, and gbrain is on PATH or `gbrain doctor --fast --json` works, ask once:
 
-> gstack can publish your artifacts (CEO plans, designs, reports) to a private GitHub repo that GBrain indexes across machines. How much should sync?
+> torch can publish your artifacts (CEO plans, designs, reports) to a private GitHub repo that GBrain indexes across machines. How much should sync?
 
 Options:
 - A) Everything allowlisted (recommended)
@@ -444,13 +444,13 @@ After answer:
 "$_BRAIN_CONFIG_BIN" set artifacts_sync_mode_prompted true
 ```
 
-If A/B and `~/.gstack/.git` is missing, ask whether to run `gstack-artifacts-init`. Do not block the skill.
+If A/B and `~/.torch/.git` is missing, ask whether to run `torch-artifacts-init`. Do not block the skill.
 
 At skill END before telemetry:
 
 ```bash
-"~/.claude/skills/gstack/bin/gstack-brain-sync" --discover-new 2>/dev/null || true
-"~/.claude/skills/gstack/bin/gstack-brain-sync" --once 2>/dev/null || true
+"~/.claude/skills/torch/bin/torch-brain-sync" --discover-new 2>/dev/null || true
+"~/.claude/skills/torch/bin/torch-brain-sync" --once 2>/dev/null || true
 ```
 
 
@@ -495,7 +495,7 @@ Escalate after 3 failed attempts, uncertain security-sensitive changes, or scope
 Before completing, if you discovered a durable project quirk or command fix that would save 5+ minutes next time, log it:
 
 ```bash
-~/.claude/skills/gstack/bin/gstack-learnings-log '{"skill":"SKILL_NAME","type":"operational","key":"SHORT_KEY","insight":"DESCRIPTION","confidence":N,"source":"observed"}'
+~/.claude/skills/torch/bin/torch-learnings-log '{"skill":"SKILL_NAME","type":"operational","key":"SHORT_KEY","insight":"DESCRIPTION","confidence":N,"source":"observed"}'
 ```
 
 Do not log obvious facts or one-time transient errors.
@@ -505,23 +505,23 @@ Do not log obvious facts or one-time transient errors.
 After workflow completion, log telemetry. Use skill `name:` from frontmatter. OUTCOME is success/error/abort/unknown.
 
 **PLAN MODE EXCEPTION — ALWAYS RUN:** This command writes telemetry to
-`~/.gstack/analytics/`, matching preamble analytics writes.
+`~/.torch/analytics/`, matching preamble analytics writes.
 
 Run this bash:
 
 ```bash
 _TEL_END=$(date +%s)
 _TEL_DUR=$(( _TEL_END - _TEL_START ))
-rm -f ~/.gstack/analytics/.pending-"$_SESSION_ID" 2>/dev/null || true
+rm -f ~/.torch/analytics/.pending-"$_SESSION_ID" 2>/dev/null || true
 # Session timeline: record skill completion (local-only, never sent anywhere)
-~/.claude/skills/gstack/bin/gstack-timeline-log '{"skill":"SKILL_NAME","event":"completed","branch":"'$(git branch --show-current 2>/dev/null || echo unknown)'","outcome":"OUTCOME","duration_s":"'"$_TEL_DUR"'","session":"'"$_SESSION_ID"'"}' 2>/dev/null || true
+~/.claude/skills/torch/bin/torch-timeline-log '{"skill":"SKILL_NAME","event":"completed","branch":"'$(git branch --show-current 2>/dev/null || echo unknown)'","outcome":"OUTCOME","duration_s":"'"$_TEL_DUR"'","session":"'"$_SESSION_ID"'"}' 2>/dev/null || true
 # Local analytics (gated on telemetry setting)
 if [ "$_TEL" != "off" ]; then
-echo '{"skill":"SKILL_NAME","duration_s":"'"$_TEL_DUR"'","outcome":"OUTCOME","browse":"USED_BROWSE","session":"'"$_SESSION_ID"'","ts":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}' >> ~/.gstack/analytics/skill-usage.jsonl 2>/dev/null || true
+echo '{"skill":"SKILL_NAME","duration_s":"'"$_TEL_DUR"'","outcome":"OUTCOME","browse":"USED_BROWSE","session":"'"$_SESSION_ID"'","ts":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}' >> ~/.torch/analytics/skill-usage.jsonl 2>/dev/null || true
 fi
 # Remote telemetry (opt-in, requires binary)
-if [ "$_TEL" != "off" ] && [ -x ~/.claude/skills/gstack/bin/gstack-telemetry-log ]; then
-  ~/.claude/skills/gstack/bin/gstack-telemetry-log \
+if [ "$_TEL" != "off" ] && [ -x ~/.claude/skills/torch/bin/torch-telemetry-log ]; then
+  ~/.claude/skills/torch/bin/torch-telemetry-log \
     --skill "SKILL_NAME" --duration "$_TEL_DUR" --outcome "OUTCOME" \
     --used-browse "USED_BROWSE" --session-id "$_SESSION_ID" 2>/dev/null &
 fi
@@ -531,7 +531,7 @@ Replace `SKILL_NAME`, `OUTCOME`, and `USED_BROWSE` before running.
 
 ## Plan Status Footer
 
-Skills that run plan reviews (`/plan-*-review`, `/codex review`) include the EXIT PLAN MODE GATE blocking checklist at the end of the skill, which verifies the plan file ends with `## GSTACK REVIEW REPORT` before ExitPlanMode is called. Skills that don't run plan reviews (operational skills like `/ship`, `/qa`, `/review`) typically don't operate in plan mode and have no review report to verify; this footer is a no-op for them. Writing the plan file is the one edit allowed in plan mode.
+Skills that run plan reviews (`/plan-*-review`, `/codex review`) include the EXIT PLAN MODE GATE blocking checklist at the end of the skill, which verifies the plan file ends with `## torch REVIEW REPORT` before ExitPlanMode is called. Skills that don't run plan reviews (operational skills like `/ship`, `/qa`, `/review`) typically don't operate in plan mode and have no review report to verify; this footer is a no-op for them. Writing the plan file is the one edit allowed in plan mode.
 
 # browse: QA Testing & Dogfooding
 
@@ -543,8 +543,8 @@ State persists between calls (cookies, tabs, login sessions).
 ```bash
 _ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
 B=""
-[ -n "$_ROOT" ] && [ -x "$_ROOT/.claude/skills/gstack/browse/dist/browse" ] && B="$_ROOT/.claude/skills/gstack/browse/dist/browse"
-[ -z "$B" ] && B="$HOME/.claude/skills/gstack/browse/dist/browse"
+[ -n "$_ROOT" ] && [ -x "$_ROOT/.claude/skills/torch/browse/dist/browse" ] && B="$_ROOT/.claude/skills/torch/browse/dist/browse"
+[ -z "$B" ] && B="$HOME/.claude/skills/torch/browse/dist/browse"
 if [ -x "$B" ]; then
   echo "READY: $B"
 else
@@ -553,7 +553,7 @@ fi
 ```
 
 If `NEEDS_SETUP`:
-1. Tell the user: "gstack browse needs a one-time build (~10 seconds). OK to proceed?" Then STOP and wait.
+1. Tell the user: "torch browse needs a one-time build (~10 seconds). OK to proceed?" Then STOP and wait.
 2. Run: `cd <SKILL_DIR> && ./setup`
 3. If `bun` is not installed:
    ```bash
@@ -678,7 +678,7 @@ $B load-html /tmp/tweet.html        # or: $B goto file://./tweet.html
 $B screenshot /tmp/out.png --selector .tweet-card
 # → /tmp/out.png is 2x the pixel dimensions of the element
 ```
-Scale must be 1-3 (gstack policy cap). Changing `--scale` recreates the browser context; refs from `snapshot` are invalidated (rerun `snapshot`), but `load-html` content is replayed automatically. Not supported in headed mode.
+Scale must be 1-3 (torch policy cap). Changing `--scale` recreates the browser context; refs from `snapshot` are invalidated (rerun `snapshot`), but `load-html` content is replayed automatically. Not supported in headed mode.
 
 ### 14. Offline render mode (rasterize your own HTML/JSON, zero network)
 
@@ -826,7 +826,7 @@ browse --headed --proxy socks5://user:pass@host:1080 \
 ## Snapshot Flags
 
 The snapshot is your primary tool for understanding and interacting with pages.
-`$B` is the browse binary (resolved from `$_ROOT/.claude/skills/gstack/browse/dist/browse` or `~/.claude/skills/gstack/browse/dist/browse`).
+`$B` is the browse binary (resolved from `$_ROOT/.claude/skills/torch/browse/dist/browse` or `~/.claude/skills/torch/browse/dist/browse`).
 
 **Syntax:** `$B snapshot [flags]`
 

@@ -89,7 +89,7 @@ describe('autoplan total preflight budget (T21 / D7)', () => {
     for (const [skill, subset] of Object.entries(SKILL_DIGEST_SUBSETS)) {
       const preflight = generateBrainPreflight(buildCtx(skill));
       for (const entity of subset) {
-        expect(preflight).toContain(`gstack-brain-cache get ${entity}`);
+        expect(preflight).toContain(`torch-brain-cache get ${entity}`);
       }
     }
   });

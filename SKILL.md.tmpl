@@ -1,20 +1,20 @@
 ---
-name: gstack
+name: torch
 preamble-tier: 1
 version: 1.2.0
 description: |
-  Router for the gstack skill suite. Sends any gstack request to the right skill
+  Router for the torch skill suite. Sends any torch request to the right skill
   (planning, review, QA, shipping, debugging, docs, security, design). For browser/QA
-  and dogfooding it points you at /browse. Use when you invoke gstack without a specific
-  skill, or ask "which gstack skill fits this?". (gstack)
+  and dogfooding it points you at /browse. Use when you invoke torch without a specific
+  skill, or ask "which torch skill fits this?". (torch)
 allowed-tools:
   - Bash
   - Read
   - AskUserQuestion
 triggers:
-  - gstack
-  - which gstack skill
-  - route this with gstack
+  - torch
+  - which torch skill
+  - route this with torch
 
 ---
 
@@ -22,7 +22,7 @@ triggers:
 
 ## Route first
 
-This is the gstack router. Its one job is to send the request to the right skill.
+This is the torch router. Its one job is to send the request to the right skill.
 
 1. If the request is about a browser, QA, dogfooding, screenshots, or inspecting a page
    (open a site, test a deploy, take a screenshot, check a flow visually) → invoke `/browse`.
@@ -32,12 +32,12 @@ Best-effort, record which way you routed (never block on it). Set `ROUTE_OUTCOME
 `browse` (sent to /browse), `routed` (sent to another skill), or `direct` (answered
 directly, no skill matched):
 ```bash
-~/.claude/skills/gstack/bin/gstack-telemetry-log --event-type route --skill gstack --outcome ROUTE_OUTCOME --session-id "$_SESSION_ID" 2>/dev/null || true
+~/.claude/skills/torch/bin/torch-telemetry-log --event-type route --skill torch --outcome ROUTE_OUTCOME --session-id "$_SESSION_ID" 2>/dev/null || true
 ```
 
-If `PROACTIVE` is `false`: do NOT proactively invoke or suggest other gstack skills during
+If `PROACTIVE` is `false`: do NOT proactively invoke or suggest other torch skills during
 this session. Only run skills the user explicitly invokes. This preference persists across
-sessions via `gstack-config`.
+sessions via `torch-config`.
 
 If `PROACTIVE` is `true` (default): **invoke the Skill tool** when the user's request
 matches a skill's purpose. Do NOT answer directly when a skill exists for the task.
@@ -69,15 +69,15 @@ quality gates that produce better results than answering inline.
 - User asks for a second opinion, codex review → invoke `/codex`
 - User asks for safety mode, careful mode → invoke `/careful` or `/guard`
 - User asks to restrict edits to a directory → invoke `/freeze` or `/unfreeze`
-- User asks to upgrade gstack → invoke `/gstack-upgrade`
+- User asks to upgrade torch → invoke `/torch-upgrade`
 - User asks to save progress, checkpoint, "save my work" → invoke `/context-save`
 - User asks to resume, restore, "where was I" → invoke `/context-restore`
 - User asks about security, OWASP, vulnerabilities, "is this secure" → invoke `/cso`
 - User asks to make a PDF, document, publication → invoke `/make-pdf`
-- User asks to launch a real browser for QA, "open the browser" → invoke `/open-gstack-browser`
+- User asks to launch a real browser for QA, "open the browser" → invoke `/open-torch-browser`
 - User asks to import cookies for authenticated testing → invoke `/setup-browser-cookies`
 - User asks about page speed, performance regression, benchmarks → invoke `/benchmark`
-- User asks what gstack has learned, "show learnings" → invoke `/learn`
+- User asks what torch has learned, "show learnings" → invoke `/learn`
 - User asks to tune question sensitivity, "stop asking me that" → invoke `/plan-tune`
 - User asks for code quality dashboard, "health check" → invoke `/health`
 
@@ -87,5 +87,5 @@ exists). The skill provides multi-step workflows, checklists, and quality gates 
 always produce better results than an ad-hoc answer. If no skill matches, answer
 directly as usual.
 
-If the user opts out of suggestions, run `gstack-config set proactive false`.
-If they opt back in, run `gstack-config set proactive true`.
+If the user opts out of suggestions, run `torch-config set proactive false`.
+If they opt back in, run `torch-config set proactive true`.

@@ -46,7 +46,7 @@ const describeE2E = shouldRun ? describe : describe.skip;
 const N = 5;
 const FLOOR = N - 1; // 4 — must fire at least one AUQ per non-dropped option
 
-const PLAN_PATH = '/tmp/gstack-test-plan-ceo-split-overflow.md';
+const PLAN_PATH = '/tmp/torch-test-plan-ceo-split-overflow.md';
 
 describeE2E('/plan-ceo-review split-overflow regression (periodic)', () => {
   test(

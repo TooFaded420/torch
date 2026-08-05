@@ -289,8 +289,8 @@
       "hasGateEval": false,
       "hasPeriodicEval": false
     },
-    "gstack-upgrade": {
-      "skill": "gstack-upgrade",
+    "torch-upgrade": {
+      "skill": "torch-upgrade",
       "skillMdBytes": 10794,
       "skillMdLines": 280,
       "estTokens": 2699,
@@ -429,8 +429,8 @@
       "hasGateEval": true,
       "hasPeriodicEval": false
     },
-    "open-gstack-browser": {
-      "skill": "open-gstack-browser",
+    "open-torch-browser": {
+      "skill": "open-torch-browser",
       "skillMdBytes": 44529,
       "skillMdLines": 981,
       "estTokens": 11132,

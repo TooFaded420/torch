@@ -1,8 +1,8 @@
 /**
  * gbrain-sources — TypeScript helper for idempotent gbrain federated source registration.
  *
- * Mirrors the bash logic in bin/gstack-gbrain-source-wireup:204-310 but in a form
- * importable by other TS callers (currently bin/gstack-gbrain-sync.ts; future
+ * Mirrors the bash logic in bin/torch-gbrain-source-wireup:204-310 but in a form
+ * importable by other TS callers (currently bin/torch-gbrain-sync.ts; future
  * callers welcome). gbrain has no `sources update` — drift recovery is
  * `sources remove` followed by `sources add`.
  *
@@ -10,7 +10,7 @@
  */
 
 import { execFileSync, spawnSync } from "child_process";
-import { withErrorContext } from "./gstack-memory-helpers";
+import { withErrorContext } from "./torch-memory-helpers";
 import { execGbrainJson, NEEDS_SHELL_ON_WINDOWS } from "./gbrain-exec";
 
 export interface SourceState {
@@ -128,7 +128,7 @@ export function probeSource(id: string, env?: NodeJS.ProcessEnv): SourceState {
  *     (Skip when reregister_on_drift=false; returns changed=false.)
  *
  * Caller is responsible for catching errors. The function uses withErrorContext for
- * forensic logging to ~/.gstack/.gbrain-errors.jsonl.
+ * forensic logging to ~/.torch/.gbrain-errors.jsonl.
  */
 export async function ensureSourceRegistered(
   id: string,
@@ -257,7 +257,7 @@ interface DoctorReport {
  * `sourceId` is matched as a LITERAL substring (not a regex) so an id with
  * regex metacharacters can never misfire. Routes through `execGbrainJson` so
  * DATABASE_URL is seeded from gbrain's config (consistent with every other
- * gstack-side gbrain call). `env` is the caller's base env (tests inject a
+ * torch-side gbrain call). `env` is the caller's base env (tests inject a
  * shim on PATH).
  */
 export function cycleCompleted(sourceId: string, env?: NodeJS.ProcessEnv): CycleStatus {

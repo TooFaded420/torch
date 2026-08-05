@@ -1,6 +1,6 @@
 # Sidebar Flow
 
-How the GStack Browser sidebar actually works. Read this before touching
+How the torch Browser sidebar actually works. Read this before touching
 `sidepanel.js`, `background.js`, `content.js`, `terminal-agent.ts`, or
 sidebar-related server endpoints.
 
@@ -63,7 +63,7 @@ T+500ms   terminal-agent.ts boots
 
 T+1-3s    Extension loads, sidebar opens
             ├── sidepanel-terminal.js: setState(IDLE), shows "Starting Claude Code..."
-            └── tryAutoConnect() polls until window.gstackServerPort + token are set
+            └── tryAutoConnect() polls until window.torchServerPort + token are set
 
 T+ready   tryAutoConnect calls connect()
             ├── POST /pty-session (Authorization: Bearer AUTH_TOKEN)
@@ -71,7 +71,7 @@ T+ready   tryAutoConnect calls connect()
             │   └── responds with {terminalPort, ptySessionToken}
             ├── GET /claude-available (preflight)
             ├── new WebSocket(`ws://127.0.0.1:<terminalPort>/ws`,
-            │                 [`gstack-pty.<token>`])
+            │                 [`torch-pty.<token>`])
             │   └── Browser sends Sec-WebSocket-Protocol + Origin
             │   └── Agent validates Origin AND token BEFORE upgrading
             │   └── Agent echoes the protocol back (REQUIRED — browser
@@ -89,13 +89,13 @@ protocols)`. We exploit that:
 1. `POST /pty-session` (auth: Bearer AUTH_TOKEN) → server mints a
    short-lived session token, pushes it to the agent over loopback,
    returns it in the JSON body.
-2. Extension calls `new WebSocket(url, ['gstack-pty.<token>'])`.
-3. Agent reads `Sec-WebSocket-Protocol`, strips `gstack-pty.`, validates
+2. Extension calls `new WebSocket(url, ['torch-pty.<token>'])`.
+3. Agent reads `Sec-WebSocket-Protocol`, strips `torch-pty.`, validates
    against `validTokens`, echoes the protocol back. Echo is mandatory —
    without it Chromium closes the connection on receipt of the upgrade
    response.
 
-A `Set-Cookie: gstack_pty=...` header is also returned for non-browser
+A `Set-Cookie: torch_pty=...` header is also returned for non-browser
 callers (curl, integration tests). The cookie path was the original v1
 design but `SameSite=Strict` cookies don't survive the cross-port jump
 from server.ts:34567 → agent:<random> from a chrome-extension origin.
@@ -106,7 +106,7 @@ The protocol-token path is what the browser actually uses.
 | Token | Lives in | Used for | Lifetime |
 |-------|----------|----------|----------|
 | `AUTH_TOKEN` | `<stateDir>/browse.json`; in-memory in server.ts | `/pty-session` POST (mint cookie + token) | server lifetime |
-| `gstack-pty.<...>` (Sec-WebSocket-Protocol) | Browser memory only; agent `validTokens` Set | `/ws` upgrade auth | 30 min, auto-revoked on WS close |
+| `torch-pty.<...>` (Sec-WebSocket-Protocol) | Browser memory only; agent `validTokens` Set | `/ws` upgrade auth | 30 min, auto-revoked on WS close |
 | `INTERNAL_TOKEN` | `<stateDir>/terminal-internal-token`; in agent memory | server → agent loopback `/internal/grant` | agent lifetime |
 
 `AUTH_TOKEN` is **never** valid for `/ws` directly. The session token is
@@ -159,11 +159,11 @@ of the Terminal pane:
 
 | Button | Behavior |
 |--------|----------|
-| 🧹 Cleanup | `window.gstackInjectToTerminal(prompt)` — pipes a "remove ads/banners" instruction into the live PTY. claude in the terminal sees it and acts. |
+| 🧹 Cleanup | `window.torchInjectToTerminal(prompt)` — pipes a "remove ads/banners" instruction into the live PTY. claude in the terminal sees it and acts. |
 | 📸 Screenshot | `POST /command screenshot` — direct browse-server call, no PTY involvement. |
 | 🍪 Cookies | Navigates to the `/cookie-picker` page. |
 
-The Inspector's "Send to Code" button uses the same `gstackInjectToTerminal`
+The Inspector's "Send to Code" button uses the same `torchInjectToTerminal`
 path to forward CSS inspector data into claude.
 
 ## Debug surfaces (Activity / Refs / Inspector)

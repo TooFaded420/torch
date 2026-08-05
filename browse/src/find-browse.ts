@@ -1,5 +1,5 @@
 /**
- * find-browse — locate the gstack browse binary.
+ * find-browse — locate the torch browse binary.
  *
  * Compiled to browse/dist/find-browse (standalone binary, no bun runtime needed).
  * Outputs the absolute path to the browse binary on stdout, or exits 1 if not found.
@@ -61,14 +61,14 @@ export function locateBinary(): string | null {
   // Workspace-local takes priority (for development)
   if (root) {
     for (const m of markers) {
-      const local = join(root, m, 'skills', 'gstack', 'browse', 'dist', 'browse');
+      const local = join(root, m, 'skills', 'torch', 'browse', 'dist', 'browse');
       const found = findExecutable(local);
       if (found) return found;
     }
 
     // Source-checkout fallback (no installed skill layout — the binary
     // lives directly at <repo>/browse/dist/browse[.exe]). Hit by:
-    // - gstack repo dev workflow before `./setup` runs
+    // - torch repo dev workflow before `./setup` runs
     // - the windows-setup-e2e.yml CI workflow which builds binaries
     //   in place but never installs them under a marker dir
     // - make-pdf consumers running from a sibling source checkout
@@ -79,7 +79,7 @@ export function locateBinary(): string | null {
 
   // Global fallback
   for (const m of markers) {
-    const global = join(home, m, 'skills', 'gstack', 'browse', 'dist', 'browse');
+    const global = join(home, m, 'skills', 'torch', 'browse', 'dist', 'browse');
     const found = findExecutable(global);
     if (found) return found;
   }

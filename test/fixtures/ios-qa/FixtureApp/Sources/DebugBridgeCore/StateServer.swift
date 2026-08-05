@@ -1,4 +1,4 @@
-// AUTO-GENERATED from gstack/ios-qa/templates/StateServer.swift.template
+// AUTO-GENERATED from torch/ios-qa/templates/StateServer.swift.template
 // Regenerate with: /ios-sync
 //
 // StateServer — HTTP server embedded in the iOS app under test. Loopback-only.
@@ -25,7 +25,7 @@ public final class StateServer {
 
     // MARK: Configuration
 
-    private let logger = Logger(subsystem: "gstack.ios-qa", category: "StateServer")
+    private let logger = Logger(subsystem: "torch.ios-qa", category: "StateServer")
     private let port: UInt16
     private let bootTokenPath: String
 
@@ -88,7 +88,7 @@ public final class StateServer {
     private init(port: UInt16 = 9999) {
         self.port = port
         self.bootToken = UUID().uuidString
-        self.bootTokenPath = NSTemporaryDirectory() + "gstack-ios-qa.token"
+        self.bootTokenPath = NSTemporaryDirectory() + "torch-ios-qa.token"
     }
 
     public func start() {
@@ -100,7 +100,7 @@ public final class StateServer {
         // 2. Log the boot token EXACTLY ONCE so the daemon can scrape it.
         //    The daemon will rotate immediately; this log line is dead within
         //    seconds.
-        logger.notice("gstack-ios-qa-bootstrap token=\(self.bootToken, privacy: .public) port=\(self.port, privacy: .public) build=\(self.appBuildId, privacy: .public)")
+        logger.notice("torch-ios-qa-bootstrap token=\(self.bootToken, privacy: .public) port=\(self.port, privacy: .public) build=\(self.appBuildId, privacy: .public)")
 
         // 3. Bind both IPv6 and IPv4 loopback. CoreDevice tunnel uses IPv6;
         //    local tooling may use IPv4. Never bind 0.0.0.0 or ::.

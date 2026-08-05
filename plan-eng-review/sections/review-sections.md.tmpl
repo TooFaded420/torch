@@ -170,17 +170,17 @@ Check the git log for this branch. If there are prior commits suggesting a previ
 After producing the Completion Summary above, persist the review result.
 
 **PLAN MODE EXCEPTION — ALWAYS RUN:** This command writes review metadata to
-`~/.gstack/` (user config directory, not project files). The skill preamble
-already writes to `~/.gstack/sessions/` and `~/.gstack/analytics/` — this is
+`~/.torch/` (user config directory, not project files). The skill preamble
+already writes to `~/.torch/sessions/` and `~/.torch/analytics/` — this is
 the same pattern. The review dashboard depends on this data. Skipping this
 command breaks the review readiness dashboard in /ship.
 
 ```bash
-~/.claude/skills/gstack/bin/gstack-review-log '{"skill":"plan-eng-review","timestamp":"TIMESTAMP","status":"STATUS","unresolved":N,"critical_gaps":N,"issues_found":N,"mode":"MODE","commit":"COMMIT"}'
-~/.claude/skills/gstack/bin/gstack-decision-log '{"decision":"Eng review (MODE): ARCH_SUMMARY","rationale":"KEY_DECISION","scope":"branch","source":"skill","confidence":8}' 2>/dev/null || true
+~/.claude/skills/torch/bin/torch-review-log '{"skill":"plan-eng-review","timestamp":"TIMESTAMP","status":"STATUS","unresolved":N,"critical_gaps":N,"issues_found":N,"mode":"MODE","commit":"COMMIT"}'
+~/.claude/skills/torch/bin/torch-decision-log '{"decision":"Eng review (MODE): ARCH_SUMMARY","rationale":"KEY_DECISION","scope":"branch","source":"skill","confidence":8}' 2>/dev/null || true
 ```
 
-The second command records the architecture verdict as a durable cross-session decision (so a future session inherits the chosen approach and what was hardened, not just the count). Same `~/.gstack/` write pattern as review-log, non-interactive, best-effort (`|| true`). Substitute `ARCH_SUMMARY` (e.g. "N findings, all folded" or "M unresolved") and `KEY_DECISION` (the load-bearing architecture call from the report, one line — omit if the review found nothing durable).
+The second command records the architecture verdict as a durable cross-session decision (so a future session inherits the chosen approach and what was hardened, not just the count). Same `~/.torch/` write pattern as review-log, non-interactive, best-effort (`|| true`). Substitute `ARCH_SUMMARY` (e.g. "N findings, all folded" or "M unresolved") and `KEY_DECISION` (the load-bearing architecture call from the report, one line — omit if the review found nothing durable).
 
 Substitute values from the Completion Summary:
 - **TIMESTAMP**: current ISO 8601 datetime

@@ -12,8 +12,8 @@
  *   - global preference applies when no project preference set
  *   - mcp__*__AskUserQuestion matcher accepted
  *   - empty stdin → defer (crash safety)
- *   - auto-decided event logged via gstack-question-log (PostToolUse won't fire)
- *   - auto-decided marker written to ~/.gstack/sessions/<id>/.auto-decided-<tool_use_id>
+ *   - auto-decided event logged via torch-question-log (PostToolUse won't fire)
+ *   - auto-decided marker written to ~/.torch/sessions/<id>/.auto-decided-<tool_use_id>
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
@@ -31,10 +31,10 @@ let cwdSlug: string;
 let fixtureCwd: string;
 
 beforeEach(() => {
-  stateRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'gstack-prefhook-'));
+  stateRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'torch-prefhook-'));
   cwdSlug = 'fixture-slug';
   fs.mkdirSync(path.join(stateRoot, 'projects', cwdSlug), { recursive: true });
-  // Real directory that the hook can chdir() into. gstack-slug derives the
+  // Real directory that the hook can chdir() into. torch-slug derives the
   // slug from the basename of this cwd (no .git => basename fallback path).
   fixtureCwd = path.join(stateRoot, cwdSlug);
   fs.mkdirSync(fixtureCwd, { recursive: true });
@@ -70,8 +70,8 @@ function runHook(stdin: object, cwd?: string, extraEnv?: Record<string, string>)
   for (const [k, v] of Object.entries(process.env)) {
     if (v !== undefined) env[k] = v;
   }
-  env.GSTACK_STATE_ROOT = stateRoot;
-  delete env.GSTACK_HOME;
+  env.torch_STATE_ROOT = stateRoot;
+  delete env.torch_HOME;
   // Strip ambient Conductor markers so these cases characterize NON-Conductor
   // behavior deterministically — otherwise running the suite inside Conductor
   // (CONDUCTOR_WORKSPACE_PATH/PORT set) would flip every defer into the
@@ -79,7 +79,7 @@ function runHook(stdin: object, cwd?: string, extraEnv?: Record<string, string>)
   // via extraEnv.
   delete env.CONDUCTOR_WORKSPACE_PATH;
   delete env.CONDUCTOR_PORT;
-  env.GSTACK_QUESTION_LOG_NO_DERIVE = '1';
+  env.torch_QUESTION_LOG_NO_DERIVE = '1';
   if (extraEnv) Object.assign(env, extraEnv);
   const res = spawnSync(HOOK, [], {
     env,
@@ -121,7 +121,7 @@ describe('defers (no enforcement)', () => {
       tool_use_id: 'tu-1',
       tool_input: {
         questions: [
-          { question: '<gstack-qid:test-q> Need approval?', options: ['A) Yes (recommended)', 'B) No'] },
+          { question: '<torch-qid:test-q> Need approval?', options: ['A) Yes (recommended)', 'B) No'] },
         ],
       },
     });
@@ -152,7 +152,7 @@ describe('defers (no enforcement)', () => {
       tool_use_id: 'tu-3',
       tool_input: {
         questions: [
-          { question: '<gstack-qid:test-q> Yes?', options: ['A) Yes (recommended)', 'B) No'] },
+          { question: '<torch-qid:test-q> Yes?', options: ['A) Yes (recommended)', 'B) No'] },
         ],
       },
     });
@@ -164,7 +164,7 @@ describe('defers (no enforcement)', () => {
     for (const [k, v] of Object.entries(process.env)) {
       if (v !== undefined) env[k] = v;
     }
-    env.GSTACK_STATE_ROOT = stateRoot;
+    env.torch_STATE_ROOT = stateRoot;
     const res = spawnSync(HOOK, [], { env, input: '', encoding: 'utf-8' });
     expect(res.status).toBe(0);
     const parsed = JSON.parse(res.stdout || '{}');
@@ -193,7 +193,7 @@ describe('enforces never-ask preferences', () => {
         questions: [
           {
             question:
-              '<gstack-qid:ship-pre-landing-review-fix> Pre-landing review flagged issue.',
+              '<torch-qid:ship-pre-landing-review-fix> Pre-landing review flagged issue.',
             options: ['A) Fix now (recommended)', 'B) Skip'],
           },
         ],
@@ -213,7 +213,7 @@ describe('enforces never-ask preferences', () => {
       tool_input: {
         questions: [
           {
-            question: '<gstack-qid:ship-test-failure-triage> Tests failed.',
+            question: '<torch-qid:ship-test-failure-triage> Tests failed.',
             options: ['A) Fix now (recommended)', 'B) Investigate', 'C) Ack and ship'],
           },
         ],
@@ -231,7 +231,7 @@ describe('enforces never-ask preferences', () => {
       tool_input: {
         questions: [
           {
-            question: '<gstack-qid:ship-pre-landing-review-fix> Ambiguous',
+            question: '<torch-qid:ship-pre-landing-review-fix> Ambiguous',
             options: ['A) Fix now (recommended)', 'B) Skip (recommended)'],
           },
         ],
@@ -249,7 +249,7 @@ describe('enforces never-ask preferences', () => {
       tool_input: {
         questions: [
           {
-            question: '<gstack-qid:ship-pre-landing-review-fix> No rec',
+            question: '<torch-qid:ship-pre-landing-review-fix> No rec',
             options: ['A) Foo', 'B) Bar'],
           },
         ],
@@ -274,7 +274,7 @@ describe('precedence: project wins over global (D8)', () => {
       tool_input: {
         questions: [
           {
-            question: '<gstack-qid:ship-pre-landing-review-fix> P?',
+            question: '<torch-qid:ship-pre-landing-review-fix> P?',
             options: ['A) Fix (recommended)', 'B) Skip'],
           },
         ],
@@ -292,7 +292,7 @@ describe('precedence: project wins over global (D8)', () => {
       tool_input: {
         questions: [
           {
-            question: '<gstack-qid:ship-pre-landing-review-fix> P?',
+            question: '<torch-qid:ship-pre-landing-review-fix> P?',
             options: ['A) Fix (recommended)', 'B) Skip'],
           },
         ],
@@ -311,7 +311,7 @@ describe('precedence: project wins over global (D8)', () => {
       tool_input: {
         questions: [
           {
-            question: '<gstack-qid:ship-pre-landing-review-fix> P?',
+            question: '<torch-qid:ship-pre-landing-review-fix> P?',
             options: ['A) Fix (recommended)', 'B) Skip'],
           },
         ],
@@ -335,7 +335,7 @@ describe('MCP variant', () => {
       tool_input: {
         questions: [
           {
-            question: '<gstack-qid:ship-pre-landing-review-fix> P?',
+            question: '<torch-qid:ship-pre-landing-review-fix> P?',
             options: ['A) Fix (recommended)', 'B) Skip'],
           },
         ],
@@ -359,7 +359,7 @@ describe('Conductor prose redirect', () => {
       tool_use_id: 'tu-c1',
       tool_input: {
         questions: [
-          { question: '<gstack-qid:test-q> Need approval?', options: ['A) Yes (recommended)', 'B) No'] },
+          { question: '<torch-qid:test-q> Need approval?', options: ['A) Yes (recommended)', 'B) No'] },
         ],
       },
     }, undefined, CONDUCTOR);
@@ -392,7 +392,7 @@ describe('Conductor prose redirect', () => {
       tool_input: {
         questions: [
           {
-            question: '<gstack-qid:ship-test-failure-triage> Tests failed.',
+            question: '<torch-qid:ship-test-failure-triage> Tests failed.',
             options: ['A) Fix now (recommended)', 'B) Investigate', 'C) Ack and ship'],
           },
         ],
@@ -409,7 +409,7 @@ describe('Conductor prose redirect', () => {
       tool_name: 'mcp__conductor__AskUserQuestion',
       tool_use_id: 'tu-c4',
       tool_input: {
-        questions: [{ question: '<gstack-qid:test-q> Pick?', options: ['A) X (recommended)', 'B) Y'] }],
+        questions: [{ question: '<torch-qid:test-q> Pick?', options: ['A) X (recommended)', 'B) Y'] }],
       },
     }, undefined, { CONDUCTOR_WORKSPACE_PATH: '/Users/x/conductor/ws' });
     expect(r.parsed?.hookSpecificOutput?.permissionDecision).toBe('deny');
@@ -425,7 +425,7 @@ describe('Conductor prose redirect', () => {
       tool_input: {
         questions: [
           {
-            question: '<gstack-qid:ship-pre-landing-review-fix> Pre-landing review flagged issue.',
+            question: '<torch-qid:ship-pre-landing-review-fix> Pre-landing review flagged issue.',
             options: ['A) Fix now (recommended)', 'B) Skip'],
           },
         ],
@@ -461,7 +461,7 @@ describe('auto-decided event tagging', () => {
       tool_input: {
         questions: [
           {
-            question: '<gstack-qid:ship-pre-landing-review-fix> P?',
+            question: '<torch-qid:ship-pre-landing-review-fix> P?',
             options: ['A) Fix (recommended)', 'B) Skip'],
           },
         ],
@@ -483,7 +483,7 @@ describe('auto-decided event tagging', () => {
       tool_input: {
         questions: [
           {
-            question: '<gstack-qid:ship-pre-landing-review-fix> P?',
+            question: '<torch-qid:ship-pre-landing-review-fix> P?',
             options: ['A) Fix (recommended)', 'B) Skip'],
           },
         ],

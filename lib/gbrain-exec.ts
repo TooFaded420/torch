@@ -1,8 +1,8 @@
 /**
  * Centralized gbrain CLI invocation.
  *
- * Every `gbrain ...` spawn from `bin/gstack-gbrain-sync.ts` and
- * `bin/gstack-memory-ingest.ts` MUST go through `spawnGbrain` (or
+ * Every `gbrain ...` spawn from `bin/torch-gbrain-sync.ts` and
+ * `bin/torch-memory-ingest.ts` MUST go through `spawnGbrain` (or
  * `execGbrainJson`), and the invariant test
  * `test/gbrain-exec-invariant.test.ts` enforces this with a static-source
  * grep. The helper layer guarantees three properties:
@@ -21,12 +21,12 @@
  *      spawn. This is the central bug the helper exists to prevent
  *      regressing on.
  *
- *   3. **`GBRAIN_HOME` honored consistently.** Other gstack helpers
+ *   3. **`GBRAIN_HOME` honored consistently.** Other torch helpers
  *      (`detectEngineTier`) already honor `GBRAIN_HOME`. `buildGbrainEnv`
  *      reads from `${GBRAIN_HOME:-$HOME/.gbrain}/config.json` so all
- *      gstack-side gbrain calls agree on which config file matters.
+ *      torch-side gbrain calls agree on which config file matters.
  *
- * **Escape hatch:** `GSTACK_RESPECT_ENV_DATABASE_URL=1` returns the
+ * **Escape hatch:** `torch_RESPECT_ENV_DATABASE_URL=1` returns the
  * caller's env unchanged. Use only when the brain intentionally lives in
  * the project's local DB (rare).
  */
@@ -78,7 +78,7 @@ export function isTransactionModePooler(url: string): boolean {
  * Build an env dict with DATABASE_URL seeded from
  * `${GBRAIN_HOME:-$HOME/.gbrain}/config.json`. Returns the base env
  * unchanged when:
- *   - `GSTACK_RESPECT_ENV_DATABASE_URL=1` (intentional opt-out),
+ *   - `torch_RESPECT_ENV_DATABASE_URL=1` (intentional opt-out),
  *   - the config file is missing or unparseable,
  *   - the config has no `database_url`,
  *   - the caller already set DATABASE_URL to the same value.
@@ -96,7 +96,7 @@ export function isTransactionModePooler(url: string): boolean {
 export function buildGbrainEnv(opts: BuildGbrainEnvOptions = {}): NodeJS.ProcessEnv {
   const baseEnv = opts.baseEnv || process.env;
   const out: NodeJS.ProcessEnv = { ...baseEnv };
-  if (baseEnv.GSTACK_RESPECT_ENV_DATABASE_URL === "1") return out;
+  if (baseEnv.torch_RESPECT_ENV_DATABASE_URL === "1") return out;
 
   const homeBase = baseEnv.HOME || homedir();
   const gbrainHome = baseEnv.GBRAIN_HOME || join(homeBase, ".gbrain");
@@ -126,7 +126,7 @@ export function buildGbrainEnv(opts: BuildGbrainEnvOptions = {}): NodeJS.Process
 
 /**
  * Windows can't directly spawn the `gbrain` launcher (bun/npm install it as a
- * `gbrain.cmd`/`.ps1` shim) or a shebang script like the bash `gstack-brain-sync`
+ * `gbrain.cmd`/`.ps1` shim) or a shebang script like the bash `torch-brain-sync`
  * — `spawnSync`/`spawn` resolve those only through a shell's PATHEXT + interpreter
  * lookup. Without `shell: true` the child spawn fails ENOENT, which on the sync
  * orchestrator surfaced as "brain-sync exited undefined" (#1731). Gate on platform
@@ -186,7 +186,7 @@ export function execGbrainJson<T = unknown>(args: string[], opts: SpawnGbrainOpt
 
 /**
  * Async streaming variant for callers that need to attach stdout/stderr
- * listeners (e.g., `gbrain import` in `gstack-memory-ingest.ts`). Always
+ * listeners (e.g., `gbrain import` in `torch-memory-ingest.ts`). Always
  * injects the seeded env. Returns the raw `ChildProcess` so the caller
  * can wire up its own promise around exit/timeout/signal handling.
  */

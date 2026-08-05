@@ -1,8 +1,8 @@
-# gstack v2 — the lightest opinionated skill pack
+# torch v2 — the lightest opinionated skill pack
 
 ## Context
 
-gstack has an externally documented reputation for being "fat." Third-party reviews (dev.to, May 2026) explicitly say gstack "can feel bloated when all roles are turned on... potentially consuming 10K+ tokens before any real code is written, and daily usage burns through tokens fast... making even straightforward tasks feel sluggish and redundant." Anthropic's own canonical Skills guidance prescribes the "progressive disclosure" pattern (`SKILL.md` skeleton + `references/` loaded on demand) — gstack diverges from this.
+torch has an externally documented reputation for being "fat." Third-party reviews (dev.to, May 2026) explicitly say torch "can feel bloated when all roles are turned on... potentially consuming 10K+ tokens before any real code is written, and daily usage burns through tokens fast... making even straightforward tasks feel sluggish and redundant." Anthropic's own canonical Skills guidance prescribes the "progressive disclosure" pattern (`SKILL.md` skeleton + `references/` loaded on demand) — torch diverges from this.
 
 The numbers back the criticism:
 
@@ -11,12 +11,12 @@ The numbers back the criticism:
 - ship.md is 164KB (~41K tokens); ship.md.tmpl is only 48KB — **115KB is resolver-injected**, the highest-leverage compression target
 - Catalog in always-loaded system prompt: 50+ skills × multi-paragraph descriptions, voice triggers, proactive-suggest paragraphs
 
-This plan ships gstack v2 in two coordinated releases: v1.45.0.0 lands the foundation + low-risk wins, then v2.0.0.0 ships the architectural break + marketing-grade repositioning 2-4 weeks later. The split came out of cross-model review: Codex argued v2 looks like posturing without real breakage; the hybrid shape gives the genuinely-breaking sections/ pattern the major bump it earns, while letting the risk-free wins ship immediately.
+This plan ships torch v2 in two coordinated releases: v1.45.0.0 lands the foundation + low-risk wins, then v2.0.0.0 ships the architectural break + marketing-grade repositioning 2-4 weeks later. The split came out of cross-model review: Codex argued v2 looks like posturing without real breakage; the hybrid shape gives the genuinely-breaking sections/ pattern the major bump it earns, while letting the risk-free wins ship immediately.
 
 ## Release shape
 
 ```
-v1.45.0.0 (Foundation Release)          v2.0.0.0 (gstack v2 Launch)
+v1.45.0.0 (Foundation Release)          v2.0.0.0 (torch v2 Launch)
 ─────────────────────────────           ─────────────────────────────
 ~1-2 weeks of CC work                   2-4 weeks later, coordinated
                                         
@@ -30,7 +30,7 @@ Phase A: Build-time compression           plan-eng, plan-design)
                                         
 Catalog trim (Codex high-leverage win)  Lighter-touch migration
   one-line skill descriptions             release note + auto-regenerate
-  drop voice triggers/proactive blocks    on /gstack-upgrade
+  drop voice triggers/proactive blocks    on /torch-upgrade
                                         
 Hard token budgets defined              Marketing-grade CHANGELOG
   enforced via budget-regression          v1 vs v2 numbers table
@@ -55,8 +55,8 @@ Normal release voice                      "lightest opinionated skill pack"
 | `test/skill-e2e-budget-regression.test.ts` (existing gate-tier) | Extend with per-skill hard budgets |
 | Real-PTY harness from v1.13.2.0 | Reuse for behavioral-contract evals (~$0.50/eval) |
 | SDK harness | Reuse for cheap shape evals (~$0/eval where possible) |
-| `gstack-upgrade/migrations/` | Pattern exists for state-format migrations; reuse for v2 auto-regenerate |
-| `~/.gstack/analytics/skill-usage.jsonl` | Already collected; powers deferred `gstack budget` CLI |
+| `torch-upgrade/migrations/` | Pattern exists for state-format migrations; reuse for v2 auto-regenerate |
+| `~/.torch/analytics/skill-usage.jsonl` | Already collected; powers deferred `torch budget` CLI |
 
 We are catching up to Anthropic's canonical Skills pattern, not inventing one.
 
@@ -82,7 +82,7 @@ reviews                            internally measured                pack" exte
 
 ## Phase 0 — Eval coverage matrix (v1.45.0.0)
 
-**Goal:** every skill in gstack ships with at least one gate-tier eval AND one periodic-tier eval that asserts a must-have behavior. The eval suite becomes the design spec. This is the load-bearing claim of the plan — must come first.
+**Goal:** every skill in torch ships with at least one gate-tier eval AND one periodic-tier eval that asserts a must-have behavior. The eval suite becomes the design spec. This is the load-bearing claim of the plan — must come first.
 
 **Cross-model tension noted:** Codex argued this is a procrastination trap and shape-asserts are shallow. User explicitly chose full tiered coverage anyway (D9 = A), with rationale: "the eval suite IS the design spec; that commitment is the load-bearing claim of the whole plan." We accept the larger upfront investment.
 
@@ -98,14 +98,14 @@ reviews                            internally measured                pack" exte
 | document-generate | generates 4 doc types from prompt | E2E generation passes quality bar | $0.30 / $2.00 |
 | context-save | persists state to expected path | round-trip restore preserves context | $0.10 / $0.50 |
 | context-restore | reads latest save, applies to session | cross-workspace restore works | $0.10 / $0.50 |
-| gstack-upgrade | detects install type, runs upgrade | full upgrade + migration round-trip | $0.20 / $1.00 |
+| torch-upgrade | detects install type, runs upgrade | full upgrade + migration round-trip | $0.20 / $1.00 |
 | sync-gbrain | refreshes index without error | full sync produces searchable corpus | $0.20 / $1.50 |
 | setup-gbrain | path 1-4 detection works | end-to-end setup for each path | $0.20 / $2.00 |
 | setup-browser-cookies | picker UI loads without error | cookie import round-trip | $0.20 / $1.00 |
 | setup-deploy | detects config, writes expected files | full deploy config setup | $0.20 / $1.00 |
 | design-consultation | DESIGN.md template renders | full design system generation | $0.30 / $2.50 |
 | design-shotgun | variants generated and saved | full multi-variant exploration | $0.30 / $2.00 |
-| open-gstack-browser | launches browser without error | sidebar attaches and shows activity | $0.20 / $0.80 |
+| open-torch-browser | launches browser without error | sidebar attaches and shows activity | $0.20 / $0.80 |
 | pair-agent | setup key generated, instructions printed | full pair flow with second agent | $0.20 / $1.50 |
 | land-and-deploy | merge gates check correctly | full merge → deploy → canary | $0.30 / $3.00 |
 | canary | post-deploy loop runs, exits cleanly | full canary cycle with alert simulation | $0.20 / $1.50 |
@@ -161,14 +161,14 @@ if (gate && !gate(ctx)) return '';
 return args.length > 0 ? resolver(ctx, args) : resolver(ctx);
 ```
 
-**A.2 Jargon-list dedup** — currently `scripts/resolvers/preamble/generate-writing-style.ts` inlines the full 1.8KB jargon glossary into 37 skills. Replace inline with a reference: "For the canonical jargon list, Read `~/.claude/skills/gstack/scripts/jargon-list.json` on first use." Saves ~66KB total corpus.
+**A.2 Jargon-list dedup** — currently `scripts/resolvers/preamble/generate-writing-style.ts` inlines the full 1.8KB jargon glossary into 37 skills. Replace inline with a reference: "For the canonical jargon list, Read `~/.claude/skills/torch/scripts/jargon-list.json` on first use." Saves ~66KB total corpus.
 
-**A.3 Terse-mode actually compresses** — read `~/.gstack/config.yaml` once in `gen-skill-docs.ts`, pass `explainLevel` into `TemplateContext`, and have `generate-writing-style.ts` / `generate-completeness.ts` / `generate-confusion-protocol.ts` / `generate-context-health.ts` return `''` when terse. Today the bytes ship regardless of config — the flag only changes runtime model behavior. Add `--explain-level=terse` build flag for benchmarking.
+**A.3 Terse-mode actually compresses** — read `~/.torch/config.yaml` once in `gen-skill-docs.ts`, pass `explainLevel` into `TemplateContext`, and have `generate-writing-style.ts` / `generate-completeness.ts` / `generate-confusion-protocol.ts` / `generate-context-health.ts` return `''` when terse. Today the bytes ship regardless of config — the flag only changes runtime model behavior. Add `--explain-level=terse` build flag for benchmarking.
 
-**A.4 Catalog trim** (moved up per Codex #6) — shorten skill descriptions in the always-loaded system prompt to one line per skill. Voice triggers move from catalog descriptions into in-skill content. Proactive-suggest paragraphs move to a separate `~/.claude/skills/gstack/scripts/proactive-suggestions.json` loaded only when the agent needs routing guidance. Per-skill description format:
+**A.4 Catalog trim** (moved up per Codex #6) — shorten skill descriptions in the always-loaded system prompt to one line per skill. Voice triggers move from catalog descriptions into in-skill content. Proactive-suggest paragraphs move to a separate `~/.claude/skills/torch/scripts/proactive-suggestions.json` loaded only when the agent needs routing guidance. Per-skill description format:
 
 ```
-- <skill-name>: <one-line outcome description, ≤80 chars> (gstack)
+- <skill-name>: <one-line outcome description, ≤80 chars> (torch)
 ```
 
 Estimated catalog cut: ~70% (largest single always-loaded reduction).
@@ -242,9 +242,9 @@ This avoids "maintenance theater" of mandatory annotations with no semantics, an
 ## Migration approach (v2.0.0.0, lighter touch per D11)
 
 - Release note in v2.0.0.0 CHANGELOG explains the sections/ format change and concrete user impact: forks/copy-pasted SKILL.md files need re-fetch; first-invocation of heavyweight skills has ~200-500ms section-read latency added.
-- `/gstack-upgrade` auto-regenerates on next invocation. No interactive migration prompts.
+- `/torch-upgrade` auto-regenerates on next invocation. No interactive migration prompts.
 - Vendored installs get a single one-line warning at session start on first v2 contact (re-use existing vendored-install warning pattern in skill preamble).
-- `gstack-upgrade --explain-v2` flag for users who want the full explanation on demand.
+- `torch-upgrade --explain-v2` flag for users who want the full explanation on demand.
 
 ## Forks / customization compatibility (Codex #11)
 
@@ -277,35 +277,35 @@ v2.0.0.0:
 | 5. Code quality | ~150 LOC additive across gen-skill-docs/types/index; ~20 new eval test files; sections/ extraction is mechanical | OK |
 | 6. Tests | Phase 0 IS the test plan. Coverage matrix CI gate enforces every skill has its evals | Findings addressed |
 | 7. Performance | Build time <2× current; runtime adds 200-500ms first-invocation for sectioned heavyweights; catalog trim reduces always-loaded prompt size on every session | Documented |
-| 8. Observability | budget-regression test already exists; canary cohort transcript logging in Phase B; migration outcome logged to ~/.gstack/analytics/migrations.jsonl | Findings addressed |
+| 8. Observability | budget-regression test already exists; canary cohort transcript logging in Phase B; migration outcome logged to ~/.torch/analytics/migrations.jsonl | Findings addressed |
 | 9. Deployment | Two-release split + warn-before-fail eval annotations + rollback via revert | Findings addressed |
 | 10. Long-term trajectory | Reversibility 3/5; sections/ pattern becomes template for future skills; deferred TODOs extend v2 narrative for v2.1+ | OK |
-| 11. Design/UX | README v2 banner + CHANGELOG numbers table land in v2.0.0.0; concrete numbers, gstack voice, no AI slop | OK |
+| 11. Design/UX | README v2 banner + CHANGELOG numbers table land in v2.0.0.0; concrete numbers, torch voice, no AI slop | OK |
 
 ## NOT in scope
 
-- **Skill removals.** User said "keep all functions." qa-only, design-shotgun, pair-agent, open-gstack-browser all stay. They get evals + catalog trim like everyone else.
+- **Skill removals.** User said "keep all functions." qa-only, design-shotgun, pair-agent, open-torch-browser all stay. They get evals + catalog trim like everyone else.
 - **Skill renames.** No `qa` → `qa-fix` collapses. Keep CLI surface stable.
-- **gstack lite/pro install profiles.** Deferred to TODOS for post-v2.
-- **gstack budget CLI.** Deferred to TODOS for post-v2.
+- **torch lite/pro install profiles.** Deferred to TODOS for post-v2.
+- **torch budget CLI.** Deferred to TODOS for post-v2.
 - **Per-skill eval coverage badge in README.** Deferred to TODOS.
 - **Cross-tool portability test/demo (Codex/Cursor compat).** Deferred to TODOS.
 - **Token-cost preview on invocation.** Deferred to TODOS.
 - **Skill autoload telemetry.** Deferred to TODOS.
-- **gstack diff PR comment.** Deferred to TODOS.
+- **torch diff PR comment.** Deferred to TODOS.
 
 ## TODOS.md updates (deferred items, recommend bulk-add post-merge)
 
 | TODO | Priority | Effort (human / CC) | Depends on |
 |---|---|---|---|
-| `gstack lite` install profile (5-skill core) | P2 | 2 days / 3-4 hrs | v2.0.0.0 |
-| `gstack pro` opt-in upgrade path | P2 | 1 day / 1 hr | gstack lite |
-| `gstack budget` CLI (per-skill token usage telemetry) | P2 | 1 day / 1 hr | v1.45.0.0 |
-| Per-skill eval coverage badge in `gstack-skills list` + README | P3 | 1 day / 1 hr | Phase 0 |
+| `torch lite` install profile (5-skill core) | P2 | 2 days / 3-4 hrs | v2.0.0.0 |
+| `torch pro` opt-in upgrade path | P2 | 1 day / 1 hr | torch lite |
+| `torch budget` CLI (per-skill token usage telemetry) | P2 | 1 day / 1 hr | v1.45.0.0 |
+| Per-skill eval coverage badge in `torch-skills list` + README | P3 | 1 day / 1 hr | Phase 0 |
 | Cross-tool portability test/demo (Codex CLI, Cursor) | P3 | 2 days / 2 hrs | v2.0.0.0 |
-| Token-cost preview on skill invocation | P3 | 1 day / 1 hr | gstack budget CLI |
+| Token-cost preview on skill invocation | P3 | 1 day / 1 hr | torch budget CLI |
 | Skill autoload telemetry (dead-weight detection) | P3 | 2 days / 2 hrs | v1.45.0.0 |
-| `gstack diff` PR comment (per-PR budget delta) | P3 | 1 day / 1 hr | budget-regression extended |
+| `torch diff` PR comment (per-PR budget delta) | P3 | 1 day / 1 hr | budget-regression extended |
 | Section-level eval annotations visible to user (confidence signal) | P3 | half day / 30 min | Phase C |
 
 ## Critical files
@@ -331,7 +331,7 @@ v2.0.0.0:
 | `office-hours/SKILL.md.tmpl` → sections/ | Skeleton extraction | B |
 | `plan-eng-review/SKILL.md.tmpl` → sections/ | Skeleton extraction | B |
 | `plan-design-review/SKILL.md.tmpl` → sections/ | Skeleton extraction | B |
-| `gstack-upgrade/migrations/v2.0.0.0.sh` (new) | Auto-regenerate + vendored-install warning | B |
+| `torch-upgrade/migrations/v2.0.0.0.sh` (new) | Auto-regenerate + vendored-install warning | B |
 | `CHANGELOG.md` | v1.45.0.0 entry (normal), v2.0.0.0 entry (marketing-grade w/ numbers table) | A, B |
 | `README.md` | v2.0.0.0 banner; "lightest opinionated skill pack" positioning | B |
 | `CONTRIBUTING.md` | Document sections/ pattern + rollback procedure | B |
@@ -354,7 +354,7 @@ v2.0.0.0:
 3. `test/skill-e2e-ship-section-loading.test.ts` (new): asserts `/ship` Reads expected sections per decision tree
 4. Canary cohort: 1 week dogfood at v2.0.0-rc.1 with transcript logging; zero Read-miss for marked-required sections
 5. Top 5 workflows manually verified; transcripts compared against v1.45 baselines
-6. Migration: `gstack-upgrade` on a v1.45 install successfully regenerates without prompts; vendored-install warning appears once
+6. Migration: `torch-upgrade` on a v1.45 install successfully regenerates without prompts; vendored-install warning appears once
 7. CHANGELOG numbers table matches measured reality
 8. WARN-mode orphan check: PR summary shows orphan list; build passes
 
@@ -392,7 +392,7 @@ Synthesized from this review's findings. Each task derives from a specific phase
 - [ ] **T3 (P1, human: ~half day / CC: ~30 min)** — A.2 + A.3 jargon dedup + terse-mode gen-time compression
   - Surfaced by: Phase A section
   - Files: `scripts/resolvers/preamble/generate-writing-style.ts`, `generate-completeness.ts`, `generate-confusion-protocol.ts`, `generate-context-health.ts`
-  - Verify: jargon-list no longer appears inlined in generated SKILL.md; `gstack-config set explain_level terse && bun run gen:skill-docs` produces shorter files
+  - Verify: jargon-list no longer appears inlined in generated SKILL.md; `torch-config set explain_level terse && bun run gen:skill-docs` produces shorter files
 - [ ] **T4 (P1, human: ~1 day / CC: ~2 hours)** — A.4 catalog trim — one-line skill descriptions; voice triggers + proactive paragraphs moved to JSON
   - Surfaced by: Codex #6 (highest-leverage), Phase A.4
   - Files: `scripts/skill-catalog.ts` (new), `scripts/proactive-suggestions.json` (new), per-skill SKILL.md.tmpl frontmatter for one-line description field
@@ -434,15 +434,15 @@ Synthesized from this review's findings. Each task derives from a specific phase
   - Surfaced by: Phase C section, Codex #4 + #5
   - Files: `scripts/gen-skill-docs.ts` (orphan walker), all `sections/*.md` (annotations with coverage semantics)
   - Verify: orphan check reports correctly in PR summary; build still passes in WARN mode
-- [ ] **T14 (P1, human: ~half day / CC: ~30 min)** — `gstack-upgrade/migrations/v2.0.0.0.sh` lighter-touch auto-regenerate
+- [ ] **T14 (P1, human: ~half day / CC: ~30 min)** — `torch-upgrade/migrations/v2.0.0.0.sh` lighter-touch auto-regenerate
   - Surfaced by: Migration approach section
-  - Files: `gstack-upgrade/migrations/v2.0.0.0.sh`
+  - Files: `torch-upgrade/migrations/v2.0.0.0.sh`
   - Verify: upgrade from v1.45 install produces clean v2 state without prompts; vendored install gets one-line warning
 - [ ] **T15 (P1, human: ~half day / CC: ~1 hour)** — v2.0.0.0 marketing-grade CHANGELOG with v1 vs v2 numbers table
   - Surfaced by: D5, Release shape, Codex #7 (real breakage documented)
   - Files: `CHANGELOG.md`, `VERSION`, `README.md` (v2 banner)
   - Verify: numbers table matches measured corpus; release note documents concrete breakage (sections/ format change, first-invocation latency, vendored-install deprecation); positioning past-tenses bloat reputation
-- [ ] **T16 (P2, human: ~1 day / CC: ~1 hour)** — Bulk-add 9 deferred TODOS to TODOS.md (gstack lite, gstack budget, etc.)
+- [ ] **T16 (P2, human: ~1 day / CC: ~1 hour)** — Bulk-add 9 deferred TODOS to TODOS.md (torch lite, torch budget, etc.)
   - Surfaced by: TODOS.md updates section
   - Files: `TODOS.md`
   - Verify: TODOS format matches `.claude/skills/review/TODOS-format.md`
@@ -454,9 +454,9 @@ Synthesized from this review's findings. Each task derives from a specific phase
 | gen-skill-docs.ts gate check | resolver `appliesTo` throws | Y — try/catch logs + skips resolver | Y (test/gen-skill-docs.test.ts extended) | "resolver X errored, skipped" in build output | stderr |
 | sections/ Read at runtime | section file missing | Y — agent falls back to skeleton-only behavior | Y (test/skill-e2e-ship-section-loading.test.ts) | warning in agent prose | session transcript |
 | CI orphan walker | sections/*.md missing eval annotation | WARN mode v2.0; FAIL v2.1+ | Y (test/skill-coverage-matrix.test.ts) | PR summary lists orphans | PR comment |
-| Migration script v2.0.0.0.sh | regenerate fails on damaged install | Y — script aborts, prints repair steps | Y (migration test) | clear error + repair steps | ~/.gstack/analytics/migrations.jsonl |
+| Migration script v2.0.0.0.sh | regenerate fails on damaged install | Y — script aborts, prints repair steps | Y (migration test) | clear error + repair steps | ~/.torch/analytics/migrations.jsonl |
 | Catalog one-line generator | skill missing one-line description in frontmatter | Y — gen-skill-docs fails build loudly | Y (gen-skill-docs.test.ts extended) | build error | stderr |
-| Canary section-Read logger | logger missing for a heavyweight skill | Y — silently skipped, gap visible in dashboard | Y (transcript-logger test) | none directly; surfaced in canary dashboard | ~/.gstack/analytics/section-reads.jsonl |
+| Canary section-Read logger | logger missing for a heavyweight skill | Y — silently skipped, gap visible in dashboard | Y (transcript-logger test) | none directly; surfaced in canary dashboard | ~/.torch/analytics/section-reads.jsonl |
 
 No critical gaps — every failure mode has a rescue, a test, and visibility.
 
@@ -464,7 +464,7 @@ No critical gaps — every failure mode has a rescue, a test, and visibility.
 
 System architecture (build pipeline):
 ```
-  CONFIG (~/.gstack/config.yaml)
+  CONFIG (~/.torch/config.yaml)
      |
      v
   +-----------------+      +--------------------+
@@ -593,7 +593,7 @@ No stale diagrams to fix.
 
 ### Test plan artifact
 
-Test plan written to `~/.gstack/projects/garrytan-gstack/garrytan-garrytan-slim-skill-tokens-eng-review-test-plan-<timestamp>.md`. `/qa` and `/qa-only` consume this as primary test input. Covers: per-phase test coverage targets, fixture design for section-loading tests, CI budget enforcement check, migration round-trip test.
+Test plan written to `~/.torch/projects/garrytan-torch/garrytan-garrytan-slim-skill-tokens-eng-review-test-plan-<timestamp>.md`. `/qa` and `/qa-only` consume this as primary test input. Covers: per-phase test coverage targets, fixture design for section-loading tests, CI budget enforcement check, migration round-trip test.
 
 ### Failure modes additions
 
@@ -628,7 +628,7 @@ v1.45 runs **sequentially** in a single branch, T1 → T8. The parallelization m
 | T11 plan-ceo-review sections/ | `plan-ceo-review/SKILL.md.tmpl` + sections | T10 (ship/ proven) |
 | T12 office-hours + plan-eng + plan-design sections/ | respective directories | T11 |
 | T13 Phase C eval annotations + 3-tier orphan check | gen-skill-docs.ts orphan walker, all sections/*.md | T9-T12 |
-| T14 migration script | `gstack-upgrade/migrations/v2.0.0.0.sh` | T13 |
+| T14 migration script | `torch-upgrade/migrations/v2.0.0.0.sh` | T13 |
 | T15 v2.0.0.0 CHANGELOG + README banner | `CHANGELOG.md`, `README.md`, `VERSION` | T14 |
 | T16 TODOS bulk-add | `TODOS.md` | — anytime |
 
@@ -646,7 +646,7 @@ User said "do it like 11, not just 10. max it out and then some." Maxed-out scop
 - **Token-efficiency ratio measured:** quality-per-token = judge_score / tokens_consumed (forces v2 to be measurably MORE efficient, not just smaller)
 - **"Quality budget" alongside "token budget":** both enforced in CI. A v2 skill that compressed to half size but dropped from 9/10 quality to 6/10 fails the gate.
 - **Side-by-side PR comment:** every PR that touches a heavyweight skill auto-posts a v1.45-baseline vs current parity comparison in the PR summary
-- **Public benchmark page:** `gstack.benchmarks.md` (new), continuously updated. Quotable: "v2 average parity score: 9.2/10, average token reduction: 67%."
+- **Public benchmark page:** `torch.benchmarks.md` (new), continuously updated. Quotable: "v2 average parity score: 9.2/10, average token reduction: 67%."
 - **Continuous monitoring:** parity suite runs weekly on main; alerts if any skill drifts below baseline (Discord webhook or similar)
 - **Baseline-capture script:** `test/helpers/capture-parity-baseline.ts` — run once at v1.44 HEAD to lock in golden transcripts before any Phase A work lands
 
@@ -659,7 +659,7 @@ Effort: human ~3-4 days / CC ~6-8 hours one-time + ~$30/week ongoing for continu
    - **Generated orphan** (`sections/foo.md` exists, no `sections/foo.md.tmpl`) → FAIL immediately, every release
    - **Manifest orphan** (`sections/foo.md.tmpl` exists, not in `manifest.json`) → WARN in v2.0, FAIL in v2.1+
    - **Hand-edited generated file** (`sections/foo.md` diverges from what regen would produce) → FAIL immediately, with "this file is generated, edit `.tmpl` instead" message
-3. **Budget cap override path (codex D3 critique):** `EVALS_BUDGET_HARD_CAP=$30` becomes the default; per-suite caps via `EVALS_BUDGET_HARD_CAP_GATE=$25`, `EVALS_BUDGET_HARD_CAP_PERIODIC=$70`; override path `EVALS_BUDGET_OVERRIDE_REASON="<text>"` env required to exceed cap (CI prints the reason in build output for audit trail); daily org-level spend alert via existing analytics (`~/.gstack/analytics/skill-usage.jsonl` aggregator).
+3. **Budget cap override path (codex D3 critique):** `EVALS_BUDGET_HARD_CAP=$30` becomes the default; per-suite caps via `EVALS_BUDGET_HARD_CAP_GATE=$25`, `EVALS_BUDGET_HARD_CAP_PERIODIC=$70`; override path `EVALS_BUDGET_OVERRIDE_REASON="<text>"` env required to exceed cap (CI prints the reason in build output for audit trail); daily org-level spend alert via existing analytics (`~/.torch/analytics/skill-usage.jsonl` aggregator).
 4. **Manifest as passive data (codex D1 critique):** `manifest.json` fields are IDs, file paths, and human-readable trigger text ONLY. No `applies_when` predicate. The skill skeleton's decision-tree prose is the ONLY place "when to read X" is decided. Avoids inventing a fourth condition language alongside tier-gating + `appliesTo` + `requiredReads`.
 5. **T7 as integration-branch flow (codex parallelization critique, now obviated by sequential):** sequential execution means T7 is just "atomic regenerate within the single v1.45 branch." Integration-branch dance not needed. The critique's intent (no 3-way merge surprise) is honored by collapsing to sequential.
 
@@ -681,19 +681,19 @@ These drafts become the source of truth for v2.0.0.0 launch tone. T15 implements
 
 ### JUST_UPGRADED notice (Persona A — existing user upgrading)
 
-Triggered by `gstack-update-check` showing `JUST_UPGRADED v1.x v2.0.0.0`. Replaces the generic v1 "Running gstack v{to} (just updated!)" with persona-A-aware copy that names the perceived speed win AND signals "your muscle memory still works."
+Triggered by `torch-update-check` showing `JUST_UPGRADED v1.x v2.0.0.0`. Replaces the generic v1 "Running torch v{to} (just updated!)" with persona-A-aware copy that names the perceived speed win AND signals "your muscle memory still works."
 
 ```
-Running gstack v2.0.0.0 (just updated!) — your sessions are now ~67% lighter.
+Running torch v2.0.0.0 (just updated!) — your sessions are now ~67% lighter.
 Heavyweight skills load only the sections they need; the catalog dropped to
 one line per skill. Everything still works the same way — your /ship, /qa,
-/review commands haven't changed. Run `/gstack-upgrade --explain-v2` for the
+/review commands haven't changed. Run `/torch-upgrade --explain-v2` for the
 full migration story, or just keep working.
 ```
 
 Voice rules honored: lead with the win ("67% lighter"); concrete numbers; reassurance that workflows are unchanged ("everything still works the same way"); escape hatch (`--explain-v2`). No em dashes. Aimed at a 5-second read.
 
-Implementation: update `~/.claude/skills/gstack/gstack-upgrade/SKILL.md.tmpl` Inline upgrade flow with v2-aware message; existing `JUST_UPGRADED <from> <to>` detection in skill preamble fires it.
+Implementation: update `~/.claude/skills/torch/torch-upgrade/SKILL.md.tmpl` Inline upgrade flow with v2-aware message; existing `JUST_UPGRADED <from> <to>` detection in skill preamble fires it.
 
 ### CHANGELOG numbers table (Persona A's magical moment + Persona B's evaluation evidence)
 
@@ -710,20 +710,20 @@ Lands in `## [v2.0.0.0]` entry of CHANGELOG.md, immediately under the headline. 
 | Eval coverage (skills with E2E protection) | ~16 of 31 | **31 of 31 + parity baselines** | quality gate enabled |
 | Parity score vs v1.44 baseline (LLM judge, all 31 skills) | — | **≥9.0/10 floor** | (CI-enforced; see parity-eval suite) |
 
-Below the table, one paragraph in gstack voice: "v1 was the heaviest opinionated skill pack. v2 is the lightest. The compression isn't free — every skill ships with both gate-tier and periodic-tier E2E evals, and a continuous parity-monitor catches silent quality regressions. The numbers above are measured against `test/helpers/parity-baseline-v1.44.1/` and reproduced by `bun run eval:parity`."
+Below the table, one paragraph in torch voice: "v1 was the heaviest opinionated skill pack. v2 is the lightest. The compression isn't free — every skill ships with both gate-tier and periodic-tier E2E evals, and a continuous parity-monitor catches silent quality regressions. The numbers above are measured against `test/helpers/parity-baseline-v1.44.1/` and reproduced by `bun run eval:parity`."
 
 ### README v2 banner
 
 Placement: top of README.md, immediately under the existing Karpathy pull-quote, above "When I heard Karpathy say this..." Stays in place for 60 days post-launch, then collapses to a one-line "v2 released May 2026" entry in the Quick start section.
 
 ```markdown
-> **gstack v2.0.0.0 — the lightest opinionated skill pack (May 2026)**
+> **torch v2.0.0.0 — the lightest opinionated skill pack (May 2026)**
 >
 > Heavyweight skills now load only the sections they need. Total SKILL.md
 > corpus dropped from 2.1 MB to ~700 KB. Every skill ships with E2E eval
 > protection and a continuous parity-monitor against v1.44 baselines.
 > See the [v2.0.0.0 release notes](CHANGELOG.md) for per-skill numbers and
-> the migration story. Existing users: `/gstack-upgrade` auto-regenerates.
+> the migration story. Existing users: `/torch-upgrade` auto-regenerates.
 ```
 
 Voice rules honored: lead with the position ("lightest opinionated skill pack"); concrete numbers (2.1 MB → 700 KB); proof of rigor (eval protection + parity monitor); migration path explicit. No em dashes. Aimed at a 10-second read.
@@ -732,14 +732,14 @@ Voice rules honored: lead with the position ("lightest opinionated skill pack");
 
 - Lock the actual v1.44 baseline numbers into `test/helpers/parity-baseline-v1.44.1/` BEFORE Phase A regeneration starts. The "v1 vs v2" delta only quotes accurately if v1.44 was measured in the same units (token count via `tiktoken`, byte count via `wc -c`, eval coverage via `test/skill-coverage-matrix.ts`).
 - If the measured v2 numbers come in LESS impressive than the drafts above (e.g., ship.md ends up at 25 KB instead of 15 KB), update the drafts to reflect reality. Never invent numbers; the marketing-grade ship moment dies the moment readers find a number they can disprove with `wc -c`.
-- The JUST_UPGRADED notice fires automatically via existing `gstack-upgrade` detection — no new mechanism required.
-- The README banner placement above the existing Karpathy quote is intentional: persona B (new evaluator) sees the v2 win BEFORE the Karpathy framing, anchoring "this is May 2026's most-current gstack."
+- The JUST_UPGRADED notice fires automatically via existing `torch-upgrade` detection — no new mechanism required.
+- The README banner placement above the existing Karpathy quote is intentional: persona B (new evaluator) sees the v2 win BEFORE the Karpathy framing, anchoring "this is May 2026's most-current torch."
 
-## GSTACK REVIEW REPORT
+## torch REVIEW REPORT
 
 | Review | Trigger | Why | Runs | Status | Findings |
 |---|---|---|---|---|---|
-| CEO Review | `/plan-ceo-review` | Scope & strategy | 1 | CLEAR | SCOPE_EXPANSION mode; 3 expansion proposals (1 accepted: v2 launch positioning; 2 deferred: gstack lite, gstack budget); 11/11 sections reviewed; 0 critical gaps |
+| CEO Review | `/plan-ceo-review` | Scope & strategy | 1 | CLEAR | SCOPE_EXPANSION mode; 3 expansion proposals (1 accepted: v2 launch positioning; 2 deferred: torch lite, torch budget); 11/11 sections reviewed; 0 critical gaps |
 | Codex Review | `/codex review` | Independent 2nd opinion (outside voice) | 1 | issues_found | 12 challenges surfaced; 7 absorbed into plan (#4, #5, #6, #9, #10, #11, #12); 3 surfaced as user-decision (#1 user kept original pick, #7 hybrid split adopted, #8 user accepted codex) |
 | Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | CLEAR | 3 architectural decisions locked (D1 JSON manifest, D2 sections/*.md.tmpl pipeline, D3 CI cost cap); 4 new failure modes added (all rescued+tested); test plan artifact written; parallelization map produced (3 lanes parallel in v1.45, sequential in v2.0); 0 critical gaps; 0 unresolved decisions |
 | Codex Consult (2nd pass) | `/codex` (consult on eng-review additions) | Independent challenge of D1/D2/D3 + parallelization | 1 | issues_found | 7 additional findings on eng-review additions; 5 absorbed (TemplateContext contract, 3-tier orphan classification, budget cap override path, manifest as passive data not predicates, T7 as integration-flow obviated by sequential); 2 surfaced as user-decision (attention-architecture risk → cathedral parity-eval suite added at "11"; parallelization collapsed to sequential v1.45 per codex critique) |

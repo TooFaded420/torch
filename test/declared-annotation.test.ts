@@ -23,17 +23,17 @@ let prevHome: string | undefined;
 let stateRoot: string;
 
 beforeEach(() => {
-  stateRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'gstack-annot-'));
-  prevStateRoot = process.env.GSTACK_STATE_ROOT;
-  prevHome = process.env.GSTACK_HOME;
-  process.env.GSTACK_STATE_ROOT = stateRoot;
-  delete process.env.GSTACK_HOME;
+  stateRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'torch-annot-'));
+  prevStateRoot = process.env.torch_STATE_ROOT;
+  prevHome = process.env.torch_HOME;
+  process.env.torch_STATE_ROOT = stateRoot;
+  delete process.env.torch_HOME;
 });
 
 afterEach(() => {
-  if (prevStateRoot !== undefined) process.env.GSTACK_STATE_ROOT = prevStateRoot;
-  else delete process.env.GSTACK_STATE_ROOT;
-  if (prevHome !== undefined) process.env.GSTACK_HOME = prevHome;
+  if (prevStateRoot !== undefined) process.env.torch_STATE_ROOT = prevStateRoot;
+  else delete process.env.torch_STATE_ROOT;
+  if (prevHome !== undefined) process.env.torch_HOME = prevHome;
   fs.rmSync(stateRoot, { recursive: true, force: true });
 });
 

@@ -1,12 +1,12 @@
 # Browser — Complete Reference
 
-gstack's browser surface in one document. Headless Chromium daemon, ~70+
+torch's browser surface in one document. Headless Chromium daemon, ~70+
 commands, ref-based element selection, codifiable browser-skills, real-browser
 mode with a Chrome side panel, an in-sidebar Claude PTY, an ngrok pair-agent
 flow, and a layered prompt-injection defense — all behind a compiled CLI that
 prints plain text to stdout. ~100-200ms per call. Zero context-token overhead.
 
-If you've used gstack in the last release or two, the productivity loop is the
+If you've used torch in the last release or two, the productivity loop is the
 new headline: `/scrape <intent>` drives a page once, `/skillify` codifies the
 flow into a deterministic Playwright script, and the next `/scrape` on the
 same intent runs in ~200ms instead of ~30 seconds of agent re-exploration.
@@ -20,7 +20,7 @@ same intent runs in ~200ms instead of ~30 seconds of agent re-exploration.
 bun install && bun run build
 
 # Set $B once and forget about it
-B=./browse/dist/browse           # or ~/.claude/skills/gstack/browse/dist/browse
+B=./browse/dist/browse           # or ~/.claude/skills/torch/browse/dist/browse
 
 # Drive a page
 $B goto https://news.ycombinator.com
@@ -31,7 +31,7 @@ $B screenshot /tmp/hn.png
 
 # Codify a repeated flow
 /scrape latest hacker news stories
-/skillify                        # writes ~/.gstack/browser-skills/hn-front/...
+/skillify                        # writes ~/.torch/browser-skills/hn-front/...
 /scrape hacker news front page   # second call: 200ms via the codified skill
 
 # Watch Claude work in real time
@@ -88,7 +88,7 @@ Three escalating modes:
   cheapest, what skills like `/qa`, `/design-review`, `/benchmark` use by
   default.
 - **Headed via `$B connect`**. Same daemon, but Chromium is visible (rebranded
-  as "GStack Browser") with the Side Panel extension auto-loaded. You watch
+  as "torch Browser") with the Side Panel extension auto-loaded. You watch
   every command tick through in real time.
 - **Pair-agent over a tunnel**. Daemon binds a second listener that ngrok
   forwards. A remote agent (Codex, OpenClaw, Hermes, anything that can speak
@@ -99,7 +99,7 @@ Three escalating modes:
 
 ## The productivity loop
 
-The shipped headline of v1.19.0.0. Two gstack skills wrap the browser-skills
+The shipped headline of v1.19.0.0. Two torch skills wrap the browser-skills
 runtime so the second time you ask Claude to scrape a page, it runs in ~200ms.
 
 ### `/scrape <intent>`
@@ -127,7 +127,7 @@ browser-skill on disk. Eleven steps, three locked contracts:
 - **D2 — Synthesis input slice.** Extracts ONLY the final-attempt `$B` calls
   that produced the JSON the user accepted, plus the user's intent string.
   Drops failed selectors, drops chat, drops earlier-session content.
-- **D3 — Atomic write.** Stages everything to `~/.gstack/.tmp/skillify-<spawnId>/`,
+- **D3 — Atomic write.** Stages everything to `~/.torch/.tmp/skillify-<spawnId>/`,
   runs `$B skill test` against the temp dir, and only renames into the final
   tier path on test pass + user approval. Test fail or rejection: `rm -rf` the
   temp dir entirely. No half-written skill ever appears in `$B skill list`.
@@ -165,7 +165,7 @@ for the full design + decision trail.
 
 ### Daemon lifecycle
 
-1. **First call.** CLI checks `<project>/.gstack/browse.json` for a running
+1. **First call.** CLI checks `<project>/.torch/browse.json` for a running
    server. None found — it spawns `bun run browse/src/server.ts` in the
    background. Daemon launches headless Chromium via Playwright, picks a
    random port (10000–60000), generates a bearer token, writes the state
@@ -182,12 +182,12 @@ for the full design + decision trail.
 
 Each project root (detected via `git rev-parse --show-toplevel`) gets its
 own daemon, port, state file, cookies, and logs. No cross-workspace
-collisions. State at `<project>/.gstack/browse.json`.
+collisions. State at `<project>/.torch/browse.json`.
 
 | Workspace | State file | Port |
 |-----------|-----------|------|
-| `/code/project-a` | `/code/project-a/.gstack/browse.json` | random (10000–60000) |
-| `/code/project-b` | `/code/project-b/.gstack/browse.json` | random (10000–60000) |
+| `/code/project-a` | `/code/project-a/.torch/browse.json` | random (10000–60000) |
+| `/code/project-b` | `/code/project-b/.torch/browse.json` | random (10000–60000) |
 
 ---
 
@@ -313,7 +313,7 @@ from `snapshot`, or `@c` refs from `snapshot -C`. Full table:
 | `status` | Daemon health + mode (headless / headed / cdp) |
 | `stop` | Shut down daemon |
 | `restart` | Restart daemon |
-| `connect` | Launch headed GStack Browser with Side Panel extension |
+| `connect` | Launch headed torch Browser with Side Panel extension |
 | `disconnect` | Close headed Chrome, return to headless |
 | `focus [@ref]` | Bring headed Chrome to foreground (macOS); `@ref` also scrolls into view |
 | `state save\|load <name>` | Save or load browser state (cookies + URLs) |
@@ -427,9 +427,9 @@ tier is printed inline next to each skill name:
 
 | Tier | Path | When |
 |------|------|------|
-| **Project** | `<project>/.gstack/browser-skills/<name>/` | Project-specific skills (committed or gitignored) |
-| **Global** | `~/.gstack/browser-skills/<name>/` | Per-user skills, all projects |
-| **Bundled** | `<gstack-install>/browser-skills/<name>/` | Ships with gstack, read-only |
+| **Project** | `<project>/.torch/browser-skills/<name>/` | Project-specific skills (committed or gitignored) |
+| **Global** | `~/.torch/browser-skills/<name>/` | Per-user skills, all projects |
+| **Bundled** | `<torch-install>/browser-skills/<name>/` | Ships with torch, read-only |
 
 ### Trust model
 
@@ -439,9 +439,9 @@ configured.
 | Axis | Mechanism | Default |
 |------|-----------|---------|
 | **Daemon-side capability** | Per-spawn scoped token bound to read+write scope (browser-driving commands minus admin: `eval`, `js`, `cookies`, `storage`). Single-use clientId encodes skill name + spawn id. Revoked when spawn exits. | Always scoped — never the daemon root token |
-| **Process-side env** | `trusted: true` frontmatter passes `process.env` minus `GSTACK_TOKEN`. `trusted: false` (default) drops everything except a minimal allowlist (LANG, LC_ALL, TERM, TZ) and pattern-strips secrets (TOKEN/KEY/SECRET/PASSWORD, AWS_*, ANTHROPIC_*, OPENAI_*, GITHUB_*, etc.) | Untrusted (must opt in) |
+| **Process-side env** | `trusted: true` frontmatter passes `process.env` minus `torch_TOKEN`. `trusted: false` (default) drops everything except a minimal allowlist (LANG, LC_ALL, TERM, TZ) and pattern-strips secrets (TOKEN/KEY/SECRET/PASSWORD, AWS_*, ANTHROPIC_*, OPENAI_*, GITHUB_*, etc.) | Untrusted (must opt in) |
 
-`GSTACK_PORT` and `GSTACK_SKILL_TOKEN` are injected last, so a parent process
+`torch_PORT` and `torch_SKILL_TOKEN` are injected last, so a parent process
 can't override them.
 
 ### Output protocol
@@ -462,7 +462,7 @@ impossible — the SDK is frozen at the version the skill was authored against.
 
 `browse/src/browser-skill-write.ts` provides three primitives:
 
-- `stageSkill(opts)` — writes files to `~/.gstack/.tmp/skillify-<spawnId>/<name>/`
+- `stageSkill(opts)` — writes files to `~/.torch/.tmp/skillify-<spawnId>/<name>/`
   with restrictive perms.
 - `commitSkill(opts)` — atomic `fs.renameSync` into the final tier path.
   Refuses to follow symlinked staging dirs (`lstat` check), refuses to
@@ -496,8 +496,8 @@ The classifier flag is set automatically by the L4 prompt-injection scan;
 agents do not set it manually.
 
 Storage:
-- Per-project: `<project>/.gstack/domain-skills/<host>.md`
-- Global: `~/.gstack/domain-skills/<host>.md`
+- Per-project: `<project>/.torch/domain-skills/<host>.md`
+- Global: `~/.torch/domain-skills/<host>.md`
 
 Source: `browse/src/domain-skills.ts`, `domain-skill-commands.ts`.
 
@@ -505,13 +505,13 @@ Source: `browse/src/domain-skills.ts`, `domain-skill-commands.ts`.
 
 ## Real-browser mode
 
-`$B connect` launches **GStack Browser** — a rebranded Chromium controlled by
+`$B connect` launches **torch Browser** — a rebranded Chromium controlled by
 Playwright with the Side Panel extension auto-loaded and anti-bot stealth
 patches applied. You watch every command tick through a visible window in
 real time.
 
 ```bash
-$B connect              # launches GStack Browser, headed
+$B connect              # launches torch Browser, headed
 $B goto https://app.com # navigates in the visible window
 $B snapshot -i          # refs from the real page
 $B click @e3            # clicks in the real window
@@ -521,18 +521,18 @@ $B disconnect           # back to headless mode
 ```
 
 The window has a subtle golden shimmer line at the top and a floating
-"gstack" pill in the bottom-right corner so you always know which Chrome
+"torch" pill in the bottom-right corner so you always know which Chrome
 window is being controlled.
 
-### What "GStack Browser" means
+### What "torch Browser" means
 
 Not your daily Chrome — a Playwright-managed Chromium with custom branding
 in the Dock and menu bar (the `.app` name, Dock icon, and tray, NOT the UA
 string), always-on Layer C anti-bot stealth (most JS-observable automation
 tells are masked, so many anti-bot-protected sites load cleanly), a
 stock-Chrome user agent that reports the underlying Chromium version, and the
-gstack extension pre-loaded via `launchPersistentContext`. The UA no longer
-carries a `GStackBrowser` suffix — that branding string was itself a
+torch extension pre-loaded via `launchPersistentContext`. The UA no longer
+carries a `torchBrowser` suffix — that branding string was itself a
 high-entropy tell, so the browser now reports a plain `Chrome/<version>` UA.
 Deepest-layer CDP-protocol detection still gets through (Google can still
 trigger captchas; see the CDP-patch item in `TODOS.md`). Your regular Chrome
@@ -602,17 +602,17 @@ cross-check those for consistency, and synthesizing fixed values flags MORE
 bot-like, not less. ChromeDriver's `cdc_`/`__webdriver` runtime artifacts and
 the Permissions notifications tell are also cleaned up on every path.
 
-`GSTACK_STEALTH=extended` (also accepts `1` or `true`; off by default) layers
+`torch_STEALTH=extended` (also accepts `1` or `true`; off by default) layers
 six more aggressive patches on top — WebGL renderer spoof, a faked
 `navigator.plugins` PluginArray, `navigator.mediaDevices`. That mode actively
 lies and can break sites that reflect on those properties; use it only when
 the default triggers detection. For gbrowser builds with the C++ patches, the
-`GSTACK_*` host-profile env (GPU vendor/renderer, UA-CH platform/model,
-hardware) emits the Pack 1 `--gstack-gpu-vendor` / `--gstack-gpu-renderer` /
-`--gstack-ua-platform` / `--gstack-ua-model` / `--gstack-hw-concurrency` /
-`--gstack-device-memory` switches that push the GPU/UA-CH/hardware spoof down
-to native code, and `GSTACK_CDP_STEALTH=on` (or `1`/`true`) emits the Pack 2
-`--gstack-suppress-prepare-stack-trace` switch (closes the Cloudflare
+`torch_*` host-profile env (GPU vendor/renderer, UA-CH platform/model,
+hardware) emits the Pack 1 `--torch-gpu-vendor` / `--torch-gpu-renderer` /
+`--torch-ua-platform` / `--torch-ua-model` / `--torch-hw-concurrency` /
+`--torch-device-memory` switches that push the GPU/UA-CH/hardware spoof down
+to native code, and `torch_CDP_STEALTH=on` (or `1`/`true`) emits the Pack 2
+`--torch-suppress-prepare-stack-trace` switch (closes the Cloudflare
 `Error.prepareStackTrace` canary). On stock Playwright Chromium every one of
 these switches is a safe no-op.
 
@@ -642,7 +642,7 @@ transport retries that could corrupt browser traffic.
 
 ## Side Panel + sidebar agent
 
-The Chrome extension that ships baked into GStack Browser shows a live
+The Chrome extension that ships baked into torch Browser shows a live
 activity feed of every browse command in a Side Panel, plus `@ref` overlays
 on the page, plus an interactive Claude PTY inside the sidebar.
 
@@ -656,7 +656,7 @@ upgrade), and the PTY session token is a 30-minute HttpOnly cookie minted
 via `POST /pty-session`.
 
 The toolbar's Cleanup button and the Inspector's "Send to Code" action both
-pipe text into the live Claude PTY via `window.gstackInjectToTerminal(text)`,
+pipe text into the live Claude PTY via `window.torchInjectToTerminal(text)`,
 exposed by `sidepanel-terminal.js`. There's no separate `/sidebar-command`
 POST — the live REPL is the only execution surface.
 
@@ -664,7 +664,7 @@ POST — the live REPL is the only execution surface.
 
 A scrolling feed of every browse command — name, args, duration, status,
 errors. Shows up in real time as Claude works. Backed by SSE (`/activity/stream`)
-that accepts the Bearer token OR the HttpOnly `gstack_sse` session cookie
+that accepts the Bearer token OR the HttpOnly `torch_sse` session cookie
 (30-minute stream-scope cookie minted via `POST /sse-session`).
 
 ### Refs tab
@@ -684,7 +684,7 @@ The "Send to Code" button injects a description into the Claude PTY.
 |-----------|----------------|-------|
 | Side Panel UI | `extension/sidepanel.js`, `sidepanel-terminal.js` | Chrome extension surface |
 | Background SW | `extension/background.js` | Manages tab events, port management |
-| Content script | `extension/content.js` | Page overlays, `gstack` pill |
+| Content script | `extension/content.js` | Page overlays, `torch` pill |
 | Terminal agent | `browse/src/terminal-agent.ts` | PTY spawn, lifecycle, auth |
 | Sidebar utilities | `browse/src/sidebar-utils.ts` | URL sanitization, helpers |
 
@@ -698,11 +698,11 @@ If you want the extension in your everyday Chrome (not the Playwright-controlled
 one):
 
 ```bash
-bin/gstack-extension    # opens chrome://extensions, copies path to clipboard
+bin/torch-extension    # opens chrome://extensions, copies path to clipboard
 ```
 
 Or do it manually: `chrome://extensions` → toggle Developer mode → Load
-unpacked → navigate to `~/.claude/skills/gstack/extension` → pin the
+unpacked → navigate to `~/.claude/skills/torch/extension` → pin the
 extension → enter the port from `$B status`.
 
 ---
@@ -735,7 +735,7 @@ When `pair-agent` activates, the daemon binds **two HTTP listeners**:
   allowlist), `/sidebar-chat`. ngrok forwards only this port.
 
 Root tokens sent over the tunnel return 403. SSE endpoints use a 30-minute
-HttpOnly `gstack_sse` cookie (never valid against `/command`).
+HttpOnly `torch_sse` cookie (never valid against `/command`).
 
 ### The 26-command tunnel allowlist
 
@@ -754,9 +754,9 @@ remote agent that tries them gets a 403 plus a fresh entry in the denial log.
 
 ### Tunnel denial log
 
-`~/.gstack/security/attempts.jsonl` — append-only, salted SHA-256 of source
+`~/.torch/security/attempts.jsonl` — append-only, salted SHA-256 of source
 + domain only (no raw IP, no full request body), rotates at 10MB with 5
-generations. Per-device salt at `~/.gstack/security/device-salt` (mode 0600).
+generations. Per-device salt at `~/.torch/security/device-salt` (mode 0600).
 
 See [`docs/REMOTE_BROWSER_ACCESS.md`](docs/REMOTE_BROWSER_ACCESS.md) for the
 full operator guide.
@@ -781,21 +781,21 @@ Three token types, three lifetimes, three scopes.
 | **Setup key** | `POST /pair` | 5 minutes, one-time use | Single redemption: present at `/connect`, get a scoped token |
 | **Scoped token** | `POST /connect` (with setup key) | 24 hours | Per-client, allowlist-bound, optionally tab-scoped |
 
-The root token is written to `<project>/.gstack/browse.json` with chmod 600.
+The root token is written to `<project>/.torch/browse.json` with chmod 600.
 Every command that mutates browser state must include
 `Authorization: Bearer <token>`.
 
 ### SSE session cookie (v1.6.0.0+)
 
 SSE endpoints (`/activity/stream`, `/inspector/events`) accept the Bearer
-token OR a 30-minute HttpOnly `gstack_sse` cookie minted via
+token OR a 30-minute HttpOnly `torch_sse` cookie minted via
 `POST /sse-session`. The `?token=<ROOT>` query-param auth is no longer
 supported. This is what lets the Chrome extension subscribe to the activity
 feed without putting the root token in extension storage.
 
 ### PTY session cookie
 
-The Terminal pane uses a separate session cookie, `gstack_pty`, minted via
+The Terminal pane uses a separate session cookie, `torch_pty`, minted via
 `POST /pty-session`. Different scope — can spawn / drive the live `claude`
 PTY, can't dispatch arbitrary `/command` calls. `/health` endpoint MUST NOT
 surface this token.
@@ -846,19 +846,19 @@ BLOCKs (deterministic).**
 
 ### Env knobs
 
-- `GSTACK_SECURITY_OFF=1` — emergency kill switch. Classifier stays off
+- `torch_SECURITY_OFF=1` — emergency kill switch. Classifier stays off
   even if warmed. Canary is still injected; just the ML scan is skipped.
-- `GSTACK_SECURITY_ENSEMBLE=deberta` — opt-in DeBERTa-v3 ensemble. Adds
+- `torch_SECURITY_ENSEMBLE=deberta` — opt-in DeBERTa-v3 ensemble. Adds
   ProtectAI DeBERTa-v3-base-injection-onnx as L4c classifier. 721MB
   first-run download. With ensemble enabled, BLOCK requires 2-of-3 ML
   classifiers agreeing at >= WARN.
-- Classifier model cache: `~/.gstack/models/testsavant-small/` (112MB, first
-  run only) plus `~/.gstack/models/deberta-v3-injection/` (721MB, only when
+- Classifier model cache: `~/.torch/models/testsavant-small/` (112MB, first
+  run only) plus `~/.torch/models/deberta-v3-injection/` (721MB, only when
   ensemble enabled).
-- Attack log: `~/.gstack/security/attempts.jsonl` (salted SHA-256 + domain
+- Attack log: `~/.torch/security/attempts.jsonl` (salted SHA-256 + domain
   only, rotates at 10MB, 5 generations).
-- Per-device salt: `~/.gstack/security/device-salt` (0600).
-- Session state: `~/.gstack/security/session-state.json` (cross-process,
+- Per-device salt: `~/.torch/security/device-salt` (0600).
+- Session state: `~/.torch/security/session-state.json` (cross-process,
   atomic).
 
 A shield icon in the sidebar header shows the live status. See
@@ -950,7 +950,7 @@ routes work).
 
 `load-html` has an extension allowlist (`.html`, `.htm`, `.xhtml`, `.svg`) and
 a magic-byte sniff to reject binary files mis-renamed as HTML. 50MB size cap
-(override via `GSTACK_BROWSE_MAX_HTML_BYTES`).
+(override via `torch_BROWSE_MAX_HTML_BYTES`).
 
 `load-html` content survives later `viewport --scale` calls via in-memory
 replay (TabSession tracks the loaded HTML + waitUntil). The replay is
@@ -996,9 +996,9 @@ batch), then `POST /batch` with 20 `text` commands → 20 page contents in
 Console, network, and dialog events flow into O(1) circular buffers (50,000
 capacity each), flushed to disk asynchronously via `Bun.write()`:
 
-- Console: `.gstack/browse-console.log`
-- Network: `.gstack/browse-network.log`
-- Dialog: `.gstack/browse-dialog.log`
+- Console: `.torch/browse-console.log`
+- Network: `.torch/browse-network.log`
+- Dialog: `.torch/browse-dialog.log`
 
 The `console`, `network`, and `dialog` commands read from the in-memory
 buffers (not disk) so capture is real-time even when disk is slow.
@@ -1062,7 +1062,7 @@ Refs are cleared on switch (the iframe has its own AX tree).
 ### State save/load
 
 ```bash
-$B state save my-session         # save cookies + URLs to .gstack/browse-state-my-session.json
+$B state save my-session         # save cookies + URLs to .torch/browse-state-my-session.json
 $B state load my-session         # restore
 ```
 
@@ -1088,7 +1088,7 @@ $B inbox --clear                 # clear after reading
 
 The sidebar scout (a background process the Chrome extension can spawn) drops
 notes for Claude when the user surfaces something they want noticed. Stored
-in `.gstack/browser-scout.jsonl`.
+in `.torch/browser-scout.jsonl`.
 
 ---
 
@@ -1142,11 +1142,11 @@ for cheap coverage maps.
 |------|-----------|------------------|---------------------------|
 | Chrome MCP | ~5s | ~2-5s | ~2000 tokens (schema + protocol) |
 | Playwright MCP | ~3s | ~1-3s | ~1500 tokens (schema + protocol) |
-| **gstack browse** | **~3s** | **~100-200ms** | **0 tokens** (plain text stdout) |
-| **gstack browse + codified skill** | **~3s** | **~200ms** | **0 tokens** (single skill invocation) |
+| **torch browse** | **~3s** | **~100-200ms** | **0 tokens** (plain text stdout) |
+| **torch browse + codified skill** | **~3s** | **~200ms** | **0 tokens** (single skill invocation) |
 
 In a 20-command browser session, MCP tools burn 30,000–40,000 tokens on
-protocol framing alone. gstack burns zero. The codified-skill path takes a
+protocol framing alone. torch burns zero. The codified-skill path takes a
 20-command session down to a single `$B skill run` call.
 
 ### Why CLI over MCP
@@ -1161,7 +1161,7 @@ pure overhead:
 - **Unnecessary abstraction** — Claude already has a Bash tool. A CLI that
   prints to stdout is the simplest possible interface.
 
-gstack skips all of this. Compiled binary. Plain text in, plain text out.
+torch skips all of this. Compiled binary. Plain text in, plain text out.
 No protocol. No schema. No connection management.
 
 ---
@@ -1174,12 +1174,12 @@ collisions.
 
 | Workspace | State file | Port |
 |-----------|-----------|------|
-| `/code/project-a` | `/code/project-a/.gstack/browse.json` | random (10000–60000) |
-| `/code/project-b` | `/code/project-b/.gstack/browse.json` | random (10000–60000) |
+| `/code/project-a` | `/code/project-a/.torch/browse.json` | random (10000–60000) |
+| `/code/project-b` | `/code/project-b/.torch/browse.json` | random (10000–60000) |
 
 Browser-skills three-tier lookup walks project → global → bundled, so a
-project-tier skill at `/code/project-a/.gstack/browser-skills/foo/` shadows
-the global `~/.gstack/browser-skills/foo/` only inside project-a.
+project-tier skill at `/code/project-a/.torch/browser-skills/foo/` shadows
+the global `~/.torch/browser-skills/foo/` only inside project-a.
 
 ---
 
@@ -1189,21 +1189,21 @@ the global `~/.gstack/browser-skills/foo/` only inside project-a.
 |----------|---------|-------------|
 | `BROWSE_PORT` | 0 (random 10000–60000) | Fixed port for the HTTP server (debug override) |
 | `BROWSE_IDLE_TIMEOUT` | 1800000 (30 min) | Idle shutdown timeout in ms |
-| `BROWSE_STATE_FILE` | `.gstack/browse.json` | Path to state file |
+| `BROWSE_STATE_FILE` | `.torch/browse.json` | Path to state file |
 | `BROWSE_SERVER_SCRIPT` | auto-detected | Path to `server.ts` |
 | `BROWSE_CDP_URL` | (none) | Set to `channel:chrome` for real-browser mode |
 | `BROWSE_CDP_PORT` | 0 | CDP port (used internally) |
 | `BROWSE_HEADLESS_SKIP` | 0 | Skip Chromium launch entirely (test harness only) |
 | `BROWSE_TUNNEL` | 0 | Activate the dual-listener tunnel architecture (requires `NGROK_AUTHTOKEN`) |
 | `BROWSE_TUNNEL_LOCAL_ONLY` | 0 | Test-only — bind both listeners locally without ngrok |
-| `GSTACK_BROWSE_MAX_HTML_BYTES` | 52428800 (50MB) | `load-html` size cap |
-| `GSTACK_SECURITY_OFF` | unset | Emergency kill switch — disable ML classifier |
-| `GSTACK_SECURITY_ENSEMBLE` | unset | Set to `deberta` for 3-classifier ensemble (721MB download) |
-| `GSTACK_STEALTH` | unset | Set to `extended` (also accepts `1`/`true`) to layer six aggressive patches (WebGL spoof, faked plugins, mediaDevices) on top of Layer C. Actively lies; can break sites. |
-| `GSTACK_CDP_STEALTH` | unset | Set to `on`/`1`/`true` to emit `--gstack-suppress-prepare-stack-trace` (gbrowser Pack 2 / B11 C++ patch only; no-op on stock Chromium) |
-| `GSTACK_GPU_VENDOR`, `GSTACK_GPU_RENDERER`, `GSTACK_GPU_CHIPSET` | unset | Per-install GPU spoof fed to the Pack 1 WebGL/UA-CH C++ patches. Set by gbd from the host profile; emitted as `--gstack-gpu-vendor` / `--gstack-gpu-renderer` / `--gstack-ua-model` cmdline switches only when present. |
-| `GSTACK_PLATFORM` | unset | Host platform classification (`MacARM`/`MacIntel` → `macOS`, `Win32` → `Windows`, `Linux*` → `Linux`) emitted as `--gstack-ua-platform` |
-| `GSTACK_HW_CONCURRENCY`, `GSTACK_DEVICE_MEMORY` | host profile (fallback 8) | Per-install `hardwareConcurrency`/`deviceMemory` reported by Layer C and emitted as `--gstack-hw-concurrency` / `--gstack-device-memory` for the worker-navigator C++ patch |
+| `torch_BROWSE_MAX_HTML_BYTES` | 52428800 (50MB) | `load-html` size cap |
+| `torch_SECURITY_OFF` | unset | Emergency kill switch — disable ML classifier |
+| `torch_SECURITY_ENSEMBLE` | unset | Set to `deberta` for 3-classifier ensemble (721MB download) |
+| `torch_STEALTH` | unset | Set to `extended` (also accepts `1`/`true`) to layer six aggressive patches (WebGL spoof, faked plugins, mediaDevices) on top of Layer C. Actively lies; can break sites. |
+| `torch_CDP_STEALTH` | unset | Set to `on`/`1`/`true` to emit `--torch-suppress-prepare-stack-trace` (gbrowser Pack 2 / B11 C++ patch only; no-op on stock Chromium) |
+| `torch_GPU_VENDOR`, `torch_GPU_RENDERER`, `torch_GPU_CHIPSET` | unset | Per-install GPU spoof fed to the Pack 1 WebGL/UA-CH C++ patches. Set by gbd from the host profile; emitted as `--torch-gpu-vendor` / `--torch-gpu-renderer` / `--torch-ua-model` cmdline switches only when present. |
+| `torch_PLATFORM` | unset | Host platform classification (`MacARM`/`MacIntel` → `macOS`, `Win32` → `Windows`, `Linux*` → `Linux`) emitted as `--torch-ua-platform` |
+| `torch_HW_CONCURRENCY`, `torch_DEVICE_MEMORY` | host profile (fallback 8) | Per-install `hardwareConcurrency`/`deviceMemory` reported by Layer C and emitted as `--torch-hw-concurrency` / `--torch-device-memory` for the worker-navigator C++ patch |
 
 ---
 
@@ -1219,7 +1219,7 @@ browse/
 │   ├── proxy-config.ts          # --proxy URL parsing + cred resolution (URL vs env, fail-fast on both)
 │   ├── proxy-redact.ts          # Cred-redaction helper for any proxy URL surfaced to logs/errors
 │   ├── xvfb.ts                  # Xvfb auto-spawn + orphan cleanup with PID + start-time validation
-│   ├── stealth.ts               # Layer C: webdriver mask + window.chrome.* + Notification/Permissions + per-install hardware + toString proxy + automation-global sweep; buildGStackLaunchArgs (GSTACK_* cmdline switches); GSTACK_STEALTH=extended opt-in
+│   ├── stealth.ts               # Layer C: webdriver mask + window.chrome.* + Notification/Permissions + per-install hardware + toString proxy + automation-global sweep; buildtorchLaunchArgs (torch_* cmdline switches); torch_STEALTH=extended opt-in
 │   ├── browse-client.ts         # Canonical SDK — what skills import as _lib/browse-client.ts
 │   ├── snapshot.ts              # AX tree → @e/@c refs → Locator map; -D/-a/-C handling
 │   ├── read-commands.ts         # Non-mutating: text, html, links, js, css, is, dialog, ...
@@ -1241,7 +1241,7 @@ browse/
 │   ├── token-registry.ts        # Mint/validate/revoke for root + setup keys + scoped tokens
 │   ├── sse-session-cookie.ts    # 30-min HttpOnly cookie for /activity/stream + /inspector/events
 │   ├── pty-session-cookie.ts    # Separate scope: live Claude PTY auth
-│   ├── tunnel-denial-log.ts     # ~/.gstack/security/attempts.jsonl writer (salted)
+│   ├── tunnel-denial-log.ts     # ~/.torch/security/attempts.jsonl writer (salted)
 │   ├── path-security.ts         # validateOutputPath / validateReadPath / validateTempPath
 │   ├── url-validation.ts        # URL safety checks for goto
 │   ├── content-security.ts      # L1-L3: datamarking, hidden strip, ARIA, URL blocklist, envelopes
@@ -1272,8 +1272,8 @@ browser-skills/
     ├── fixtures/hn-2026-04-26.html
     └── script.test.ts
 
-scrape/SKILL.md.tmpl             # /scrape gstack skill — match-or-prototype entry point
-skillify/SKILL.md.tmpl           # /skillify gstack skill — codify last /scrape into permanent skill
+scrape/SKILL.md.tmpl             # /scrape torch skill — match-or-prototype entry point
+skillify/SKILL.md.tmpl           # /skillify torch skill — codify last /scrape into permanent skill
 ```
 
 ---
@@ -1349,14 +1349,14 @@ SKILL.md contract (sibling SDK byte-identity, frontmatter schema).
 
 For an agent-written skill: drive the page once with `/scrape <intent>`,
 say `/skillify`, accept the proposed name in the approval gate. The skill
-lands at `~/.gstack/browser-skills/<name>/` after the test passes.
+lands at `~/.torch/browser-skills/<name>/` after the test passes.
 
 ### Deploying to the active skill
 
-The active skill lives at `~/.claude/skills/gstack/`. After making changes:
+The active skill lives at `~/.claude/skills/torch/`. After making changes:
 
 ```bash
-cd ~/.claude/skills/gstack
+cd ~/.claude/skills/torch
 git fetch origin && git reset --hard origin/main
 bun run build
 ```
@@ -1364,7 +1364,7 @@ bun run build
 Or copy the binary directly:
 
 ```bash
-cp browse/dist/browse ~/.claude/skills/gstack/browse/dist/browse
+cp browse/dist/browse ~/.claude/skills/torch/browse/dist/browse
 ```
 
 ---

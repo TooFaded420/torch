@@ -1,13 +1,13 @@
 /**
- * bin-context — tiny shared helpers for non-interactive gstack bins that need the
+ * bin-context — tiny shared helpers for non-interactive torch bins that need the
  * project slug, current branch, and argv flags. Extracted from the decision bins
- * (gstack-decision-log / gstack-decision-search) so the slug/branch/flag plumbing
+ * (torch-decision-log / torch-decision-search) so the slug/branch/flag plumbing
  * lives in one audited place instead of being copy-pasted per bin.
  */
 
 import { spawnSync } from "child_process";
 
-/** Resolve the project slug via the `gstack-slug` helper (parses `SLUG=...`). */
+/** Resolve the project slug via the `torch-slug` helper (parses `SLUG=...`). */
 export function resolveSlug(slugBinPath: string): string {
   const r = spawnSync(slugBinPath, { encoding: "utf-8" });
   const m = (r.stdout || "").match(/^SLUG=(.+)$/m);

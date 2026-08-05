@@ -14,12 +14,12 @@
  *        diff and a paragraph-boundary assertion on top.
  *
  * Resolution order for the pdftotext binary (v1.24-aligned):
- *   1. $GSTACK_PDFTOTEXT_BIN env override (preferred, matches v1.24 GSTACK_*_BIN pattern)
+ *   1. $torch_PDFTOTEXT_BIN env override (preferred, matches v1.24 torch_*_BIN pattern)
  *   2. $PDFTOTEXT_BIN env override (back-compat alias)
  *   3. PATH lookup via Bun.which('pdftotext') — handles Windows PATHEXT natively
  *   4. standard POSIX paths (Homebrew + distro) — no Windows candidates because
  *      Poppler scatters across Scoop / Chocolatey / oschwartz10612-poppler-windows
- *      and guessing causes false positives. Set GSTACK_PDFTOTEXT_BIN explicitly.
+ *      and guessing causes false positives. Set torch_PDFTOTEXT_BIN explicitly.
  *   5. throws a friendly "install poppler" error
  *
  * The wrapper is *optional at runtime*: production renders don't need it.
@@ -72,8 +72,8 @@ function resolveOverride(value: string | undefined, env: NodeJS.ProcessEnv): str
  * Locate pdftotext. Throws PdftotextUnavailableError if none is found.
  */
 export function resolvePdftotext(env: NodeJS.ProcessEnv = process.env): PdftotextInfo {
-  // 1 + 2: env overrides (GSTACK_PDFTOTEXT_BIN preferred, PDFTOTEXT_BIN back-compat).
-  const overrideRaw = env.GSTACK_PDFTOTEXT_BIN ?? env.PDFTOTEXT_BIN;
+  // 1 + 2: env overrides (torch_PDFTOTEXT_BIN preferred, PDFTOTEXT_BIN back-compat).
+  const overrideRaw = env.torch_PDFTOTEXT_BIN ?? env.PDFTOTEXT_BIN;
   const override = resolveOverride(overrideRaw, env);
   if (override) return describeBinary(override);
 
@@ -84,7 +84,7 @@ export function resolvePdftotext(env: NodeJS.ProcessEnv = process.env): Pdftotex
 
   // 4: POSIX-only standard locations. No Windows candidates — Poppler installs
   // scatter across Scoop/Chocolatey/portable zips and guessing causes false
-  // positives. Windows users set GSTACK_PDFTOTEXT_BIN explicitly.
+  // positives. Windows users set torch_PDFTOTEXT_BIN explicitly.
   const posixCandidates = [
     "/opt/homebrew/bin/pdftotext",     // Apple Silicon Homebrew
     "/usr/local/bin/pdftotext",        // Intel Mac or Linuxbrew
@@ -107,17 +107,17 @@ export function resolvePdftotext(env: NodeJS.ProcessEnv = process.env): Pdftotex
     "  Windows:  scoop install poppler  (or download from",
     "            https://github.com/oschwartz10612/poppler-windows)",
     "",
-    "Or set GSTACK_PDFTOTEXT_BIN to an explicit path:",
+    "Or set torch_PDFTOTEXT_BIN to an explicit path:",
     process.platform === "win32"
-      ? '  setx GSTACK_PDFTOTEXT_BIN "C:\\path\\to\\pdftotext.exe"'
-      : "  export GSTACK_PDFTOTEXT_BIN=/path/to/pdftotext",
+      ? '  setx torch_PDFTOTEXT_BIN "C:\\path\\to\\pdftotext.exe"'
+      : "  export torch_PDFTOTEXT_BIN=/path/to/pdftotext",
   ].join("\n"));
 }
 
 /**
  * Locate a poppler companion tool (pdffonts, pdfimages, pdftoppm) used by the
  * emoji render gate. Mirrors resolvePdftotext's resolution order:
- *   1. $GSTACK_<TOOL>_BIN env override (e.g. GSTACK_PDFFONTS_BIN)
+ *   1. $torch_<TOOL>_BIN env override (e.g. torch_PDFFONTS_BIN)
  *   2. PATH via Bun.which
  *   3. standard POSIX locations (Homebrew + distro)
  *
@@ -128,7 +128,7 @@ export function resolvePopplerTool(
   tool: "pdffonts" | "pdfimages" | "pdftoppm",
   env: NodeJS.ProcessEnv = process.env,
 ): string | null {
-  const override = resolveOverride(env[`GSTACK_${tool.toUpperCase()}_BIN`], env);
+  const override = resolveOverride(env[`torch_${tool.toUpperCase()}_BIN`], env);
   if (override) return override;
 
   const PATH = env.PATH ?? env.Path ?? "";

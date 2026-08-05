@@ -3,7 +3,7 @@
  *
  * Resolution:
  *   1. BROWSE_STATE_FILE env → derive stateDir from parent
- *   2. git rev-parse --show-toplevel → projectDir/.gstack/
+ *   2. git rev-parse --show-toplevel → projectDir/.torch/
  *   3. process.cwd() fallback (non-git environments)
  *
  * The CLI computes the config and passes BROWSE_STATE_FILE to the
@@ -60,10 +60,10 @@ export function resolveConfig(
   if (env.BROWSE_STATE_FILE) {
     stateFile = env.BROWSE_STATE_FILE;
     stateDir = path.dirname(stateFile);
-    projectDir = path.dirname(stateDir); // parent of .gstack/
+    projectDir = path.dirname(stateDir); // parent of .torch/
   } else {
     projectDir = getGitRoot() || process.cwd();
-    stateDir = path.join(projectDir, '.gstack');
+    stateDir = path.join(projectDir, '.torch');
     stateFile = path.join(stateDir, 'browse.json');
   }
 
@@ -79,7 +79,7 @@ export function resolveConfig(
 }
 
 /**
- * Create the .gstack/ state directory if it doesn't exist.
+ * Create the .torch/ state directory if it doesn't exist.
  * Throws with a clear message on permission errors.
  */
 export function ensureStateDir(config: BrowseConfig): void {
@@ -95,13 +95,13 @@ export function ensureStateDir(config: BrowseConfig): void {
     throw err;
   }
 
-  // Ensure .gstack/ is in the project's .gitignore
+  // Ensure .torch/ is in the project's .gitignore
   const gitignorePath = path.join(config.projectDir, '.gitignore');
   try {
     const content = fs.readFileSync(gitignorePath, 'utf-8');
-    if (!content.match(/^\.gstack\/?$/m)) {
+    if (!content.match(/^\.torch\/?$/m)) {
       const separator = content.endsWith('\n') ? '' : '\n';
-      fs.appendFileSync(gitignorePath, `${separator}.gstack/\n`);
+      fs.appendFileSync(gitignorePath, `${separator}.torch/\n`);
     }
   } catch (err: any) {
     if (err.code !== 'ENOENT') {
@@ -155,14 +155,14 @@ export function readVersionHash(execPath: string = process.execPath): string | n
 }
 
 /**
- * Resolve the gstack home directory.
+ * Resolve the torch home directory.
  *
  * Honors the existing convention used by telemetry.ts and domain-skills.ts:
- *   1. GSTACK_HOME env (explicit override)
- *   2. $HOME/.gstack (default)
+ *   1. torch_HOME env (explicit override)
+ *   2. $HOME/.torch (default)
  */
-export function resolveGstackHome(): string {
-  return process.env.GSTACK_HOME || path.join(os.homedir(), '.gstack');
+export function resolvetorchHome(): string {
+  return process.env.torch_HOME || path.join(os.homedir(), '.torch');
 }
 
 /**
@@ -171,13 +171,13 @@ export function resolveGstackHome(): string {
  * Resolution order:
  *   1. `explicit` arg (passed via ServerConfig.chromiumProfile by embedders)
  *   2. CHROMIUM_PROFILE env (used by gbrowser's gbd per-workspace)
- *   3. <resolveGstackHome()>/chromium-profile (default)
+ *   3. <resolvetorchHome()>/chromium-profile (default)
  */
 export function resolveChromiumProfile(explicit?: string): string {
   if (explicit && explicit.length > 0) return explicit;
   const env = process.env.CHROMIUM_PROFILE;
   if (env && env.length > 0) return env;
-  return path.join(resolveGstackHome(), 'chromium-profile');
+  return path.join(resolvetorchHome(), 'chromium-profile');
 }
 
 /**
@@ -196,7 +196,7 @@ export function resolveChromiumProfile(explicit?: string): string {
  *
  * Caller MUST ensure external coordination has already guaranteed no live
  * peer is using this profile (gbd.lock for gbrowser; single-instance CLI
- * check for gstack).
+ * check for torch).
  */
 export function cleanSingletonLocks(userDataDir: string): void {
   if (!path.isAbsolute(userDataDir)) {

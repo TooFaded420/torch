@@ -1,5 +1,5 @@
 #!/bin/bash
-# Build GStack Browser.app — macOS application bundle
+# Build torch Browser.app — macOS application bundle
 #
 # Creates a self-contained .app with:
 #   - Compiled browse binary
@@ -7,7 +7,7 @@
 #   - Chrome extension (sidebar)
 #   - Info.plist with bundle ID
 #
-# Output: dist/GStack Browser.app and dist/GStack-Browser.dmg
+# Output: dist/torch Browser.app and dist/torch-Browser.dmg
 #
 # Usage:
 #   ./scripts/build-app.sh           # Build .app + DMG
@@ -17,8 +17,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-APP_NAME="GStack Browser"
-BUNDLE_ID="com.gstack.browser"
+APP_NAME="torch Browser"
+BUNDLE_ID="com.torch.browser"
 VERSION=$(cat "$ROOT/VERSION" 2>/dev/null || echo "0.0.1")
 BUILD_DIR="$ROOT/dist"
 APP_DIR="$BUILD_DIR/$APP_NAME.app"
@@ -56,8 +56,8 @@ mkdir -p "$APP_DIR/Contents/MacOS"
 mkdir -p "$APP_DIR/Contents/Resources"
 
 # Launcher script
-cp "$ROOT/scripts/app/gstack-browser" "$APP_DIR/Contents/MacOS/gstack-browser"
-chmod +x "$APP_DIR/Contents/MacOS/gstack-browser"
+cp "$ROOT/scripts/app/torch-browser" "$APP_DIR/Contents/MacOS/torch-browser"
+chmod +x "$APP_DIR/Contents/MacOS/torch-browser"
 
 # Browse binary
 cp "$BUILD_DIR/browse-app" "$APP_DIR/Contents/Resources/browse"
@@ -82,7 +82,7 @@ echo "  Copying Chromium (~330MB)..."
 cp -a "$CHROME_APP" "$APP_DIR/Contents/Resources/chromium/"
 
 # ─── Step 3b: Rebrand Chromium ────────────────────────────────────
-# Patch the bundled Chromium's Info.plist so macOS shows "GStack Browser"
+# Patch the bundled Chromium's Info.plist so macOS shows "torch Browser"
 # in the menu bar, Dock, and Cmd+Tab instead of "Google Chrome for Testing"
 CHROMIUM_PLIST="$APP_DIR/Contents/Resources/chromium/$(basename "$CHROME_APP")/Contents/Info.plist"
 if [ -f "$CHROMIUM_PLIST" ]; then
@@ -98,7 +98,7 @@ if [ -f "$CHROMIUM_PLIST" ]; then
     APP_NAME_SED_ESCAPED=$(printf '%s' "$APP_NAME" | sed 's/[&/\]/\\&/g')
     sed -i '' "s/Google Chrome for Testing/${APP_NAME_SED_ESCAPED}/g" "$CHROMIUM_STRINGS" 2>/dev/null || true
   fi
-  # Replace Chromium's icon with ours so the Dock shows the GStack icon
+  # Replace Chromium's icon with ours so the Dock shows the torch icon
   # (Chromium's process owns the Dock icon, not our launcher)
   ICON_SRC="$SCRIPT_DIR/app/icon.icns"
   if [ -f "$ICON_SRC" ]; then
@@ -138,7 +138,7 @@ cat > "$APP_DIR/Contents/Info.plist" << PLIST
   <key>CFBundleShortVersionString</key>
   <string>$VERSION</string>
   <key>CFBundleExecutable</key>
-  <string>gstack-browser</string>
+  <string>torch-browser</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleSignature</key>
@@ -161,7 +161,7 @@ PLIST
 APP_SIZE=$(du -sh "$APP_DIR" | cut -f1)
 echo ""
 echo "  $APP_NAME.app: $APP_SIZE"
-echo "    Contents/MacOS/gstack-browser     (launcher)"
+echo "    Contents/MacOS/torch-browser     (launcher)"
 echo "    Contents/Resources/browse          ($(du -sh "$APP_DIR/Contents/Resources/browse" | cut -f1))"
 echo "    Contents/Resources/extension/      ($(du -sh "$APP_DIR/Contents/Resources/extension" | cut -f1))"
 echo "    Contents/Resources/chromium/       ($(du -sh "$APP_DIR/Contents/Resources/chromium" | cut -f1))"
@@ -173,7 +173,7 @@ if [ "${1:-}" = "--no-dmg" ]; then
   exit 0
 fi
 
-DMG_PATH="$BUILD_DIR/GStack-Browser.dmg"
+DMG_PATH="$BUILD_DIR/torch-Browser.dmg"
 echo ""
 echo "  Creating DMG..."
 rm -f "$DMG_PATH"

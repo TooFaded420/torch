@@ -1,7 +1,7 @@
 ## Step 2: Per-File Documentation Audit
 
 Read each documentation file and cross-reference it against the diff. Use these generic heuristics
-(adapt to whatever project you're in — these are not gstack-specific):
+(adapt to whatever project you're in — these are not torch-specific):
 
 **README.md:**
 - Does it describe all features and capabilities visible in the diff?
@@ -211,12 +211,12 @@ git push
 
 **If GitHub:**
 ```bash
-gh pr view --json body -q .body > /tmp/gstack-pr-body-$$.md
+gh pr view --json body -q .body > /tmp/torch-pr-body-$$.md
 ```
 
 **If GitLab:**
 ```bash
-glab mr view -F json 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('description',''))" > /tmp/gstack-pr-body-$$.md
+glab mr view -F json 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('description',''))" > /tmp/torch-pr-body-$$.md
 ```
 
 2. If the tempfile already contains a `## Documentation` section, replace that section with the
@@ -239,23 +239,23 @@ glab mr view -F json 2>/dev/null | python3 -c "import sys,json; print(json.load(
    If there are any documentation debt items, suggest adding a `docs-debt` label to the PR.
 
 4. Redaction scan-at-sink, then write the updated body back. The body is already
-   in a temp file (`/tmp/gstack-pr-body-$$.md`); scan THAT file before editing so
+   in a temp file (`/tmp/torch-pr-body-$$.md`); scan THAT file before editing so
    the bytes scanned are the bytes sent:
 
 ```bash
-REDACT_VIS=$(~/.claude/skills/gstack/bin/gstack-config get redact_repo_visibility 2>/dev/null)
+REDACT_VIS=$(~/.claude/skills/torch/bin/torch-config get redact_repo_visibility 2>/dev/null)
 [ -z "$REDACT_VIS" ] && REDACT_VIS=$(gh repo view --json visibility -q .visibility 2>/dev/null | tr 'A-Z' 'a-z')
-~/.claude/skills/gstack/bin/gstack-redact --from-file /tmp/gstack-pr-body-$$.md --repo-visibility "${REDACT_VIS:-unknown}" --json
+~/.claude/skills/torch/bin/torch-redact --from-file /tmp/torch-pr-body-$$.md --repo-visibility "${REDACT_VIS:-unknown}" --json
 # exit 3 (HIGH) → do NOT edit, rotate+redact; exit 2 (MEDIUM) → confirm per finding.
 ```
 
 **If GitHub:**
 ```bash
-gh pr edit --body-file /tmp/gstack-pr-body-$$.md
+gh pr edit --body-file /tmp/torch-pr-body-$$.md
 ```
 
 **If GitLab:**
-Read the contents of `/tmp/gstack-pr-body-$$.md` using the Read tool, then pass it to `glab mr update` using a heredoc to avoid shell metacharacter issues:
+Read the contents of `/tmp/torch-pr-body-$$.md` using the Read tool, then pass it to `glab mr update` using a heredoc to avoid shell metacharacter issues:
 ```bash
 glab mr update -d "$(cat <<'MRBODY'
 <paste the file contents here>
@@ -266,7 +266,7 @@ MRBODY
 5. Clean up the tempfile:
 
 ```bash
-rm -f /tmp/gstack-pr-body-$$.md
+rm -f /tmp/torch-pr-body-$$.md
 ```
 
 6. If `gh pr view` / `glab mr view` fails (no PR/MR exists): skip with message "No PR/MR found — skipping body update."
@@ -302,7 +302,7 @@ If `CURRENT_TITLE` is empty (no open PR/MR), skip with message "No PR/MR found �
 3. Compute the corrected title using the shared helper (single source of truth — same one `/ship` uses):
 
 ```bash
-NEW_TITLE=$(~/.claude/skills/gstack/bin/gstack-pr-title-rewrite.sh "$V" "$CURRENT_TITLE")
+NEW_TITLE=$(~/.claude/skills/torch/bin/torch-pr-title-rewrite.sh "$V" "$CURRENT_TITLE")
 ```
 
 The helper handles three cases: title already correct (no-op), title has a different `v<X.Y.Z.W>` prefix (replace it), or title has no version prefix (prepend one).

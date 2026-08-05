@@ -6,7 +6,7 @@ const ROOT = path.resolve(import.meta.dir, "..");
 const read = (rel: string) => fs.readFileSync(path.join(ROOT, rel), "utf-8");
 
 // #1731 tripwire. Windows can't spawn the `gbrain` shim (gbrain.cmd) or the bash
-// shebang script gstack-brain-sync without a shell; the fix gates `shell: true`
+// shebang script torch-brain-sync without a shell; the fix gates `shell: true`
 // behind NEEDS_SHELL_ON_WINDOWS. These static checks fail CI if a refactor adds
 // a gbrain/brain-sync child spawn without the Windows shell flag, since macOS/
 // Linux CI can't exercise the Windows path at runtime.
@@ -35,7 +35,7 @@ describe("#1731 gbrain spawns carry the Windows shell flag", () => {
   }
 
   test("orchestrator brain-sync spawns carry the Windows shell flag", () => {
-    const src = read("bin/gstack-gbrain-sync.ts");
+    const src = read("bin/torch-gbrain-sync.ts");
     const brainSyncSpawns = src.match(/spawnSync\(brainSyncPath,/g)?.length ?? 0;
     expect(brainSyncSpawns).toBe(2);
     // Both spawnSync(brainSyncPath, ...) blocks must include the shell flag.

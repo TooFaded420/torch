@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
-# Supabase project config for gstack telemetry
-# These are PUBLIC keys — safe to commit (like Firebase public config).
-# RLS denies all access to the anon key. All reads and writes go through
-# edge functions (which use SUPABASE_SERVICE_ROLE_KEY server-side).
+# Supabase project config for torch telemetry
+# These are PUBLIC keys - safe to commit (like Firebase public config).
+# RLS posture (migrations 002-006):
+#   - telemetry_events / update_checks / views: anon reads fully denied
+#   - installations: anon SELECT+UPDATE allowed for tracking columns only,
+#     so the telemetry-ingest edge function can upsert last_seen with the
+#     anon key (no service-role key used anywhere in the ingest path)
 
-GSTACK_SUPABASE_URL="https://frugpmstpnojnhfyimgv.supabase.co"
-GSTACK_SUPABASE_ANON_KEY="sb_publishable_tR4i6cyMIrYTE3s6OyHGHw_ppx2p6WK"
+torch_SUPABASE_URL="https://dbbwvouxosctgkmnmzac.supabase.co"
+torch_SUPABASE_ANON_KEY="sb_publishable_hkQjQLghsmAoHOjTqXpAvA_N7v0R-2r"

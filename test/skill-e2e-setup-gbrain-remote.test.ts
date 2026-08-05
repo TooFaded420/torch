@@ -118,13 +118,13 @@ exit 0
 describeE2E('/setup-gbrain Path 4 (Remote MCP) — happy path', () => {
   test('verifies, registers HTTP MCP, never writes token to CLAUDE.md', async () => {
     const stubServer = await startStubMcpServer();
-    const gstackHome = fs.mkdtempSync(path.join(os.tmpdir(), 'setup-gbrain-remote-'));
+    const torchHome = fs.mkdtempSync(path.join(os.tmpdir(), 'setup-gbrain-remote-'));
     const fakeBinDir = fs.mkdtempSync(path.join(os.tmpdir(), 'setup-gbrain-remote-bin-'));
     const callLog = makeFakeClaude(fakeBinDir);
 
-    // The skill writes CLAUDE.md in cwd. Use gstackHome as cwd so we
+    // The skill writes CLAUDE.md in cwd. Use torchHome as cwd so we
     // can inspect it after the run.
-    fs.writeFileSync(path.join(gstackHome, 'CLAUDE.md'), '# Test project\n');
+    fs.writeFileSync(path.join(torchHome, 'CLAUDE.md'), '# Test project\n');
 
     const SECRET_TOKEN = 'gbrain_TEST_TOKEN_THAT_MUST_NEVER_LEAK_84613';
     const askUserQuestions: Array<{ input: Record<string, unknown> }> = [];
@@ -132,11 +132,11 @@ describeE2E('/setup-gbrain Path 4 (Remote MCP) — happy path', () => {
 
     // Ambient env mutations. Restored in finally.
     const orig = {
-      gstackHome: process.env.GSTACK_HOME,
+      torchHome: process.env.torch_HOME,
       pathEnv: process.env.PATH,
       mcpToken: process.env.GBRAIN_MCP_TOKEN,
     };
-    process.env.GSTACK_HOME = gstackHome;
+    process.env.torch_HOME = torchHome;
     process.env.PATH = `${fakeBinDir}:${path.join(path.resolve(import.meta.dir, '..'), 'bin')}:${process.env.PATH ?? '/usr/bin:/bin:/opt/homebrew/bin'}`;
     process.env.GBRAIN_MCP_TOKEN = SECRET_TOKEN;
 
@@ -154,7 +154,7 @@ describeE2E('/setup-gbrain Path 4 (Remote MCP) — happy path', () => {
           `Skip the artifacts-repo provisioning step (Step 7) — answer "No thanks". ` +
           `Skip per-remote policy (Step 6) — answer "skip-for-now". ` +
           `Walk through Steps 4a, 4b, 4c, 5a, 8, 10 ONLY.`,
-        workingDirectory: gstackHome,
+        workingDirectory: torchHome,
         maxTurns: 25,
         allowedTools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit'],
         ...(binary ? { pathToClaudeCodeExecutable: binary } : {}),
@@ -198,7 +198,7 @@ describeE2E('/setup-gbrain Path 4 (Remote MCP) — happy path', () => {
       expect(calls).toMatch(/mcp add.*--transport http/);
 
       // Assertion 3: the secret token NEVER appears in the final CLAUDE.md.
-      const claudeMd = fs.readFileSync(path.join(gstackHome, 'CLAUDE.md'), 'utf-8');
+      const claudeMd = fs.readFileSync(path.join(torchHome, 'CLAUDE.md'), 'utf-8');
       expect(claudeMd).not.toContain(SECRET_TOKEN);
 
       // Assertion 4: CLAUDE.md got the remote-http block.
@@ -207,16 +207,16 @@ describeE2E('/setup-gbrain Path 4 (Remote MCP) — happy path', () => {
       // Assertion 5: classifier — the model didn't write findings before
       // asking. The Path 4 prose has 5 STOP gates; if any of them got
       // skipped, that's the wrote_findings_before_asking pattern.
-      const wroteBefore = /## GSTACK REVIEW REPORT|critical_gaps/i.test(modelTextOutput);
+      const wroteBefore = /## torch REVIEW REPORT|critical_gaps/i.test(modelTextOutput);
       // Setup-gbrain doesn't have a review report contract, so this is
       // a structural shape check, not a hard failure mode.
       expect(wroteBefore).toBe(false);
     } finally {
-      if (orig.gstackHome === undefined) delete process.env.GSTACK_HOME; else process.env.GSTACK_HOME = orig.gstackHome;
+      if (orig.torchHome === undefined) delete process.env.torch_HOME; else process.env.torch_HOME = orig.torchHome;
       if (orig.pathEnv === undefined) delete process.env.PATH; else process.env.PATH = orig.pathEnv;
       if (orig.mcpToken === undefined) delete process.env.GBRAIN_MCP_TOKEN; else process.env.GBRAIN_MCP_TOKEN = orig.mcpToken;
       await stubServer.close();
-      fs.rmSync(gstackHome, { recursive: true, force: true });
+      fs.rmSync(torchHome, { recursive: true, force: true });
       fs.rmSync(fakeBinDir, { recursive: true, force: true });
     }
   }, 240_000);

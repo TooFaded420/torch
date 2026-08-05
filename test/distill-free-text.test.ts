@@ -1,5 +1,5 @@
 /**
- * gstack-distill-free-text — Layer 8 dream cycle (plan-tune cathedral T10).
+ * torch-distill-free-text — Layer 8 dream cycle (plan-tune cathedral T10).
  *
  * Covers the SDK-free paths: status, dry-run, rate cap, no-event handling.
  * The real API call path is exercised by the E2E test in T16; here we
@@ -13,15 +13,15 @@ import * as os from 'os';
 import { spawnSync } from 'child_process';
 
 const ROOT = path.resolve(import.meta.dir, '..');
-const BIN = path.join(ROOT, 'bin', 'gstack-distill-free-text');
-const QLOG_BIN = path.join(ROOT, 'bin', 'gstack-question-log');
+const BIN = path.join(ROOT, 'bin', 'torch-distill-free-text');
+const QLOG_BIN = path.join(ROOT, 'bin', 'torch-question-log');
 
 let stateRoot: string;
 let fixtureCwd: string;
 let cwdSlug: string;
 
 beforeEach(() => {
-  stateRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'gstack-dist-'));
+  stateRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'torch-dist-'));
   cwdSlug = 'distill-fixture';
   fixtureCwd = path.join(stateRoot, cwdSlug);
   fs.mkdirSync(fixtureCwd, { recursive: true });
@@ -36,9 +36,9 @@ function makeEnv(extra: Record<string, string> = {}): Record<string, string> {
   for (const [k, v] of Object.entries(process.env)) {
     if (v !== undefined) env[k] = v;
   }
-  env.GSTACK_STATE_ROOT = stateRoot;
-  env.GSTACK_QUESTION_LOG_NO_DERIVE = '1';
-  delete env.GSTACK_HOME;
+  env.torch_STATE_ROOT = stateRoot;
+  env.torch_QUESTION_LOG_NO_DERIVE = '1';
+  delete env.torch_HOME;
   return { ...env, ...extra };
 }
 

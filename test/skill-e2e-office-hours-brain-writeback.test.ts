@@ -8,7 +8,7 @@
  *
  * Approach:
  *   1. Regenerate office-hours/SKILL.md with --respect-detection against
- *      a temp GSTACK_HOME that has detected:true. Snapshot the rendered
+ *      a temp torch_HOME that has detected:true. Snapshot the rendered
  *      content (which now contains the compressed SAVE_RESULTS block),
  *      then restore the canonical no-gbrain version so the working tree
  *      stays clean.
@@ -91,7 +91,7 @@ describeIfSelected(
       copyFileSync(briefSrc, join(workDir, 'pitch.md'));
 
       // Generate a brain-aware office-hours/SKILL.md (with --respect-detection
-      // against a temp GSTACK_HOME). Snapshot the content, restore the
+      // against a temp torch_HOME). Snapshot the content, restore the
       // canonical version, write the snapshot into the workdir.
       const tmpHome = mkdtempSync(join(tmpdir(), 'gbrain-detect-home-'));
       writeFileSync(
@@ -123,7 +123,7 @@ describeIfSelected(
           ],
           {
             cwd: ROOT,
-            env: { ...process.env, GSTACK_HOME: tmpHome },
+            env: { ...process.env, torch_HOME: tmpHome },
             stdio: ['ignore', 'pipe', 'pipe'],
             timeout: 60_000,
           },

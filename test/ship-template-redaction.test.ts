@@ -26,7 +26,7 @@ const TMPL = readShipTemplateUnion();
 
 describe("/ship redaction wiring", () => {
   test("scans the PR body via the shared bin before create", () => {
-    expect(TMPL).toContain("gstack-redact --from-file");
+    expect(TMPL).toContain("torch-redact --from-file");
     expect(TMPL).toMatch(/Redaction scan \(PR body \+ title\)/);
   });
   test("creates from the scanned temp file (exact bytes)", () => {

@@ -1,5 +1,5 @@
 /**
- * gstack-gbrain-supabase-provision — Supabase Management API wrapper.
+ * torch-gbrain-supabase-provision — Supabase Management API wrapper.
  *
  * All tests run against a per-test local mock HTTP server (Bun.serve)
  * that returns fixture responses. Never hits the real Supabase API, never
@@ -19,7 +19,7 @@ import * as os from 'os';
 import * as path from 'path';
 
 const ROOT = path.resolve(import.meta.dir, '..');
-const BIN = path.join(ROOT, 'bin', 'gstack-gbrain-supabase-provision');
+const BIN = path.join(ROOT, 'bin', 'torch-gbrain-supabase-provision');
 
 // Minimal PATH that finds jq/curl but excludes user bins.
 const SAFE_PATH = '/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:/usr/local/bin';
@@ -460,7 +460,7 @@ describe('pooler-url', () => {
     expect(r.stderr).not.toContain('rewriting');
   });
 
-  test('GSTACK_SUPABASE_TRUST_API_PORT=1 disables the rewrite', async () => {
+  test('torch_SUPABASE_TRUST_API_PORT=1 disables the rewrite', async () => {
     mock = startMock({
       [`GET /v1/projects/${REF}/config/database/pooler`]: () =>
         jsonResp({ ...POOLER_OK, pool_mode: 'transaction', db_port: 6543 }),
@@ -469,7 +469,7 @@ describe('pooler-url', () => {
       SUPABASE_ACCESS_TOKEN: 'sbp_test',
       DB_PASS: 'pw',
       SUPABASE_API_BASE: mock.url,
-      GSTACK_SUPABASE_TRUST_API_PORT: '1',
+      torch_SUPABASE_TRUST_API_PORT: '1',
     });
     expect(r.status).toBe(0);
     expect(JSON.parse(r.stdout).pooler_url).toContain(':6543/postgres');

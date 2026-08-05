@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { resolveConfig, ensureStateDir, readVersionHash, getGitRoot, getRemoteSlug, resolveGstackHome, resolveChromiumProfile, cleanSingletonLocks } from '../src/config';
+import { resolveConfig, ensureStateDir, readVersionHash, getGitRoot, getRemoteSlug, resolvetorchHome, resolveChromiumProfile, cleanSingletonLocks } from '../src/config';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -19,15 +19,15 @@ describe('config', () => {
       const gitRoot = getGitRoot();
       expect(gitRoot).not.toBeNull();
       expect(config.projectDir).toBe(gitRoot);
-      expect(config.stateDir).toBe(path.join(gitRoot!, '.gstack'));
-      expect(config.stateFile).toBe(path.join(gitRoot!, '.gstack', 'browse.json'));
+      expect(config.stateDir).toBe(path.join(gitRoot!, '.torch'));
+      expect(config.stateFile).toBe(path.join(gitRoot!, '.torch', 'browse.json'));
     });
 
     test('derives paths from BROWSE_STATE_FILE when set', () => {
-      const stateFile = '/tmp/test-config/.gstack/browse.json';
+      const stateFile = '/tmp/test-config/.torch/browse.json';
       const config = resolveConfig({ BROWSE_STATE_FILE: stateFile });
       expect(config.stateFile).toBe(stateFile);
-      expect(config.stateDir).toBe('/tmp/test-config/.gstack');
+      expect(config.stateDir).toBe('/tmp/test-config/.torch');
       expect(config.projectDir).toBe('/tmp/test-config');
     });
 
@@ -42,7 +42,7 @@ describe('config', () => {
   describe('ensureStateDir', () => {
     test('creates directory if it does not exist', () => {
       const tmpDir = path.join(os.tmpdir(), `browse-config-test-${Date.now()}`);
-      const config = resolveConfig({ BROWSE_STATE_FILE: path.join(tmpDir, '.gstack', 'browse.json') });
+      const config = resolveConfig({ BROWSE_STATE_FILE: path.join(tmpDir, '.torch', 'browse.json') });
       expect(fs.existsSync(config.stateDir)).toBe(false);
       ensureStateDir(config);
       expect(fs.existsSync(config.stateDir)).toBe(true);
@@ -52,7 +52,7 @@ describe('config', () => {
 
     test('is a no-op if directory already exists', () => {
       const tmpDir = path.join(os.tmpdir(), `browse-config-test-${Date.now()}`);
-      const stateDir = path.join(tmpDir, '.gstack');
+      const stateDir = path.join(tmpDir, '.torch');
       fs.mkdirSync(stateDir, { recursive: true });
       const config = resolveConfig({ BROWSE_STATE_FILE: path.join(stateDir, 'browse.json') });
       ensureStateDir(config); // should not throw
@@ -61,26 +61,26 @@ describe('config', () => {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     });
 
-    test('adds .gstack/ to .gitignore if not present', () => {
+    test('adds .torch/ to .gitignore if not present', () => {
       const tmpDir = path.join(os.tmpdir(), `browse-gitignore-test-${Date.now()}`);
       fs.mkdirSync(tmpDir, { recursive: true });
       fs.writeFileSync(path.join(tmpDir, '.gitignore'), 'node_modules/\n');
-      const config = resolveConfig({ BROWSE_STATE_FILE: path.join(tmpDir, '.gstack', 'browse.json') });
+      const config = resolveConfig({ BROWSE_STATE_FILE: path.join(tmpDir, '.torch', 'browse.json') });
       ensureStateDir(config);
       const content = fs.readFileSync(path.join(tmpDir, '.gitignore'), 'utf-8');
-      expect(content).toContain('.gstack/');
-      expect(content).toBe('node_modules/\n.gstack/\n');
+      expect(content).toContain('.torch/');
+      expect(content).toBe('node_modules/\n.torch/\n');
       fs.rmSync(tmpDir, { recursive: true, force: true });
     });
 
-    test('does not duplicate .gstack/ in .gitignore', () => {
+    test('does not duplicate .torch/ in .gitignore', () => {
       const tmpDir = path.join(os.tmpdir(), `browse-gitignore-test-${Date.now()}`);
       fs.mkdirSync(tmpDir, { recursive: true });
-      fs.writeFileSync(path.join(tmpDir, '.gitignore'), 'node_modules/\n.gstack/\n');
-      const config = resolveConfig({ BROWSE_STATE_FILE: path.join(tmpDir, '.gstack', 'browse.json') });
+      fs.writeFileSync(path.join(tmpDir, '.gitignore'), 'node_modules/\n.torch/\n');
+      const config = resolveConfig({ BROWSE_STATE_FILE: path.join(tmpDir, '.torch', 'browse.json') });
       ensureStateDir(config);
       const content = fs.readFileSync(path.join(tmpDir, '.gitignore'), 'utf-8');
-      expect(content).toBe('node_modules/\n.gstack/\n');
+      expect(content).toBe('node_modules/\n.torch/\n');
       fs.rmSync(tmpDir, { recursive: true, force: true });
     });
 
@@ -88,20 +88,20 @@ describe('config', () => {
       const tmpDir = path.join(os.tmpdir(), `browse-gitignore-test-${Date.now()}`);
       fs.mkdirSync(tmpDir, { recursive: true });
       fs.writeFileSync(path.join(tmpDir, '.gitignore'), 'node_modules');
-      const config = resolveConfig({ BROWSE_STATE_FILE: path.join(tmpDir, '.gstack', 'browse.json') });
+      const config = resolveConfig({ BROWSE_STATE_FILE: path.join(tmpDir, '.torch', 'browse.json') });
       ensureStateDir(config);
       const content = fs.readFileSync(path.join(tmpDir, '.gitignore'), 'utf-8');
-      expect(content).toBe('node_modules\n.gstack/\n');
+      expect(content).toBe('node_modules\n.torch/\n');
       fs.rmSync(tmpDir, { recursive: true, force: true });
     });
 
     test('logs warning to browse-server.log on non-ENOENT gitignore error', () => {
       const tmpDir = path.join(os.tmpdir(), `browse-gitignore-test-${Date.now()}`);
       fs.mkdirSync(tmpDir, { recursive: true });
-      // Create a read-only .gitignore (no .gstack/ entry → would try to append)
+      // Create a read-only .gitignore (no .torch/ entry → would try to append)
       fs.writeFileSync(path.join(tmpDir, '.gitignore'), 'node_modules/\n');
       fs.chmodSync(path.join(tmpDir, '.gitignore'), 0o444);
-      const config = resolveConfig({ BROWSE_STATE_FILE: path.join(tmpDir, '.gstack', 'browse.json') });
+      const config = resolveConfig({ BROWSE_STATE_FILE: path.join(tmpDir, '.torch', 'browse.json') });
       ensureStateDir(config); // should not throw
       // Verify warning was written to server log
       const logPath = path.join(config.stateDir, 'browse-server.log');
@@ -119,7 +119,7 @@ describe('config', () => {
     test('skips if no .gitignore exists', () => {
       const tmpDir = path.join(os.tmpdir(), `browse-gitignore-test-${Date.now()}`);
       fs.mkdirSync(tmpDir, { recursive: true });
-      const config = resolveConfig({ BROWSE_STATE_FILE: path.join(tmpDir, '.gstack', 'browse.json') });
+      const config = resolveConfig({ BROWSE_STATE_FILE: path.join(tmpDir, '.torch', 'browse.json') });
       ensureStateDir(config);
       expect(fs.existsSync(path.join(tmpDir, '.gitignore'))).toBe(false);
       fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -136,24 +136,24 @@ describe('config', () => {
 
     test('parses SSH remote URLs', () => {
       // Test the regex directly since we can't mock Bun.spawnSync easily
-      const url = 'git@github.com:garrytan/gstack.git';
+      const url = 'git@github.com:h3cz/torch.git';
       const match = url.match(/[:/]([^/]+)\/([^/]+?)(?:\.git)?$/);
       expect(match).not.toBeNull();
-      expect(`${match![1]}-${match![2]}`).toBe('garrytan-gstack');
+      expect(`${match![1]}-${match![2]}`).toBe('h3cz-torch');
     });
 
     test('parses HTTPS remote URLs', () => {
-      const url = 'https://github.com/garrytan/gstack.git';
+      const url = 'https://github.com/h3cz/torch.git';
       const match = url.match(/[:/]([^/]+)\/([^/]+?)(?:\.git)?$/);
       expect(match).not.toBeNull();
-      expect(`${match![1]}-${match![2]}`).toBe('garrytan-gstack');
+      expect(`${match![1]}-${match![2]}`).toBe('h3cz-torch');
     });
 
     test('parses HTTPS remote URLs without .git suffix', () => {
-      const url = 'https://github.com/garrytan/gstack';
+      const url = 'https://github.com/h3cz/torch';
       const match = url.match(/[:/]([^/]+)\/([^/]+?)(?:\.git)?$/);
       expect(match).not.toBeNull();
-      expect(`${match![1]}-${match![2]}`).toBe('garrytan-gstack');
+      expect(`${match![1]}-${match![2]}`).toBe('h3cz-torch');
     });
   });
 
@@ -315,25 +315,25 @@ describe('startup error log', () => {
   });
 });
 
-describe('resolveGstackHome', () => {
-  test('honors GSTACK_HOME env var when set', () => {
-    const orig = process.env.GSTACK_HOME;
-    process.env.GSTACK_HOME = '/tmp/custom-gstack-home';
+describe('resolvetorchHome', () => {
+  test('honors torch_HOME env var when set', () => {
+    const orig = process.env.torch_HOME;
+    process.env.torch_HOME = '/tmp/custom-torch-home';
     try {
-      expect(resolveGstackHome()).toBe('/tmp/custom-gstack-home');
+      expect(resolvetorchHome()).toBe('/tmp/custom-torch-home');
     } finally {
-      if (orig === undefined) delete process.env.GSTACK_HOME;
-      else process.env.GSTACK_HOME = orig;
+      if (orig === undefined) delete process.env.torch_HOME;
+      else process.env.torch_HOME = orig;
     }
   });
 
-  test('falls back to os.homedir() + /.gstack when env unset', () => {
-    const orig = process.env.GSTACK_HOME;
-    delete process.env.GSTACK_HOME;
+  test('falls back to os.homedir() + /.torch when env unset', () => {
+    const orig = process.env.torch_HOME;
+    delete process.env.torch_HOME;
     try {
-      expect(resolveGstackHome()).toBe(path.join(os.homedir(), '.gstack'));
+      expect(resolvetorchHome()).toBe(path.join(os.homedir(), '.torch'));
     } finally {
-      if (orig !== undefined) process.env.GSTACK_HOME = orig;
+      if (orig !== undefined) process.env.torch_HOME = orig;
     }
   });
 });
@@ -361,17 +361,17 @@ describe('resolveChromiumProfile', () => {
     }
   });
 
-  test('falls back to resolveGstackHome()/chromium-profile when nothing set', () => {
+  test('falls back to resolvetorchHome()/chromium-profile when nothing set', () => {
     const origEnv = process.env.CHROMIUM_PROFILE;
-    const origHome = process.env.GSTACK_HOME;
+    const origHome = process.env.torch_HOME;
     delete process.env.CHROMIUM_PROFILE;
-    process.env.GSTACK_HOME = '/tmp/fallback-gstack';
+    process.env.torch_HOME = '/tmp/fallback-torch';
     try {
-      expect(resolveChromiumProfile()).toBe('/tmp/fallback-gstack/chromium-profile');
+      expect(resolveChromiumProfile()).toBe('/tmp/fallback-torch/chromium-profile');
     } finally {
       if (origEnv !== undefined) process.env.CHROMIUM_PROFILE = origEnv;
-      if (origHome === undefined) delete process.env.GSTACK_HOME;
-      else process.env.GSTACK_HOME = origHome;
+      if (origHome === undefined) delete process.env.torch_HOME;
+      else process.env.torch_HOME = origHome;
     }
   });
 

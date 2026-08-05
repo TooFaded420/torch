@@ -18,11 +18,11 @@
 setopt +o nomatch 2>/dev/null || true  # zsh compat
 BRANCH=$(git branch --show-current 2>/dev/null | tr '/' '-')
 REPO=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
-# Compute project slug for ~/.gstack/projects/ lookup
+# Compute project slug for ~/.torch/projects/ lookup
 _PLAN_SLUG=$(git remote get-url origin 2>/dev/null | sed 's|.*[:/]\([^/]*/[^/]*\)\.git$|\1|;s|.*[:/]\([^/]*/[^/]*\)$|\1|' | tr '/' '-' | tr -cd 'a-zA-Z0-9._-') || true
 _PLAN_SLUG="${_PLAN_SLUG:-$(basename "$PWD" | tr -cd 'a-zA-Z0-9._-')}"
 # Search common plan file locations (project designs first, then personal/local)
-for PLAN_DIR in "$HOME/.gstack/projects/$_PLAN_SLUG" "$HOME/.claude/plans" "$HOME/.codex/plans" ".gstack/plans"; do
+for PLAN_DIR in "$HOME/.torch/projects/$_PLAN_SLUG" "$HOME/.claude/plans" "$HOME/.codex/plans" ".torch/plans"; do
   [ -d "$PLAN_DIR" ] || continue
   PLAN=$(ls -t "$PLAN_DIR"/*.md 2>/dev/null | xargs grep -l "$BRANCH" 2>/dev/null | head -1)
   [ -z "$PLAN" ] && PLAN=$(ls -t "$PLAN_DIR"/*.md 2>/dev/null | xargs grep -l "$REPO" 2>/dev/null | head -1)
@@ -52,7 +52,7 @@ Read the plan file. Extract every actionable item — anything that describes wo
 **Ignore:**
 - Context/Background sections (`## Context`, `## Background`, `## Problem`)
 - Questions and open items (marked with ?, "TBD", "TODO: decide")
-- Review report sections (`## GSTACK REVIEW REPORT`)
+- Review report sections (`## torch REVIEW REPORT`)
 - Explicitly deferred items ("Future:", "Out of scope:", "NOT in scope:", "P2:", "P3:", "P4:")
 - CEO Review Decisions sections (these record choices, not work items)
 
@@ -251,18 +251,18 @@ Add a `## Verification Results` section to the PR body (Step 19):
 Search for relevant learnings from previous sessions:
 
 ```bash
-_CROSS_PROJ=$(~/.claude/skills/gstack/bin/gstack-config get cross_project_learnings 2>/dev/null || echo "unset")
+_CROSS_PROJ=$(~/.claude/skills/torch/bin/torch-config get cross_project_learnings 2>/dev/null || echo "unset")
 echo "CROSS_PROJECT: $_CROSS_PROJ"
 if [ "$_CROSS_PROJ" = "true" ]; then
-  ~/.claude/skills/gstack/bin/gstack-learnings-search --limit 10 --query "release ship version changelog merge pr" --cross-project 2>/dev/null || true
+  ~/.claude/skills/torch/bin/torch-learnings-search --limit 10 --query "release ship version changelog merge pr" --cross-project 2>/dev/null || true
 else
-  ~/.claude/skills/gstack/bin/gstack-learnings-search --limit 10 --query "release ship version changelog merge pr" 2>/dev/null || true
+  ~/.claude/skills/torch/bin/torch-learnings-search --limit 10 --query "release ship version changelog merge pr" 2>/dev/null || true
 fi
 ```
 
 If `CROSS_PROJECT` is `unset` (first time): Use AskUserQuestion:
 
-> gstack can search learnings from your other projects on this machine to find
+> torch can search learnings from your other projects on this machine to find
 > patterns that might apply here. This stays local (no data leaves your machine).
 > Recommended for solo developers. Skip if you work on multiple client codebases
 > where cross-contamination would be a concern.
@@ -271,8 +271,8 @@ Options:
 - A) Enable cross-project learnings (recommended)
 - B) Keep learnings project-scoped only
 
-If A: run `~/.claude/skills/gstack/bin/gstack-config set cross_project_learnings true`
-If B: run `~/.claude/skills/gstack/bin/gstack-config set cross_project_learnings false`
+If A: run `~/.claude/skills/torch/bin/torch-config set cross_project_learnings true`
+If B: run `~/.claude/skills/torch/bin/torch-config set cross_project_learnings false`
 
 Then re-run the search with the appropriate flag.
 
@@ -281,7 +281,7 @@ matches a past learning, display:
 
 **"Prior learning applied: [key] (confidence N/10, from [date])"**
 
-This makes the compounding visible. The user should see that gstack is getting
+This makes the compounding visible. The user should see that torch is getting
 smarter on their codebase over time.
 
 ## Step 8.2: Scope Drift Detection

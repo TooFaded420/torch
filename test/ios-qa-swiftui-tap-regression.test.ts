@@ -24,7 +24,7 @@ describe('ios-fix regression fixture — SwiftUI taps reported success without a
 
   test('keeps the physical-device deploy/tap test opt-in and executable', () => {
     const deviceTest = readFileSync(join(ROOT, 'test/skill-e2e-ios-device.test.ts'), 'utf8');
-    expect(deviceTest).toContain("process.env.GSTACK_IOS_DEVICE_DEPLOY === '1'");
+    expect(deviceTest).toContain("process.env.torch_IOS_DEVICE_DEPLOY === '1'");
     expect(deviceTest).toContain("'primary-button'");
     expect(deviceTest).toContain("'/tap'");
     expect(deviceTest).not.toContain("test.skip('TODO(deploy)");

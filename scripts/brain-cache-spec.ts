@@ -2,7 +2,7 @@
  * Brain cache spec — single source of truth for the brain-aware planning skills
  * cache layer. Imported by:
  *   - scripts/resolvers/gbrain.ts (renders per-skill subset into SKILL.md.tmpl)
- *   - bin/gstack-brain-cache (drives TTL + write-back invalidation)
+ *   - bin/torch-brain-cache (drives TTL + write-back invalidation)
  *   - test/brain-cache-spec.test.ts (asserts internal consistency)
  *   - test/skill-preflight-budget.test.ts (enforces per-skill token budget)
  *   - test/autoplan-preflight-budget.test.ts (enforces autoplan total budget)
@@ -12,7 +12,7 @@
  */
 
 export interface BrainCacheEntity {
-  /** Filename inside ~/.gstack/{,projects/<slug>/}brain-cache/ */
+  /** Filename inside ~/.torch/{,projects/<slug>/}brain-cache/ */
   file: string;
   /** Time-to-live in milliseconds before cache is considered stale and triggers cold refresh. */
   ttl_ms: number;
@@ -22,7 +22,7 @@ export interface BrainCacheEntity {
    * Which write-paths invalidate this digest. When a writer runs, it consults
    * this list to know which cache files to bust. Special values:
    *   - 'calibration-write' — any Phase 2 takes_add call
-   *   - 'skill-run-write'   — any skill that writes a gstack/skill-run page
+   *   - 'skill-run-write'   — any skill that writes a torch/skill-run page
    * Otherwise these are skill names like '/plan-ceo-review'.
    */
   invalidated_by: ReadonlyArray<string>;
@@ -32,10 +32,10 @@ export interface BrainCacheEntity {
 
 /**
  * The seven cached entities mirror the seven typed page kinds in
- * `gstack-core` schema pack v1.0.0 (Phase 0):
+ * `torch-core` schema pack v1.0.0 (Phase 0):
  *   user-profile, product, goal, developer-persona, brand, competitive-intel, skill-run
  * Plus two derived digests:
- *   recent-decisions (top 5 gstack/skill-run pages)
+ *   recent-decisions (top 5 torch/skill-run pages)
  *   salience (mcp__gbrain__get_recent_salience output)
  */
 export const BRAIN_CACHE_ENTITIES: Record<string, BrainCacheEntity> = {
@@ -134,12 +134,12 @@ export const AUTOPLAN_PREFLIGHT_BUDGET_BYTES = 25_600;
  * D9 salience privacy: default allowlist of slug prefixes that are safe to surface
  * in planning prompts. Anything outside (personal/, family/, therapy/, etc.)
  * gets stripped at digest write time. User can extend via
- * `gstack-config set salience_allowlist '<comma-separated-prefixes>'`.
+ * `torch-config set salience_allowlist '<comma-separated-prefixes>'`.
  */
 export const SALIENCE_DEFAULT_ALLOWLIST: ReadonlyArray<string> = [
   'projects/',
   'concepts/',
-  'gstack/',
+  'torch/',
 ];
 
 /**
@@ -163,7 +163,7 @@ export const SKILL_CALIBRATION_WEIGHTS: Record<string, number> = {
 export const CACHE_REFRESH_LOCK_TIMEOUT_MS = 5 * 60_000;
 
 /**
- * Retention policy: gstack/skill-run pages auto-archive after this many days.
+ * Retention policy: torch/skill-run pages auto-archive after this many days.
  * Calibration takes (kind=bet) NEVER archive (long-term scorecard needs them).
  */
 export const SKILL_RUN_RETENTION_DAYS = 90;
@@ -173,8 +173,8 @@ export const SKILL_RUN_RETENTION_DAYS = 90;
  * On mismatch with the version recorded in _meta.json, the cache layer
  * triggers a FULL rebuild for the affected project.
  */
-export const GSTACK_SCHEMA_PACK_NAME = 'gstack-core';
-export const GSTACK_SCHEMA_PACK_VERSION = '1.0.0';
+export const torch_SCHEMA_PACK_NAME = 'torch-core';
+export const torch_SCHEMA_PACK_VERSION = '1.0.0';
 
 /**
  * Trust policy values. Drives auto-push of artifacts, calibration write-back
@@ -198,7 +198,7 @@ export const TRANSPORT_DEFAULT_POLICY: Record<string, BrainTrustPolicy | 'infer'
 
 /**
  * User-slug fallback chain (D4 A3 defensive default). Resolved once per endpoint
- * and persisted via `gstack-config set user_slug_at_<endpoint-hash> <slug>`.
+ * and persisted via `torch-config set user_slug_at_<endpoint-hash> <slug>`.
  * Stable across sessions.
  */
 export const USER_SLUG_RESOLUTION_ORDER = [

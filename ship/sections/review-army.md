@@ -58,7 +58,7 @@ The verification is "I read the source that creates this symbol", not "I
 grep'd for the name and didn't find it." Deeper framework-aware verification
 (model introspection, migration-history-aware checks, ORM dialect detection)
 is deliberately out of scope for the lighter gate — see the deferred
-`~/.gstack-dev/plans/1539-framework-aware-review.md` design doc.
+`~/.torch-dev/plans/1539-framework-aware-review.md` design doc.
 
 The FP classes the gate kills (measured against Django Sprint 2.5 #1539):
 
@@ -76,10 +76,10 @@ higher confidence.
 
 ## Design Review (conditional, diff-scoped)
 
-Check if the diff touches frontend files using `gstack-diff-scope`:
+Check if the diff touches frontend files using `torch-diff-scope`:
 
 ```bash
-source <(~/.claude/skills/gstack/bin/gstack-diff-scope <base> 2>/dev/null)
+source <(~/.claude/skills/torch/bin/torch-diff-scope <base> 2>/dev/null)
 ```
 
 **If `SCOPE_FRONTEND=false`:** Skip design review silently. No output.
@@ -102,7 +102,7 @@ source <(~/.claude/skills/gstack/bin/gstack-diff-scope <base> 2>/dev/null)
 6. **Log the result** for the Review Readiness Dashboard:
 
 ```bash
-~/.claude/skills/gstack/bin/gstack-review-log '{"skill":"design-review-lite","timestamp":"TIMESTAMP","status":"STATUS","findings":N,"auto_fixed":M,"commit":"COMMIT"}'
+~/.claude/skills/torch/bin/torch-review-log '{"skill":"design-review-lite","timestamp":"TIMESTAMP","status":"STATUS","findings":N,"auto_fixed":M,"commit":"COMMIT"}'
 ```
 
 Substitute: TIMESTAMP = ISO 8601 datetime, STATUS = "clean" if 0 findings or "issues_found", N = total findings, M = auto-fixed count, COMMIT = output of `git rev-parse --short HEAD`.
@@ -137,7 +137,7 @@ Present Codex output under a `CODEX (design):` header, merged with the checklist
 ### Detect stack and scope
 
 ```bash
-source <(~/.claude/skills/gstack/bin/gstack-diff-scope <base> 2>/dev/null) || true
+source <(~/.claude/skills/torch/bin/torch-diff-scope <base> 2>/dev/null) || true
 # Detect stack for specialist context
 STACK=""
 [ -f Gemfile ] && STACK="${STACK}ruby "
@@ -164,7 +164,7 @@ echo "TEST_FW: ${TEST_FW:-unknown}"
 ### Read specialist hit rates (adaptive gating)
 
 ```bash
-~/.claude/skills/gstack/bin/gstack-specialist-stats 2>/dev/null || true
+~/.claude/skills/torch/bin/torch-specialist-stats 2>/dev/null || true
 ```
 
 ### Select specialists
@@ -172,23 +172,23 @@ echo "TEST_FW: ${TEST_FW:-unknown}"
 Based on the scope signals above, select which specialists to dispatch.
 
 **Always-on (dispatch on every review with 50+ changed lines):**
-1. **Testing** — read `~/.claude/skills/gstack/review/specialists/testing.md`
-2. **Maintainability** — read `~/.claude/skills/gstack/review/specialists/maintainability.md`
+1. **Testing** — read `~/.claude/skills/torch/review/specialists/testing.md`
+2. **Maintainability** — read `~/.claude/skills/torch/review/specialists/maintainability.md`
 
 **If DIFF_LINES < 50:** Skip all specialists. Print: "Small diff ($DIFF_LINES lines) — specialists skipped." Continue to the Fix-First flow (item 4).
 
 **Conditional (dispatch if the matching scope signal is true):**
-3. **Security** — if SCOPE_AUTH=true, OR if SCOPE_BACKEND=true AND DIFF_LINES > 100. Read `~/.claude/skills/gstack/review/specialists/security.md`
-4. **Performance** — if SCOPE_BACKEND=true OR SCOPE_FRONTEND=true. Read `~/.claude/skills/gstack/review/specialists/performance.md`
-5. **Data Migration** — if SCOPE_MIGRATIONS=true. Read `~/.claude/skills/gstack/review/specialists/data-migration.md`
-6. **API Contract** — if SCOPE_API=true. Read `~/.claude/skills/gstack/review/specialists/api-contract.md`
-7. **Design** — if SCOPE_FRONTEND=true. Use the existing design review checklist at `~/.claude/skills/gstack/review/design-checklist.md`
+3. **Security** — if SCOPE_AUTH=true, OR if SCOPE_BACKEND=true AND DIFF_LINES > 100. Read `~/.claude/skills/torch/review/specialists/security.md`
+4. **Performance** — if SCOPE_BACKEND=true OR SCOPE_FRONTEND=true. Read `~/.claude/skills/torch/review/specialists/performance.md`
+5. **Data Migration** — if SCOPE_MIGRATIONS=true. Read `~/.claude/skills/torch/review/specialists/data-migration.md`
+6. **API Contract** — if SCOPE_API=true. Read `~/.claude/skills/torch/review/specialists/api-contract.md`
+7. **Design** — if SCOPE_FRONTEND=true. Use the existing design review checklist at `~/.claude/skills/torch/review/design-checklist.md`
 
 ### Adaptive gating
 
 After scope-based selection, apply adaptive gating based on specialist hit rates:
 
-For each conditional specialist that passed scope gating, check the `gstack-specialist-stats` output above:
+For each conditional specialist that passed scope gating, check the `torch-specialist-stats` output above:
 - If tagged `[GATE_CANDIDATE]` (0 findings in 10+ dispatches): skip it. Print: "[specialist] auto-gated (0 findings in N reviews)."
 - If tagged `[NEVER_GATE]`: always dispatch regardless of hit rate. Security and data-migration are insurance policy specialists — they should run even when silent.
 
@@ -214,7 +214,7 @@ Construct the prompt for each specialist. The prompt includes:
 3. Past learnings for this domain (if any exist):
 
 ```bash
-~/.claude/skills/gstack/bin/gstack-learnings-search --type pitfall --query "{specialist domain}" --limit 5 2>/dev/null || true
+~/.claude/skills/torch/bin/torch-learnings-search --type pitfall --query "{specialist domain}" --limit 5 2>/dev/null || true
 ```
 
 If learnings are found, include them: "Past learnings for this domain: {learnings}"
@@ -319,7 +319,7 @@ Remember these stats — you will need them for the review-log entry in Step 5.8
 If activated, dispatch one more subagent via the Agent tool (foreground, not background).
 
 The Red Team subagent receives:
-1. The red-team checklist from `~/.claude/skills/gstack/review/specialists/red-team.md`
+1. The red-team checklist from `~/.claude/skills/torch/review/specialists/red-team.md`
 2. The merged specialist findings from Step 9.2 (so it knows what was already caught)
 3. The git diff command
 
@@ -341,7 +341,7 @@ If the Red Team subagent fails or times out, skip silently and continue.
 Before classifying findings, check if any were previously skipped by the user in a prior review on this branch.
 
 ```bash
-~/.claude/skills/gstack/bin/gstack-review-read
+~/.claude/skills/torch/bin/torch-review-read
 ```
 
 Parse the output: only lines BEFORE `---CONFIG---` are JSONL entries (the output also contains `---CONFIG---` and `---HEAD---` footer sections that are not JSONL — ignore those).
@@ -392,7 +392,7 @@ Output a summary header: `Pre-Landing Review: N issues (X critical, Y informatio
 
 9. Persist the review result to the review log:
 ```bash
-~/.claude/skills/gstack/bin/gstack-review-log '{"skill":"review","timestamp":"TIMESTAMP","status":"STATUS","issues_found":N,"critical":N,"informational":N,"quality_score":SCORE,"specialists":SPECIALISTS_JSON,"findings":FINDINGS_JSON,"commit":"'"$(git rev-parse --short HEAD)"'","via":"ship"}'
+~/.claude/skills/torch/bin/torch-review-log '{"skill":"review","timestamp":"TIMESTAMP","status":"STATUS","issues_found":N,"critical":N,"informational":N,"quality_score":SCORE,"specialists":SPECIALISTS_JSON,"findings":FINDINGS_JSON,"commit":"'"$(git rev-parse --short HEAD)"'","via":"ship"}'
 ```
 Substitute TIMESTAMP (ISO 8601), STATUS ("clean" if no issues, "issues_found" otherwise),
 and N values from the summary counts above. The `via:"ship"` distinguishes from standalone `/review` runs.

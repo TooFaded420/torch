@@ -1,7 +1,7 @@
 /**
  * Layer 8 memory cache + injection (plan-tune cathedral T12).
  *
- * Verifies the PreToolUse hook reads ~/.gstack/free-text-memory.json and
+ * Verifies the PreToolUse hook reads ~/.torch/free-text-memory.json and
  * surfaces matching nuggets via additionalContext on the hook response.
  * Cache: per-session memory-cache.json populated on first read, sub-1ms
  * thereafter (D13 perf).
@@ -21,7 +21,7 @@ let fixtureCwd: string;
 let cwdSlug: string;
 
 beforeEach(() => {
-  stateRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'gstack-memcache-'));
+  stateRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'torch-memcache-'));
   cwdSlug = 'memcache-fixture';
   fixtureCwd = path.join(stateRoot, cwdSlug);
   fs.mkdirSync(fixtureCwd, { recursive: true });
@@ -40,9 +40,9 @@ function runHook(stdin: object): { stdout: string; stderr: string; status: numbe
   for (const [k, v] of Object.entries(process.env)) {
     if (v !== undefined) env[k] = v;
   }
-  env.GSTACK_STATE_ROOT = stateRoot;
-  env.GSTACK_QUESTION_LOG_NO_DERIVE = '1';
-  delete env.GSTACK_HOME;
+  env.torch_STATE_ROOT = stateRoot;
+  env.torch_QUESTION_LOG_NO_DERIVE = '1';
+  delete env.torch_HOME;
   // These cases assert the defer-path memoryContext injection. Strip ambient
   // Conductor markers so running inside Conductor (CONDUCTOR_WORKSPACE_PATH/PORT
   // set) doesn't flip the hook into the [conductor] prose deny instead of defer.
@@ -85,7 +85,7 @@ describe('memory injection', () => {
       tool_input: {
         questions: [
           {
-            question: '<gstack-qid:ship-todos-reorganize> Reorganize?',
+            question: '<torch-qid:ship-todos-reorganize> Reorganize?',
             options: ['A) Accept (recommended)', 'B) Skip'],
           },
         ],
@@ -109,7 +109,7 @@ describe('memory injection', () => {
       tool_input: {
         questions: [
           {
-            question: '<gstack-qid:ship-todos-reorganize> Reorganize?',
+            question: '<torch-qid:ship-todos-reorganize> Reorganize?',
             options: ['A) Accept (recommended)', 'B) Skip'],
           },
         ],
@@ -134,7 +134,7 @@ describe('memory injection', () => {
       tool_input: {
         questions: [
           {
-            question: '<gstack-qid:ship-todos-reorganize> Reorganize?',
+            question: '<torch-qid:ship-todos-reorganize> Reorganize?',
             options: ['A) Accept (recommended)', 'B) Skip'],
           },
         ],
@@ -168,7 +168,7 @@ describe('memory injection', () => {
       tool_input: {
         questions: [
           {
-            question: '<gstack-qid:ship-todos-reorganize> Reorganize?',
+            question: '<torch-qid:ship-todos-reorganize> Reorganize?',
             options: ['A) Accept (recommended)', 'B) Skip'],
           },
         ],
@@ -197,7 +197,7 @@ describe('per-session memory cache', () => {
       tool_use_id: 'tu-c1',
       tool_input: {
         questions: [
-          { question: '<gstack-qid:ship-todos-reorganize> Q', options: ['A', 'B'] },
+          { question: '<torch-qid:ship-todos-reorganize> Q', options: ['A', 'B'] },
         ],
       },
     });
@@ -215,7 +215,7 @@ describe('per-session memory cache', () => {
       tool_use_id: 'tu-e',
       tool_input: {
         questions: [
-          { question: '<gstack-qid:ship-todos-reorganize> Q', options: ['A', 'B'] },
+          { question: '<torch-qid:ship-todos-reorganize> Q', options: ['A', 'B'] },
         ],
       },
     });

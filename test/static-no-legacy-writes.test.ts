@@ -1,9 +1,9 @@
 /**
  * Static invariant test for #1671: nothing in production code should
- * append directly to ~/.gstack/builder-profile.jsonl. All session writes
- * must go through `gstack-developer-profile --log-session`. The legacy
+ * append directly to ~/.torch/builder-profile.jsonl. All session writes
+ * must go through `torch-developer-profile --log-session`. The legacy
  * file is now read-only — populated only by the pre-existing migration
- * and reconcile paths in bin/gstack-developer-profile.
+ * and reconcile paths in bin/torch-developer-profile.
  *
  * Prevents future regressions onto the legacy file that would re-create
  * the original bug (writer and reader disagreeing on storage location).
@@ -22,14 +22,14 @@ const ROOT = path.resolve(import.meta.dir, '..');
 // or document its existence — they do not write to it.
 const ALLOWED_FILES = new Set<string>([
   // The binary that reads + reconciles the legacy file.
-  'bin/gstack-developer-profile',
+  'bin/torch-developer-profile',
   // The legacy-shim binary that delegates reads.
-  'bin/gstack-builder-profile',
+  'bin/torch-builder-profile',
   // Memory-ingest reads the legacy file during reconcile period.
-  'bin/gstack-memory-ingest.ts',
+  'bin/torch-memory-ingest.ts',
   // The artifacts-init template registers the legacy file in
   // .brain-allowlist/.brain-privacy-map for users with pre-existing data.
-  'bin/gstack-artifacts-init',
+  'bin/torch-artifacts-init',
   // Documentation files mention the path.
   'CHANGELOG.md',
   'TODOS.md',
@@ -122,7 +122,7 @@ describe('#1671 invariant: no production code writes to builder-profile.jsonl', 
       throw new Error(
         `Found production writes to builder-profile.jsonl outside the allowlist.\n` +
           `These would re-create #1671 (writer/reader file mismatch).\n` +
-          `Use \`gstack-developer-profile --log-session\` instead.\n${msg}`,
+          `Use \`torch-developer-profile --log-session\` instead.\n${msg}`,
       );
     }
     expect(offending).toEqual([]);
@@ -131,14 +131,14 @@ describe('#1671 invariant: no production code writes to builder-profile.jsonl', 
   test('office-hours/SKILL.md uses --log-session, not raw echo append', () => {
     const skill = fs.readFileSync(path.join(ROOT, 'office-hours/SKILL.md'), 'utf-8');
     // The two known writer call-sites must use the new subcommand.
-    expect(skill).toContain('gstack-developer-profile --log-session');
+    expect(skill).toContain('torch-developer-profile --log-session');
     // And must NOT contain the old echo-append pattern.
     expect(skill).not.toMatch(/echo\s+['"][^'"]*['"]?\s*>>\s*["'][^"']*builder-profile\.jsonl/);
   });
 
   test('office-hours/SKILL.md.tmpl uses --log-session, not raw echo append', () => {
     const tmpl = fs.readFileSync(path.join(ROOT, 'office-hours/SKILL.md.tmpl'), 'utf-8');
-    expect(tmpl).toContain('gstack-developer-profile --log-session');
+    expect(tmpl).toContain('torch-developer-profile --log-session');
     expect(tmpl).not.toMatch(/echo\s+['"][^'"]*['"]?\s*>>\s*["'][^"']*builder-profile\.jsonl/);
   });
 });

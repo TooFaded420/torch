@@ -26,9 +26,9 @@ describe('extractSectionReads', () => {
   test('picks up section reads via the /sections/<file>.md segment', () => {
     const result = {
       toolCalls: [
-        read('/Users/x/.claude/skills/gstack-ship/sections/version-bump.md'),
+        read('/Users/x/.claude/skills/torch-ship/sections/version-bump.md'),
         read('ship/sections/changelog.md'),
-        read('/abs/.factory/skills/gstack-ship/sections/review-army.md'),
+        read('/abs/.factory/skills/torch-ship/sections/review-army.md'),
       ],
     };
     expect(extractSectionReads(result)).toEqual(['version-bump.md', 'changelog.md', 'review-army.md']);
@@ -63,7 +63,7 @@ describe('extractShipActions', () => {
       toolCalls: [
         bash('git merge origin/main'),
         bash('bun test'),
-        bash('gstack-version-bump --bump minor'),
+        bash('torch-version-bump --bump minor'),
         { tool: 'Edit', input: { file_path: 'CHANGELOG.md' }, output: '' },
         bash('git commit -m "v1.2.0.0 feat"'),
         bash('git push origin HEAD'),

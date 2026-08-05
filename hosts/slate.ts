@@ -6,8 +6,8 @@ const slate: HostConfig = {
   cliCommand: 'slate',
   cliAliases: [],
 
-  globalRoot: '.slate/skills/gstack',
-  localSkillRoot: '.slate/skills/gstack',
+  globalRoot: '.slate/skills/torch',
+  localSkillRoot: '.slate/skills/torch',
   hostSubdir: '.slate',
   usesEnvVars: true,
 
@@ -23,15 +23,15 @@ const slate: HostConfig = {
   },
 
   pathRewrites: [
-    { from: '~/.claude/skills/gstack', to: '~/.slate/skills/gstack' },
-    { from: '.claude/skills/gstack', to: '.slate/skills/gstack' },
+    { from: '~/.claude/skills/torch', to: '~/.slate/skills/torch' },
+    { from: '.claude/skills/torch', to: '.slate/skills/torch' },
     { from: '.claude/skills', to: '.slate/skills' },
   ],
 
   suppressedResolvers: ['GBRAIN_CONTEXT_LOAD', 'GBRAIN_SAVE_RESULTS'],
 
   runtimeRoot: {
-    globalSymlinks: ['bin', 'browse/dist', 'browse/bin', 'gstack-upgrade', 'ETHOS.md'],
+    globalSymlinks: ['bin', 'browse/dist', 'browse/bin', 'torch-upgrade', 'ETHOS.md'],
     globalFiles: {
       'review': ['checklist.md', 'TODOS-format.md'],
     },

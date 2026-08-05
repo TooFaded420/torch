@@ -11,18 +11,18 @@
 Search for relevant learnings from previous sessions:
 
 ```bash
-_CROSS_PROJ=$(~/.claude/skills/gstack/bin/gstack-config get cross_project_learnings 2>/dev/null || echo "unset")
+_CROSS_PROJ=$(~/.claude/skills/torch/bin/torch-config get cross_project_learnings 2>/dev/null || echo "unset")
 echo "CROSS_PROJECT: $_CROSS_PROJ"
 if [ "$_CROSS_PROJ" = "true" ]; then
-  ~/.claude/skills/gstack/bin/gstack-learnings-search --limit 10 --cross-project 2>/dev/null || true
+  ~/.claude/skills/torch/bin/torch-learnings-search --limit 10 --cross-project 2>/dev/null || true
 else
-  ~/.claude/skills/gstack/bin/gstack-learnings-search --limit 10 2>/dev/null || true
+  ~/.claude/skills/torch/bin/torch-learnings-search --limit 10 2>/dev/null || true
 fi
 ```
 
 If `CROSS_PROJECT` is `unset` (first time): Use AskUserQuestion:
 
-> gstack can search learnings from your other projects on this machine to find
+> torch can search learnings from your other projects on this machine to find
 > patterns that might apply here. This stays local (no data leaves your machine).
 > Recommended for solo developers. Skip if you work on multiple client codebases
 > where cross-contamination would be a concern.
@@ -31,8 +31,8 @@ Options:
 - A) Enable cross-project learnings (recommended)
 - B) Keep learnings project-scoped only
 
-If A: run `~/.claude/skills/gstack/bin/gstack-config set cross_project_learnings true`
-If B: run `~/.claude/skills/gstack/bin/gstack-config set cross_project_learnings false`
+If A: run `~/.claude/skills/torch/bin/torch-config set cross_project_learnings true`
+If B: run `~/.claude/skills/torch/bin/torch-config set cross_project_learnings false`
 
 Then re-run the search with the appropriate flag.
 
@@ -41,7 +41,7 @@ matches a past learning, display:
 
 **"Prior learning applied: [key] (confidence N/10, from [date])"**
 
-This makes the compounding visible. The user should see that gstack is getting
+This makes the compounding visible. The user should see that torch is getting
 smarter on their codebase over time.
 
 ### 1. Architecture review
@@ -105,7 +105,7 @@ The verification is "I read the source that creates this symbol", not "I
 grep'd for the name and didn't find it." Deeper framework-aware verification
 (model introspection, migration-history-aware checks, ORM dialect detection)
 is deliberately out of scope for the lighter gate — see the deferred
-`~/.gstack-dev/plans/1539-framework-aware-review.md` design doc.
+`~/.torch-dev/plans/1539-framework-aware-review.md` design doc.
 
 The FP classes the gate kills (measured against Django Sprint 2.5 #1539):
 
@@ -284,12 +284,12 @@ The plan should be complete enough that when implementation begins, every test i
 After producing the coverage diagram, write a test plan artifact to the project directory so `/qa` and `/qa-only` can consume it as primary test input:
 
 ```bash
-eval "$(~/.claude/skills/gstack/bin/gstack-slug 2>/dev/null)" && mkdir -p ~/.gstack/projects/$SLUG
+eval "$(~/.claude/skills/torch/bin/torch-slug 2>/dev/null)" && mkdir -p ~/.torch/projects/$SLUG
 USER=$(whoami)
 DATETIME=$(date +%Y%m%d-%H%M%S)
 ```
 
-Write to `~/.gstack/projects/{slug}/{user}-{branch}-eng-review-test-plan-{datetime}.md`:
+Write to `~/.torch/projects/{slug}/{user}-{branch}-eng-review-test-plan-{datetime}.md`:
 
 ```markdown
 # Test Plan
@@ -335,35 +335,35 @@ After all review sections are complete, run an independent second opinion from a
 different AI system automatically — it is a standard part of plan review, not an
 opt-in. Two models agreeing on a plan is stronger signal than one model's thorough
 review. The user turns this off only by asking explicitly
-(`gstack-config set codex_reviews disabled`).
+(`torch-config set codex_reviews disabled`).
 
 **Preflight — decide whether and how the outside voice runs:**
 
 ```bash
 # Codex preflight: one block (functions sourced here don't persist to later blocks).
-_TEL=$(~/.claude/skills/gstack/bin/gstack-config get telemetry 2>/dev/null || echo off)
-_CODEX_CFG=$(~/.claude/skills/gstack/bin/gstack-config get codex_reviews 2>/dev/null || echo enabled)
-source ~/.claude/skills/gstack/bin/gstack-codex-probe 2>/dev/null || true
+_TEL=$(~/.claude/skills/torch/bin/torch-config get telemetry 2>/dev/null || echo off)
+_CODEX_CFG=$(~/.claude/skills/torch/bin/torch-config get codex_reviews 2>/dev/null || echo enabled)
+source ~/.claude/skills/torch/bin/torch-codex-probe 2>/dev/null || true
 if [ "$_CODEX_CFG" = "disabled" ]; then
   _CODEX_MODE="disabled"
 elif ! command -v codex >/dev/null 2>&1; then
-  _CODEX_MODE="not_installed"; _gstack_codex_log_event "codex_cli_missing" 2>/dev/null || true
-elif ! _gstack_codex_auth_probe >/dev/null 2>&1; then
-  _CODEX_MODE="not_authed"; _gstack_codex_log_event "codex_auth_failed" 2>/dev/null || true
+  _CODEX_MODE="not_installed"; _torch_codex_log_event "codex_cli_missing" 2>/dev/null || true
+elif ! _torch_codex_auth_probe >/dev/null 2>&1; then
+  _CODEX_MODE="not_authed"; _torch_codex_log_event "codex_auth_failed" 2>/dev/null || true
 else
-  _CODEX_MODE="ready"; _gstack_codex_version_check 2>/dev/null || true
+  _CODEX_MODE="ready"; _torch_codex_version_check 2>/dev/null || true
 fi
 echo "CODEX_MODE: $_CODEX_MODE"
 ```
 
 Branch on the echoed `CODEX_MODE`:
-- **`disabled`** — the user turned Codex reviews off (`codex_reviews=disabled`). Skip this section entirely; do NOT fall back to a Claude subagent — disabled means no extra review step. Print: "Codex review skipped (codex_reviews disabled). Re-enable: `gstack-config set codex_reviews enabled`."
+- **`disabled`** — the user turned Codex reviews off (`codex_reviews=disabled`). Skip this section entirely; do NOT fall back to a Claude subagent — disabled means no extra review step. Print: "Codex review skipped (codex_reviews disabled). Re-enable: `torch-config set codex_reviews enabled`."
 - **`not_installed`** — Codex CLI absent. Print: "Codex not installed — using Claude subagent. Install for cross-model coverage: `npm install -g @openai/codex`." Fall back to the Claude subagent path.
 - **`not_authed`** — installed but no credentials. Print: "Codex installed but not authenticated — using Claude subagent. Run `codex login` or set `$CODEX_API_KEY`." Fall back to the Claude subagent path.
 - **`ready`** — run the Codex pass below.
 
 When the mode is `ready`, `not_installed`, or `not_authed`, print one line so the off-switch
-stays discoverable: "Running the outside voice automatically (standard step). Disable: `gstack-config set codex_reviews disabled`."
+stays discoverable: "Running the outside voice automatically (standard step). Disable: `torch-config set codex_reviews disabled`."
 
 **Construct the plan review prompt** (for `ready`, `not_installed`, and `not_authed` — skip only on `disabled`).
 Read the plan file being reviewed (the file the user pointed this review at, or the branch
@@ -465,7 +465,7 @@ If no tension points exist, note: "No cross-model tension — both reviewers agr
 
 **Persist the result:**
 ```bash
-~/.claude/skills/gstack/bin/gstack-review-log '{"skill":"codex-plan-review","timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","status":"STATUS","source":"SOURCE","commit":"'"$(git rev-parse --short HEAD)"'"}'
+~/.claude/skills/torch/bin/torch-review-log '{"skill":"codex-plan-review","timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","status":"STATUS","source":"SOURCE","commit":"'"$(git rev-parse --short HEAD)"'"}'
 ```
 
 Substitute: STATUS = "clean" if no findings, "issues_found" if findings exist.
@@ -589,8 +589,8 @@ Rules:
 backslashes serialize cleanly — never use hand-rolled `echo` / `printf`.
 
 ```bash
-eval "$(~/.claude/skills/gstack/bin/gstack-slug 2>/dev/null)"
-TASKS_DIR="${HOME}/.gstack/projects/${SLUG:-unknown}"
+eval "$(~/.claude/skills/torch/bin/torch-slug 2>/dev/null)"
+TASKS_DIR="${HOME}/.torch/projects/${SLUG:-unknown}"
 mkdir -p "$TASKS_DIR"
 TASKS_FILE="$TASKS_DIR/tasks-eng-review-$(date +%Y%m%d-%H%M%S).jsonl"
 COMMIT=$(git rev-parse HEAD 2>/dev/null || echo unknown)
@@ -656,17 +656,17 @@ Check the git log for this branch. If there are prior commits suggesting a previ
 After producing the Completion Summary above, persist the review result.
 
 **PLAN MODE EXCEPTION — ALWAYS RUN:** This command writes review metadata to
-`~/.gstack/` (user config directory, not project files). The skill preamble
-already writes to `~/.gstack/sessions/` and `~/.gstack/analytics/` — this is
+`~/.torch/` (user config directory, not project files). The skill preamble
+already writes to `~/.torch/sessions/` and `~/.torch/analytics/` — this is
 the same pattern. The review dashboard depends on this data. Skipping this
 command breaks the review readiness dashboard in /ship.
 
 ```bash
-~/.claude/skills/gstack/bin/gstack-review-log '{"skill":"plan-eng-review","timestamp":"TIMESTAMP","status":"STATUS","unresolved":N,"critical_gaps":N,"issues_found":N,"mode":"MODE","commit":"COMMIT"}'
-~/.claude/skills/gstack/bin/gstack-decision-log '{"decision":"Eng review (MODE): ARCH_SUMMARY","rationale":"KEY_DECISION","scope":"branch","source":"skill","confidence":8}' 2>/dev/null || true
+~/.claude/skills/torch/bin/torch-review-log '{"skill":"plan-eng-review","timestamp":"TIMESTAMP","status":"STATUS","unresolved":N,"critical_gaps":N,"issues_found":N,"mode":"MODE","commit":"COMMIT"}'
+~/.claude/skills/torch/bin/torch-decision-log '{"decision":"Eng review (MODE): ARCH_SUMMARY","rationale":"KEY_DECISION","scope":"branch","source":"skill","confidence":8}' 2>/dev/null || true
 ```
 
-The second command records the architecture verdict as a durable cross-session decision (so a future session inherits the chosen approach and what was hardened, not just the count). Same `~/.gstack/` write pattern as review-log, non-interactive, best-effort (`|| true`). Substitute `ARCH_SUMMARY` (e.g. "N findings, all folded" or "M unresolved") and `KEY_DECISION` (the load-bearing architecture call from the report, one line — omit if the review found nothing durable).
+The second command records the architecture verdict as a durable cross-session decision (so a future session inherits the chosen approach and what was hardened, not just the count). Same `~/.torch/` write pattern as review-log, non-interactive, best-effort (`|| true`). Substitute `ARCH_SUMMARY` (e.g. "N findings, all folded" or "M unresolved") and `KEY_DECISION` (the load-bearing architecture call from the report, one line — omit if the review found nothing durable).
 
 Substitute values from the Completion Summary:
 - **TIMESTAMP**: current ISO 8601 datetime
@@ -682,7 +682,7 @@ Substitute values from the Completion Summary:
 After completing the review, read the review log and config to display the dashboard.
 
 ```bash
-~/.claude/skills/gstack/bin/gstack-review-read
+~/.claude/skills/torch/bin/torch-review-read
 ```
 
 Parse the output. Find the most recent entry for each skill (plan-ceo-review, plan-eng-review, review, plan-design-review, design-review-lite, adversarial-review, codex-review, codex-plan-review). Ignore entries with timestamps older than 7 days. For the Eng Review row, show whichever is more recent between `review` (diff-scoped pre-landing review) and `plan-eng-review` (plan-stage architecture review). Append "(DIFF)" or "(PLAN)" to the status to distinguish. For the Adversarial row, show whichever is more recent between `adversarial-review` (new auto-scaled) and `codex-review` (legacy). For Design Review, show whichever is more recent between `plan-design-review` (full visual audit) and `design-review-lite` (code-level check). Append "(FULL)" or "(LITE)" to the status to distinguish. For the Outside Voice row, show the most recent `codex-plan-review` entry — this captures outside voices from both /plan-ceo-review and /plan-eng-review.
@@ -710,7 +710,7 @@ Display:
 ```
 
 **Review tiers:**
-- **Eng Review (required by default):** The only review that gates shipping. Covers architecture, code quality, tests, performance. Can be disabled globally with \`gstack-config set skip_eng_review true\` (the "don't bother me" setting).
+- **Eng Review (required by default):** The only review that gates shipping. Covers architecture, code quality, tests, performance. Can be disabled globally with \`torch-config set skip_eng_review true\` (the "don't bother me" setting).
 - **CEO Review (optional):** Use your judgment. Recommend it for big product/business changes, new user-facing features, or scope decisions. Skip for bug fixes, refactors, infra, and cleanup.
 - **Design Review (optional):** Use your judgment. Recommend it for UI/UX changes. Skip for backend-only, infra, or prompt-only changes.
 - **Adversarial Review (automatic):** Always-on for every review. Every diff gets both Claude adversarial subagent and Codex adversarial challenge. Large diffs (200+ lines) additionally get Codex structured review with P1 gate. No configuration needed.
@@ -765,7 +765,7 @@ Summary. For prior reviews, use the JSONL fields directly — they contain all r
 Produce this markdown table:
 
 \`\`\`markdown
-## GSTACK REVIEW REPORT
+## torch REVIEW REPORT
 
 | Review | Trigger | Why | Runs | Status | Findings |
 |--------|---------|-----|------|--------|----------|
@@ -785,7 +785,7 @@ empty); **VERDICT** is always present:
   If Eng Review is not CLEAR and not skipped globally, append "eng review required".
 
 **Unresolved-decisions status (MANDATORY — never omitted; the report's final non-whitespace
-line).** After VERDICT, end the report (content under the \`## GSTACK REVIEW REPORT\`
+line).** After VERDICT, end the report (content under the \`## torch REVIEW REPORT\`
 heading — a bold label, never a new \`## \` heading; exempt from the "omit when empty"
 rule) with exactly one: the exact unbolded line \`NO UNRESOLVED DECISIONS\` (a bolded one
 does NOT count), OR a \`**UNRESOLVED DECISIONS:**\` header + one bullet per open item
@@ -804,18 +804,18 @@ The report must always be the LAST section of the plan file — never mid-file.
 Use a single delete-then-append flow:
 
 1. Read the plan file (Read tool) to see its full current content. Search the read
-   output for a \`## GSTACK REVIEW REPORT\` heading anywhere in the file.
+   output for a \`## torch REVIEW REPORT\` heading anywhere in the file.
 2. If found, use the Edit tool to DELETE the entire existing section. Match from
-   \`## GSTACK REVIEW REPORT\` through either the next \`## \` heading or end of
+   \`## torch REVIEW REPORT\` through either the next \`## \` heading or end of
    file, whichever comes first. Replace with the empty string. This applies
    regardless of where the section currently lives — mid-file deletion is
    intentional, not a special case. If the Edit fails (e.g., concurrent edit
    changed the content), re-read the plan file and retry once.
 3. After the delete (or skipped, if no section existed), append the new
-   \`## GSTACK REVIEW REPORT\` section at the END of the file. Use the Edit
+   \`## torch REVIEW REPORT\` section at the END of the file. Use the Edit
    tool to match the file's current last paragraph and add the section after it,
    or use Write to re-emit the whole file with the section at the end.
-4. Verify with the Read tool that \`## GSTACK REVIEW REPORT\` is the last
+4. Verify with the Read tool that \`## torch REVIEW REPORT\` is the last
    \`## \` heading in the file before continuing. If it isn't, repeat steps
    2-3 once.
 
@@ -830,7 +830,7 @@ If you discovered a non-obvious pattern, pitfall, or architectural insight durin
 this session, log it for future sessions:
 
 ```bash
-~/.claude/skills/gstack/bin/gstack-learnings-log '{"skill":"plan-eng-review","type":"TYPE","key":"SHORT_KEY","insight":"DESCRIPTION","confidence":N,"source":"SOURCE","files":["path/to/relevant/file"]}'
+~/.claude/skills/torch/bin/torch-learnings-log '{"skill":"plan-eng-review","type":"TYPE","key":"SHORT_KEY","insight":"DESCRIPTION","confidence":N,"source":"SOURCE","files":["path/to/relevant/file"]}'
 ```
 
 **Types:** `pattern` (reusable approach), `pitfall` (what NOT to do), `preference`
@@ -859,7 +859,7 @@ TTHW target, architectural bet, wedge commitment), it MAY write a
 
 **Gated on two things:**
 1. Brain trust policy for the active endpoint is `personal` (check via
-   `~/.claude/skills/gstack/bin/gstack-config get brain_trust_policy@<endpoint-hash>`).
+   `~/.claude/skills/torch/bin/torch-config get brain_trust_policy@<endpoint-hash>`).
    Shared brains skip write-back to avoid polluting team calibration.
 2. Feature flag `BRAIN_CALIBRATION_WRITEBACK` is set (today: false; flips
    to true when upstream gbrain v0.42+ ships `takes_add` MCP op).
@@ -867,7 +867,7 @@ TTHW target, architectural bet, wedge commitment), it MAY write a
 When both gates pass, the write-back path uses `mcp__gbrain__takes_add`
 to record a take with weight 0.7 (per SKILL_CALIBRATION_WEIGHTS).
 If the MCP op is unavailable, fall back to `mcp__gbrain__put_page` with
-a gstack:takes fence block (documented but uglier path).
+a torch:takes fence block (documented but uglier path).
 
 Mandatory take frontmatter shape:
 ```yaml
@@ -884,7 +884,7 @@ After write, invalidate the affected digests so the next preflight reflects
 the new state:
 
 ```bash
-eval "$(~/.claude/skills/gstack/bin/gstack-slug 2>/dev/null)" 2>/dev/null || true
+eval "$(~/.claude/skills/torch/bin/torch-slug 2>/dev/null)" 2>/dev/null || true
   # (no per-skill invalidation targets configured)
 ```
 
@@ -897,8 +897,8 @@ This is non-blocking — the user doesn't wait. Next invocation benefits
 from the warm cache.
 
 ```bash
-eval "$(~/.claude/skills/gstack/bin/gstack-slug 2>/dev/null)" 2>/dev/null || true
-(~/.claude/skills/gstack/bin/gstack-brain-cache refresh --project "$SLUG" 2>/dev/null &) || true
+eval "$(~/.claude/skills/torch/bin/torch-slug 2>/dev/null)" 2>/dev/null || true
+(~/.claude/skills/torch/bin/torch-brain-cache refresh --project "$SLUG" 2>/dev/null &) || true
 ```
 
 

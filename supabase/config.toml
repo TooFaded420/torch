@@ -1,0 +1,16 @@
+# Supabase CLI configuration for torch telemetry
+# Managed remote project: dbbwvouxosctgkmnmzac (torch-telemetry)
+
+project_id = "torch-telemetry"
+
+[api]
+enabled = true
+
+[db]
+port = 5432
+
+[edge_runtime]
+enabled = true
+
+[analytics]
+enabled = false

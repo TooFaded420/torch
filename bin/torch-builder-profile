@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# torch-builder-profile — LEGACY SHIM.
+#
+# Superseded by bin/torch-developer-profile. This binary now delegates to
+# `torch-developer-profile --read` to keep /office-hours working during the
+# transition. When all call sites have been updated, this file can be removed.
+#
+# The migration from ~/.torch/builder-profile.jsonl to the unified
+# ~/.torch/developer-profile.json happens automatically on first read —
+# see bin/torch-developer-profile --migrate for details.
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+exec "$SCRIPT_DIR/torch-developer-profile" --read "$@"

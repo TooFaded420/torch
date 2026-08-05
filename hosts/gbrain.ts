@@ -11,8 +11,8 @@ const gbrain: HostConfig = {
   cliCommand: 'gbrain',
   cliAliases: [],
 
-  globalRoot: '.gbrain/skills/gstack',
-  localSkillRoot: '.gbrain/skills/gstack',
+  globalRoot: '.gbrain/skills/torch',
+  localSkillRoot: '.gbrain/skills/torch',
   hostSubdir: '.gbrain',
   usesEnvVars: true,
 
@@ -29,8 +29,8 @@ const gbrain: HostConfig = {
   },
 
   pathRewrites: [
-    { from: '~/.claude/skills/gstack', to: '~/.gbrain/skills/gstack' },
-    { from: '.claude/skills/gstack', to: '.gbrain/skills/gstack' },
+    { from: '~/.claude/skills/torch', to: '~/.gbrain/skills/torch' },
+    { from: '.claude/skills/torch', to: '.gbrain/skills/torch' },
     { from: '.claude/skills', to: '.gbrain/skills' },
     { from: 'CLAUDE.md', to: 'AGENTS.md' },
   ],
@@ -60,7 +60,7 @@ const gbrain: HostConfig = {
   ],
 
   runtimeRoot: {
-    globalSymlinks: ['bin', 'browse/dist', 'browse/bin', 'gstack-upgrade', 'ETHOS.md'],
+    globalSymlinks: ['bin', 'browse/dist', 'browse/bin', 'torch-upgrade', 'ETHOS.md'],
     globalFiles: {
       'review': ['checklist.md', 'TODOS-format.md'],
     },

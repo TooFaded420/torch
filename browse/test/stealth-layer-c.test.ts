@@ -11,7 +11,7 @@
 import { describe, test, expect, afterEach } from 'bun:test';
 import {
   buildStealthScript,
-  buildGStackLaunchArgs,
+  buildtorchLaunchArgs,
   readHostProfile,
   AUTOMATION_ARTIFACT_CLEANUP_SCRIPT,
   WEBDRIVER_MASK_SCRIPT,
@@ -112,19 +112,19 @@ describe('buildStealthScript — T3 Layer C', () => {
     expect(markNativeMatches.length).toBeGreaterThanOrEqual(7);
   });
 
-  test('script does not include "GStackBrowser" branding string', () => {
+  test('script does not include "torchBrowser" branding string', () => {
     const s = buildStealthScript(hw);
     // D6: dropped from UA, must not leak in via stealth payload either.
-    expect(s).not.toContain('GStackBrowser');
+    expect(s).not.toContain('torchBrowser');
   });
 });
 
-describe('buildGStackLaunchArgs — Pack 1 cmdline-switch construction', () => {
-  // Helper: clear all GSTACK_* env, run test body, restore env.
+describe('buildtorchLaunchArgs — Pack 1 cmdline-switch construction', () => {
+  // Helper: clear all torch_* env, run test body, restore env.
   function withEnv(env: Record<string, string | undefined>, body: () => void) {
     const saved: Record<string, string | undefined> = {};
     for (const k of Object.keys(process.env)) {
-      if (k.startsWith('GSTACK_')) {
+      if (k.startsWith('torch_')) {
         saved[k] = process.env[k];
         delete process.env[k];
       }
@@ -136,7 +136,7 @@ describe('buildGStackLaunchArgs — Pack 1 cmdline-switch construction', () => {
       body();
     } finally {
       for (const k of Object.keys(process.env)) {
-        if (k.startsWith('GSTACK_')) delete process.env[k];
+        if (k.startsWith('torch_')) delete process.env[k];
       }
       for (const [k, v] of Object.entries(saved)) {
         if (v !== undefined) process.env[k] = v;
@@ -148,88 +148,88 @@ describe('buildGStackLaunchArgs — Pack 1 cmdline-switch construction', () => {
     withEnv({}, () => {
       // All switches are opt-in: the six per-install flags fall through
       // (nothing in env), and the Pack 2 / B11 suppression flag is only
-      // emitted when GSTACK_CDP_STEALTH is on/1/true. Empty env → [].
-      expect(buildGStackLaunchArgs()).toEqual([]);
+      // emitted when torch_CDP_STEALTH is on/1/true. Empty env → [].
+      expect(buildtorchLaunchArgs()).toEqual([]);
     });
   });
 
   test('all env values populated (incl. CDP stealth opt-in) → all 7 switches emitted', () => {
     withEnv({
-      GSTACK_GPU_VENDOR: 'Apple Inc.',
-      GSTACK_GPU_RENDERER: 'ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Max, Unspecified Version)',
-      GSTACK_PLATFORM: 'MacARM',
-      GSTACK_GPU_CHIPSET: 'Apple M4 Max',
-      GSTACK_HW_CONCURRENCY: '16',
-      GSTACK_DEVICE_MEMORY: '8',
-      GSTACK_CDP_STEALTH: 'on',
+      torch_GPU_VENDOR: 'Apple Inc.',
+      torch_GPU_RENDERER: 'ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Max, Unspecified Version)',
+      torch_PLATFORM: 'MacARM',
+      torch_GPU_CHIPSET: 'Apple M4 Max',
+      torch_HW_CONCURRENCY: '16',
+      torch_DEVICE_MEMORY: '8',
+      torch_CDP_STEALTH: 'on',
     }, () => {
-      const args = buildGStackLaunchArgs();
-      expect(args).toContain('--gstack-gpu-vendor=Apple Inc.');
-      expect(args).toContain('--gstack-gpu-renderer=ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Max, Unspecified Version)');
-      expect(args).toContain('--gstack-ua-platform=macOS');
-      expect(args).toContain('--gstack-ua-model=Apple M4 Max');
-      expect(args).toContain('--gstack-hw-concurrency=16');
-      expect(args).toContain('--gstack-device-memory=8');
-      expect(args).toContain('--gstack-suppress-prepare-stack-trace');
+      const args = buildtorchLaunchArgs();
+      expect(args).toContain('--torch-gpu-vendor=Apple Inc.');
+      expect(args).toContain('--torch-gpu-renderer=ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Max, Unspecified Version)');
+      expect(args).toContain('--torch-ua-platform=macOS');
+      expect(args).toContain('--torch-ua-model=Apple M4 Max');
+      expect(args).toContain('--torch-hw-concurrency=16');
+      expect(args).toContain('--torch-device-memory=8');
+      expect(args).toContain('--torch-suppress-prepare-stack-trace');
       expect(args.length).toBe(7);
     });
   });
 
   test('platform mapping: MacARM and MacIntel both → macOS', () => {
-    withEnv({ GSTACK_PLATFORM: 'MacARM' }, () => {
-      expect(buildGStackLaunchArgs()).toContain('--gstack-ua-platform=macOS');
+    withEnv({ torch_PLATFORM: 'MacARM' }, () => {
+      expect(buildtorchLaunchArgs()).toContain('--torch-ua-platform=macOS');
     });
-    withEnv({ GSTACK_PLATFORM: 'MacIntel' }, () => {
-      expect(buildGStackLaunchArgs()).toContain('--gstack-ua-platform=macOS');
+    withEnv({ torch_PLATFORM: 'MacIntel' }, () => {
+      expect(buildtorchLaunchArgs()).toContain('--torch-ua-platform=macOS');
     });
   });
 
   test('platform mapping: Win32 → Windows, Linux x86_64 → Linux', () => {
-    withEnv({ GSTACK_PLATFORM: 'Win32' }, () => {
-      expect(buildGStackLaunchArgs()).toContain('--gstack-ua-platform=Windows');
+    withEnv({ torch_PLATFORM: 'Win32' }, () => {
+      expect(buildtorchLaunchArgs()).toContain('--torch-ua-platform=Windows');
     });
-    withEnv({ GSTACK_PLATFORM: 'Linux x86_64' }, () => {
-      expect(buildGStackLaunchArgs()).toContain('--gstack-ua-platform=Linux');
+    withEnv({ torch_PLATFORM: 'Linux x86_64' }, () => {
+      expect(buildtorchLaunchArgs()).toContain('--torch-ua-platform=Linux');
     });
   });
 
   test('partial env: only set switches that have values', () => {
-    withEnv({ GSTACK_HW_CONCURRENCY: '12' }, () => {
-      const args = buildGStackLaunchArgs();
-      // hw only — suppress-stack is opt-in and GSTACK_CDP_STEALTH is unset.
-      expect(args).toContain('--gstack-hw-concurrency=12');
-      expect(args).not.toContain('--gstack-suppress-prepare-stack-trace');
+    withEnv({ torch_HW_CONCURRENCY: '12' }, () => {
+      const args = buildtorchLaunchArgs();
+      // hw only — suppress-stack is opt-in and torch_CDP_STEALTH is unset.
+      expect(args).toContain('--torch-hw-concurrency=12');
+      expect(args).not.toContain('--torch-suppress-prepare-stack-trace');
       expect(args.length).toBe(1);
     });
   });
 
-  test('prepare-stack-trace suppression is opt-in via GSTACK_CDP_STEALTH', () => {
+  test('prepare-stack-trace suppression is opt-in via torch_CDP_STEALTH', () => {
     // on/1/true enable it; off and unset omit it, so stock Playwright
-    // Chromium (no GSTACK_CDP_STEALTH) never receives the unknown switch.
+    // Chromium (no torch_CDP_STEALTH) never receives the unknown switch.
     for (const v of ['on', '1', 'true']) {
-      withEnv({ GSTACK_CDP_STEALTH: v }, () => {
-        expect(buildGStackLaunchArgs()).toContain('--gstack-suppress-prepare-stack-trace');
+      withEnv({ torch_CDP_STEALTH: v }, () => {
+        expect(buildtorchLaunchArgs()).toContain('--torch-suppress-prepare-stack-trace');
       });
     }
-    withEnv({ GSTACK_CDP_STEALTH: 'off' }, () => {
-      expect(buildGStackLaunchArgs()).not.toContain('--gstack-suppress-prepare-stack-trace');
+    withEnv({ torch_CDP_STEALTH: 'off' }, () => {
+      expect(buildtorchLaunchArgs()).not.toContain('--torch-suppress-prepare-stack-trace');
     });
     withEnv({}, () => {
-      expect(buildGStackLaunchArgs()).not.toContain('--gstack-suppress-prepare-stack-trace');
+      expect(buildtorchLaunchArgs()).not.toContain('--torch-suppress-prepare-stack-trace');
     });
   });
 
-  test('unrecognized platform falls through without --gstack-ua-platform', () => {
-    withEnv({ GSTACK_PLATFORM: 'OS/2' }, () => {
-      const args = buildGStackLaunchArgs();
-      expect(args.some(a => a.startsWith('--gstack-ua-platform='))).toBe(false);
+  test('unrecognized platform falls through without --torch-ua-platform', () => {
+    withEnv({ torch_PLATFORM: 'OS/2' }, () => {
+      const args = buildtorchLaunchArgs();
+      expect(args.some(a => a.startsWith('--torch-ua-platform='))).toBe(false);
     });
   });
 
   test('GPU vendor with spaces survives intact (no quote/escape regression)', () => {
-    withEnv({ GSTACK_GPU_VENDOR: 'NVIDIA Corporation' }, () => {
-      const args = buildGStackLaunchArgs();
-      expect(args).toContain('--gstack-gpu-vendor=NVIDIA Corporation');
+    withEnv({ torch_GPU_VENDOR: 'NVIDIA Corporation' }, () => {
+      const args = buildtorchLaunchArgs();
+      expect(args).toContain('--torch-gpu-vendor=NVIDIA Corporation');
     });
   });
 });
@@ -248,16 +248,16 @@ describe('readHostProfile — clamp/fallback', () => {
   let savedHw: string | undefined;
   let savedMem: string | undefined;
   afterEach(() => {
-    if (savedHw === undefined) delete process.env.GSTACK_HW_CONCURRENCY;
-    else process.env.GSTACK_HW_CONCURRENCY = savedHw;
-    if (savedMem === undefined) delete process.env.GSTACK_DEVICE_MEMORY;
-    else process.env.GSTACK_DEVICE_MEMORY = savedMem;
+    if (savedHw === undefined) delete process.env.torch_HW_CONCURRENCY;
+    else process.env.torch_HW_CONCURRENCY = savedHw;
+    if (savedMem === undefined) delete process.env.torch_DEVICE_MEMORY;
+    else process.env.torch_DEVICE_MEMORY = savedMem;
   });
   function withHw(hw: string | undefined, mem: string | undefined): ReturnType<typeof readHostProfile> {
-    savedHw = process.env.GSTACK_HW_CONCURRENCY;
-    savedMem = process.env.GSTACK_DEVICE_MEMORY;
-    if (hw === undefined) delete process.env.GSTACK_HW_CONCURRENCY; else process.env.GSTACK_HW_CONCURRENCY = hw;
-    if (mem === undefined) delete process.env.GSTACK_DEVICE_MEMORY; else process.env.GSTACK_DEVICE_MEMORY = mem;
+    savedHw = process.env.torch_HW_CONCURRENCY;
+    savedMem = process.env.torch_DEVICE_MEMORY;
+    if (hw === undefined) delete process.env.torch_HW_CONCURRENCY; else process.env.torch_HW_CONCURRENCY = hw;
+    if (mem === undefined) delete process.env.torch_DEVICE_MEMORY; else process.env.torch_DEVICE_MEMORY = mem;
     return readHostProfile();
   }
 

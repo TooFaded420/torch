@@ -50,7 +50,7 @@ const SATURATED_PIXEL_FLOOR = 200;
 const SATURATION_DELTA = 40;
 // Per-child wall-clock bound. Bun's test timeout doesn't reliably interrupt a
 // synchronous execFileSync, so each child gets its own ceiling — a wedged
-// browser/poppler binary (or a hostile GSTACK_*_BIN override) fails instead of
+// browser/poppler binary (or a hostile torch_*_BIN override) fails instead of
 // hanging the whole job.
 const CHILD_TIMEOUT_MS = 25_000;
 

@@ -1,8 +1,8 @@
 /**
  * gbrain-guards — defense-in-depth against gbrain's destructive code paths (#1734).
  *
- * gbrain (the separate CLI gstack shells out to) can rm-rf a user's working tree
- * during an autopilot race (its own bug, upstream gbrain #1526). gstack can't fix
+ * gbrain (the separate CLI torch shells out to) can rm-rf a user's working tree
+ * during an autopilot race (its own bug, upstream gbrain #1526). torch can't fix
  * that, but it MUST stop treating gbrain's destructive subcommands as safe. These
  * guards gate the two ways the orchestrator can reach destruction:
  *

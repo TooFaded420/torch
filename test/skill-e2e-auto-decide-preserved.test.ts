@@ -6,7 +6,7 @@
  * to prefer mcp__*__AskUserQuestion variants and fall back to plan-file
  * decisions when neither is callable. This must NOT break the legitimate
  * `/plan-tune` AUTO_DECIDE path: when the user has explicitly opted into
- * auto-deciding a specific question via `gstack-question-preference --write
+ * auto-deciding a specific question via `torch-question-preference --write
  * never-ask`, the model is supposed to honor that — it should still
  * auto-pick the recommended option and emit the AUTO_DECIDE annotation
  * ("Auto-decided <summary> → <option> (your preference). Change with
@@ -17,8 +17,8 @@
  * or manually rather than gating CI.
  *
  * Set up:
- *   - tmpDir as GSTACK_HOME (isolated state, doesn't touch the user's
- *     real ~/.gstack)
+ *   - tmpDir as torch_HOME (isolated state, doesn't touch the user's
+ *     real ~/.torch)
  *   - question_tuning=true in the tmp config
  *   - preference for plan-ceo-review-mode → never-ask (source: plan-tune)
  *
@@ -51,32 +51,32 @@ const ROOT = path.resolve(import.meta.dir, '..');
 
 describeE2E('AUTO_DECIDE opt-in preserved under Conductor flags (periodic)', () => {
   test('user-opted-in question still auto-decides when AskUserQuestion is --disallowedTools', async () => {
-    const tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'gstack-auto-decide-'));
+    const tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'torch-auto-decide-'));
     try {
-      // 1. Bootstrap the tmp GSTACK_HOME with question_tuning=true.
-      const configBin = path.join(ROOT, 'bin', 'gstack-config');
+      // 1. Bootstrap the tmp torch_HOME with question_tuning=true.
+      const configBin = path.join(ROOT, 'bin', 'torch-config');
       const setRes = spawnSync(configBin, ['set', 'question_tuning', 'true'], {
-        env: { ...process.env, GSTACK_HOME: tmpHome },
+        env: { ...process.env, torch_HOME: tmpHome },
         encoding: 'utf-8',
       });
       if (setRes.status !== 0) {
-        throw new Error(`gstack-config set failed: ${setRes.stderr || setRes.stdout}`);
+        throw new Error(`torch-config set failed: ${setRes.stderr || setRes.stdout}`);
       }
 
       // 2. Resolve slug for the project (uses git remote — same as the spawned
       //    claude would resolve). The preference file path keys on this slug.
-      const slugBin = path.join(ROOT, 'bin', 'gstack-slug');
+      const slugBin = path.join(ROOT, 'bin', 'torch-slug');
       const slugRes = spawnSync(slugBin, [], {
         cwd: ROOT,
-        env: { ...process.env, GSTACK_HOME: tmpHome },
+        env: { ...process.env, torch_HOME: tmpHome },
         encoding: 'utf-8',
       });
-      // gstack-slug emits `eval`-able shell exports like `SLUG=garrytan-gstack`.
+      // torch-slug emits `eval`-able shell exports like `SLUG=garrytan-torch`.
       const slug = (slugRes.stdout.match(/SLUG=([^\s;]+)/)?.[1] ?? 'unknown').replace(/['"]/g, '');
 
       // 3. Write the preference: plan-ceo-review-mode → never-ask. The
       //    'plan-tune' source bypasses the inline-user origin gate.
-      const prefBin = path.join(ROOT, 'bin', 'gstack-question-preference');
+      const prefBin = path.join(ROOT, 'bin', 'torch-question-preference');
       const writeRes = spawnSync(
         prefBin,
         ['--write', JSON.stringify({
@@ -85,12 +85,12 @@ describeE2E('AUTO_DECIDE opt-in preserved under Conductor flags (periodic)', () 
           source: 'plan-tune',
         })],
         {
-          env: { ...process.env, GSTACK_HOME: tmpHome },
+          env: { ...process.env, torch_HOME: tmpHome },
           encoding: 'utf-8',
         },
       );
       if (writeRes.status !== 0) {
-        throw new Error(`gstack-question-preference --write failed: ${writeRes.stderr || writeRes.stdout}`);
+        throw new Error(`torch-question-preference --write failed: ${writeRes.stderr || writeRes.stdout}`);
       }
 
       // Sanity: the preference file landed where we expect.
@@ -100,8 +100,8 @@ describeE2E('AUTO_DECIDE opt-in preserved under Conductor flags (periodic)', () 
       }
 
       // 4. Run /plan-ceo-review with the Conductor flag set + isolated state.
-      //    GSTACK_HOME=tmpHome is REQUIRED: the preference + question_tuning were
-      //    seeded there. Without it the spawned claude reads the real ~/.gstack,
+      //    torch_HOME=tmpHome is REQUIRED: the preference + question_tuning were
+      //    seeded there. Without it the spawned claude reads the real ~/.torch,
       //    never sees the never-ask preference, and the test silently exercises
       //    the wrong state root (pre-existing bug, Codex #9 / Issue 13).
       //    CONDUCTOR_WORKSPACE_PATH additionally proves auto-decide still WINS
@@ -112,7 +112,7 @@ describeE2E('AUTO_DECIDE opt-in preserved under Conductor flags (periodic)', () 
         inPlanMode: true,
         extraArgs: ['--disallowedTools', 'AskUserQuestion'],
         timeoutMs: 300_000,
-        env: { GSTACK_HOME: tmpHome, CONDUCTOR_WORKSPACE_PATH: tmpHome },
+        env: { torch_HOME: tmpHome, CONDUCTOR_WORKSPACE_PATH: tmpHome },
       });
 
       // 5. Pass: 'auto_decided' (the strongest signal) or 'plan_ready' with

@@ -1,5 +1,5 @@
 // Single-instance enforcement. Daemon takes an exclusive flock on
-// ~/.gstack/ios-qa-daemon.pid on startup. Second invocation discovers the
+// ~/.torch/ios-qa-daemon.pid on startup. Second invocation discovers the
 // existing daemon's port + connects. Stale lock (PID dead) is reclaimed.
 //
 // Readiness protocol: daemon writes `READY: port=<n> pid=<pid>` to stdout
@@ -18,8 +18,8 @@ export interface PidfileContents {
 }
 
 export function defaultPidfilePath(): string {
-  return process.env.GSTACK_IOS_DAEMON_PIDFILE
-    ?? join(homedir(), '.gstack', 'ios-qa-daemon.pid');
+  return process.env.torch_IOS_DAEMON_PIDFILE
+    ?? join(homedir(), '.torch', 'ios-qa-daemon.pid');
 }
 
 /**

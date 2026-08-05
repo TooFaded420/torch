@@ -173,26 +173,26 @@ jobs:
       # /plan-ceo-review. Claude Code discovers user-scoped skills from
       # $HOME/.claude/skills/<name>/SKILL.md, but .claude/skills is gitignored, so
       # a fresh CI checkout has NO registry — claude prints "Unknown command:
-      # /plan-ceo-review". Mirror setup's --no-prefix registry minimally: a gstack
-      # root symlink (resolves the preamble's absolute ~/.claude/skills/gstack/bin/*
-      # and ~/.claude/skills/gstack/<skill>/sections/* paths) plus a per-skill
+      # /plan-ceo-review". Mirror setup's --no-prefix registry minimally: a torch
+      # root symlink (resolves the preamble's absolute ~/.claude/skills/torch/bin/*
+      # and ~/.claude/skills/torch/<skill>/sections/* paths) plus a per-skill
       # top-level dir holding SKILL.md (+ sections) symlinks for the two skills
       # these tests invoke. No ./setup (it builds binaries, launches Chromium,
       # installs fonts, reads a /dev/tty prompt) and no binary build (SKILL.md +
       # bin/ + sections/ are committed). $HOME is /github/home here; the spawned
       # claude inherits it (this runner adds no HOME/CLAUDE_CONFIG_DIR override,
       # no hermetic mode) and the Seed step already proved claude reads $HOME.
-      - name: Register gstack skills for PTY smoke
+      - name: Register torch skills for PTY smoke
         if: matrix.suite.name == 'e2e-pty-plan-smoke'
         run: |
           set -eu
           SKILLS_DIR="$HOME/.claude/skills"
-          REPO="$GITHUB_WORKSPACE"   # /__w/gstack/gstack
+          REPO="$GITHUB_WORKSPACE"   # /__w/torch/torch
           mkdir -p "$SKILLS_DIR"
-          # The gstack root stays a symlink — the preamble's runtime bash resolves
-          # ~/.claude/skills/gstack/bin/* and ~/.claude/skills/gstack/<skill>/sections/*
+          # The torch root stays a symlink — the preamble's runtime bash resolves
+          # ~/.claude/skills/torch/bin/* and ~/.claude/skills/torch/<skill>/sections/*
           # through it, and bash follows cross-mount symlinks fine.
-          ln -snf "$REPO" "$SKILLS_DIR/gstack"
+          ln -snf "$REPO" "$SKILLS_DIR/torch"
           # But the per-skill SKILL.md the TUI DISCOVERS must be a REAL file on the
           # same mount as $HOME. claude 2.1.187's interactive-TUI skill scanner does
           # not follow the /github/home -> /__w cross-mount symlink (proven: `claude
@@ -211,9 +211,9 @@ jobs:
           # surfaces /slash commands from <cwd>/.claude/skills, and the smokes run
           # with cwd=$REPO whose .claude/skills is gitignored (absent on a fresh CI
           # checkout) — the user-dir registration above feeds `claude -p` but the
-          # TUI looks here. No gstack symlink in the project dir: it would point at
+          # TUI looks here. No torch symlink in the project dir: it would point at
           # its own parent ($REPO). Runtime preamble paths use the user-dir
-          # ~/.claude/skills/gstack symlink above.
+          # ~/.claude/skills/torch symlink above.
           PROJ_SKILLS="$REPO/.claude/skills"
           mkdir -p "$PROJ_SKILLS"
           for s in office-hours plan-ceo-review; do
@@ -223,15 +223,15 @@ jobs:
             cp -R "$REPO/$s/sections" "$PROJ_SKILLS/$s/sections"
           done
           echo "--- registry under $SKILLS_DIR ---"
-          ls -la "$SKILLS_DIR/gstack" "$SKILLS_DIR/office-hours" "$SKILLS_DIR/plan-ceo-review"
+          ls -la "$SKILLS_DIR/torch" "$SKILLS_DIR/office-hours" "$SKILLS_DIR/plan-ceo-review"
           # Fail fast if any committed target moved/renamed — a dangling symlink
           # would otherwise resurface as a silent "Unknown command" + 35-min timeout.
           for f in \
             "$SKILLS_DIR/office-hours/SKILL.md" \
             "$SKILLS_DIR/plan-ceo-review/SKILL.md" \
-            "$SKILLS_DIR/gstack/bin/gstack-update-check" \
-            "$SKILLS_DIR/gstack/office-hours/sections/design-and-handoff.md" \
-            "$SKILLS_DIR/gstack/plan-ceo-review/sections/review-sections.md"; do
+            "$SKILLS_DIR/torch/bin/torch-update-check" \
+            "$SKILLS_DIR/torch/office-hours/sections/design-and-handoff.md" \
+            "$SKILLS_DIR/torch/plan-ceo-review/sections/review-sections.md"; do
             if [ ! -e "$f" ]; then
               echo "ERROR: skill-registry target missing (symlink dangles): $f" >&2
               exit 1
@@ -257,7 +257,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: eval-${{ matrix.suite.name }}
-          path: ~/.gstack-dev/evals/*.json
+          path: ~/.torch-dev/evals/*.json
           retention-days: 90
 
   report:

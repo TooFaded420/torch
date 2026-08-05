@@ -7,7 +7,7 @@
 //
 // Asserts that the model:
 //   1. ran the verify helper successfully (got past Step 4c)
-//   2. invoked gstack-gbrain-install (Step 4.5 Yes branch)
+//   2. invoked torch-gbrain-install (Step 4.5 Yes branch)
 //   3. invoked `gbrain init --pglite --json` (also Step 4.5 Yes branch)
 //   4. registered the remote MCP via claude mcp add --transport http
 //   5. wrote a "Code search ..... OK local-pglite" row to the Step 10 verdict
@@ -123,7 +123,7 @@ exit 0
 }
 
 /**
- * Fake gstack-gbrain-install so we don't actually clone the gbrain repo +
+ * Fake torch-gbrain-install so we don't actually clone the gbrain repo +
  * bun-link. The test only cares that the skill INVOKED it on the Yes branch.
  */
 function makeFakeInstall(binDir: string): string {
@@ -132,7 +132,7 @@ function makeFakeInstall(binDir: string): string {
 echo "install $@" >> "${callLog}"
 exit 0
 `;
-  fs.writeFileSync(path.join(binDir, 'gstack-gbrain-install'), script, {
+  fs.writeFileSync(path.join(binDir, 'torch-gbrain-install'), script, {
     mode: 0o755,
   });
   return callLog;
@@ -224,7 +224,7 @@ describeE2E('/setup-gbrain Path 4 + Step 4.5 Yes → local PGLite for code', () 
       expect(askLog.length).toBeGreaterThan(0);
 
       // Assertion 2: at LEAST ONE of the Path 4 / Step 4.5 commands fired:
-      //   - gstack-gbrain-install (install step)
+      //   - torch-gbrain-install (install step)
       //   - `gbrain init --pglite` (engine init)
       //   - `claude mcp add` (remote MCP registration)
       // Failing all three means the model didn't follow the skill at all.

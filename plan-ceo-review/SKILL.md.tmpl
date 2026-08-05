@@ -11,7 +11,7 @@ description: |
   Use when asked to "think bigger", "expand scope", "strategy review", "rethink this",
   or "is this ambitious enough".
   Proactively suggest when the user is questioning scope or ambition of a plan,
-  or when the plan feels like it could be thinking bigger. (gstack)
+  or when the plan feels like it could be thinking bigger. (torch)
 benefits-from: [office-hours]
 allowed-tools:
   - Read
@@ -30,13 +30,13 @@ gbrain:
   context_queries:
     - id: prior-ceo-plans
       kind: filesystem
-      glob: "~/.gstack/projects/{repo_slug}/ceo-plans/*.md"
+      glob: "~/.torch/projects/{repo_slug}/ceo-plans/*.md"
       sort: mtime_desc
       limit: 5
       render_as: "## Prior CEO plans for this project"
     - id: recent-design-docs
       kind: filesystem
-      glob: "~/.gstack/projects/{repo_slug}/*-design-*.md"
+      glob: "~/.torch/projects/{repo_slug}/*-design-*.md"
       sort: mtime_desc
       limit: 3
       render_as: "## Recent design docs for this project"
@@ -136,10 +136,10 @@ Then read CLAUDE.md, TODOS.md, and any existing architecture docs.
 **Design doc check:**
 ```bash
 setopt +o nomatch 2>/dev/null || true  # zsh compat
-SLUG=$(~/.claude/skills/gstack/browse/bin/remote-slug 2>/dev/null || basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")
+SLUG=$(~/.claude/skills/torch/browse/bin/remote-slug 2>/dev/null || basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")
 BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null | tr '/' '-' || echo 'no-branch')
-DESIGN=$(ls -t ~/.gstack/projects/$SLUG/*-$BRANCH-design-*.md 2>/dev/null | head -1)
-[ -z "$DESIGN" ] && DESIGN=$(ls -t ~/.gstack/projects/$SLUG/*-design-*.md 2>/dev/null | head -1)
+DESIGN=$(ls -t ~/.torch/projects/$SLUG/*-$BRANCH-design-*.md 2>/dev/null | head -1)
+[ -z "$DESIGN" ] && DESIGN=$(ls -t ~/.torch/projects/$SLUG/*-design-*.md 2>/dev/null | head -1)
 [ -n "$DESIGN" ] && echo "Design doc found: $DESIGN" || echo "No design doc found"
 ```
 If a design doc exists (from `/office-hours`), read it. Use it as the source of truth for the problem statement, constraints, and chosen approach. If it has a `Supersedes:` field, note that this is a revised design.
@@ -147,7 +147,7 @@ If a design doc exists (from `/office-hours`), read it. Use it as the source of 
 **Handoff note check** (reuses $SLUG and $BRANCH from the design doc check above):
 ```bash
 setopt +o nomatch 2>/dev/null || true  # zsh compat
-HANDOFF=$(ls -t ~/.gstack/projects/$SLUG/*-$BRANCH-ceo-handoff-*.md 2>/dev/null | head -1)
+HANDOFF=$(ls -t ~/.torch/projects/$SLUG/*-$BRANCH-ceo-handoff-*.md 2>/dev/null | head -1)
 [ -n "$HANDOFF" ] && echo "HANDOFF_FOUND: $HANDOFF" || echo "NO_HANDOFF"
 ```
 If this block runs in a separate shell from the design doc check, recompute $SLUG and $BRANCH first using the same commands from that block.
@@ -321,17 +321,17 @@ Both are outcome-framed. Only one makes the user feel the cathedral. Lead with t
 After the opt-in/cherry-pick ceremony, write the plan to disk so the vision and decisions survive beyond this conversation. Only run this step for EXPANSION and SELECTIVE EXPANSION modes.
 
 ```bash
-eval "$(~/.claude/skills/gstack/bin/gstack-slug 2>/dev/null)" && mkdir -p ~/.gstack/projects/$SLUG/ceo-plans
+eval "$(~/.claude/skills/torch/bin/torch-slug 2>/dev/null)" && mkdir -p ~/.torch/projects/$SLUG/ceo-plans
 ```
 
 Before writing, check for existing CEO plans in the ceo-plans/ directory. If any are >30 days old or their branch has been merged/deleted, offer to archive them:
 
 ```bash
-mkdir -p ~/.gstack/projects/$SLUG/ceo-plans/archive
-# For each stale plan: mv ~/.gstack/projects/$SLUG/ceo-plans/{old-plan}.md ~/.gstack/projects/$SLUG/ceo-plans/archive/
+mkdir -p ~/.torch/projects/$SLUG/ceo-plans/archive
+# For each stale plan: mv ~/.torch/projects/$SLUG/ceo-plans/{old-plan}.md ~/.torch/projects/$SLUG/ceo-plans/archive/
 ```
 
-Write to `~/.gstack/projects/$SLUG/ceo-plans/{date}-{feature-slug}.md` using this format:
+Write to `~/.torch/projects/$SLUG/ceo-plans/{date}-{feature-slug}.md` using this format:
 
 ```markdown
 ---
@@ -377,7 +377,7 @@ Think ahead to implementation: What decisions will need to be made during implem
   HOUR 4-5 (integration):  What will surprise them?
   HOUR 6+ (polish/tests):  What will they wish they'd planned for?
 ```
-NOTE: These represent human-team implementation hours. With CC + gstack,
+NOTE: These represent human-team implementation hours. With CC + torch,
 6 hours of human implementation compresses to ~30-60 minutes. The decisions
 are identical — the implementation speed is 10-20x faster. Always present
 both scales when discussing effort.

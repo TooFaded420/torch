@@ -8,11 +8,11 @@
  *
  *   - the preamble epilogue        → "repo"
  *     (scripts/resolvers/preamble/generate-preamble-bash.ts)
- *   - gstack-telemetry-log         → "_repo_slug", "_branch"
- *     (bin/gstack-telemetry-log)
+ *   - torch-telemetry-log         → "_repo_slug", "_branch"
+ *     (bin/torch-telemetry-log)
  *
- * gstack-telemetry-sync MUST strip every one of those fields before the remote
- * POST (bin/gstack-telemetry-sync). This test enforces that contract three ways:
+ * torch-telemetry-sync MUST strip every one of those fields before the remote
+ * POST (bin/torch-telemetry-sync). This test enforces that contract three ways:
  *
  *   1. Coverage — every repo/branch field the producers emit is also stripped.
  *      Catches "added a new repo field, forgot to strip it" (the rename-to-_repo
@@ -30,9 +30,9 @@ import fs from 'fs';
 import path from 'path';
 
 const ROOT = path.resolve(__dirname, '..');
-const SYNC = path.join(ROOT, 'bin', 'gstack-telemetry-sync');
+const SYNC = path.join(ROOT, 'bin', 'torch-telemetry-sync');
 const PREAMBLE = path.join(ROOT, 'scripts', 'resolvers', 'preamble', 'generate-preamble-bash.ts');
-const TEL_LOG = path.join(ROOT, 'bin', 'gstack-telemetry-log');
+const TEL_LOG = path.join(ROOT, 'bin', 'torch-telemetry-log');
 
 // Fields that identify the user's repo/branch. The promise is that NONE of
 // these reach the network. Add to this floor if a new identity field is born.
@@ -53,7 +53,7 @@ function fieldFromSedExpr(expr: string): string | null {
 
 /**
  * Repo/branch JSON keys a producer writes INTO skill-usage.jsonl — the only
- * file gstack-telemetry-sync reads and uploads. Scoped to the emission lines
+ * file torch-telemetry-sync reads and uploads. Scoped to the emission lines
  * that target the synced file so local-only sinks (e.g. the timeline log, which
  * carries "branch" but is never synced) don't count against the egress invariant.
  */
@@ -82,7 +82,7 @@ describe('telemetry no-repo-identity-egress invariant', () => {
 
   test('coverage: every repo/branch field the producers emit into skill-usage.jsonl is stripped', () => {
     // Only emission lines that target the synced file (skill-usage.jsonl). The
-    // preamble appends directly; gstack-telemetry-log builds the synced event
+    // preamble appends directly; torch-telemetry-log builds the synced event
     // with a `printf '{"v":1,...` line into $JSONL_FILE (= skill-usage.jsonl).
     const preambleSynced = fs
       .readFileSync(PREAMBLE, 'utf-8')
@@ -102,7 +102,7 @@ describe('telemetry no-repo-identity-egress invariant', () => {
     for (const field of emitted) {
       expect(
         strippedFields.has(field),
-        `producer emits repo-identity field "${field}" but gstack-telemetry-sync does not strip it (would leak to remote)`,
+        `producer emits repo-identity field "${field}" but torch-telemetry-sync does not strip it (would leak to remote)`,
       ).toBe(true);
     }
   });

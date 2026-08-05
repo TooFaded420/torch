@@ -466,19 +466,19 @@ describe('preamble — QUESTION_TUNING injection', () => {
       tmplPath: 'test.tmpl',
       host: 'claude' as const,
       paths: {
-        skillRoot: '~/.claude/skills/gstack',
-        localSkillRoot: '.claude/skills/gstack',
-        binDir: '~/.claude/skills/gstack/bin',
-        browseDir: '~/.claude/skills/gstack/browse/dist',
-        designDir: '~/.claude/skills/gstack/design/dist',
+        skillRoot: '~/.claude/skills/torch',
+        localSkillRoot: '.claude/skills/torch',
+        binDir: '~/.claude/skills/torch/bin',
+        browseDir: '~/.claude/skills/torch/browse/dist',
+        designDir: '~/.claude/skills/torch/design/dist',
       },
       preambleTier: 2,
     };
     const out = generatePreamble(ctx);
     expect(out).toContain('QUESTION_TUNING: $_QUESTION_TUNING');
     expect(out).toContain('## Question Tuning');
-    expect(out).toContain('gstack-question-preference --check');
-    expect(out).toContain('gstack-question-log');
+    expect(out).toContain('torch-question-preference --check');
+    expect(out).toContain('torch-question-log');
     expect(out).toContain('profile-poisoning defense');
     expect(out).toContain('inline-user');
   });
@@ -490,11 +490,11 @@ describe('preamble — QUESTION_TUNING injection', () => {
       tmplPath: 'test.tmpl',
       host: 'claude' as const,
       paths: {
-        skillRoot: '~/.claude/skills/gstack',
-        localSkillRoot: '.claude/skills/gstack',
-        binDir: '~/.claude/skills/gstack/bin',
-        browseDir: '~/.claude/skills/gstack/browse/dist',
-        designDir: '~/.claude/skills/gstack/design/dist',
+        skillRoot: '~/.claude/skills/torch',
+        localSkillRoot: '.claude/skills/torch',
+        binDir: '~/.claude/skills/torch/bin',
+        browseDir: '~/.claude/skills/torch/browse/dist',
+        designDir: '~/.claude/skills/torch/design/dist',
       },
       preambleTier: 1,
     };
@@ -511,16 +511,16 @@ describe('preamble — QUESTION_TUNING injection', () => {
       tmplPath: 'x',
       host: 'codex' as const,
       paths: {
-        skillRoot: '$GSTACK_ROOT',
-        localSkillRoot: '.agents/skills/gstack',
-        binDir: '$GSTACK_BIN',
-        browseDir: '$GSTACK_BROWSE',
-        designDir: '$GSTACK_DESIGN',
+        skillRoot: '$torch_ROOT',
+        localSkillRoot: '.agents/skills/torch',
+        binDir: '$torch_BIN',
+        browseDir: '$torch_BROWSE',
+        designDir: '$torch_DESIGN',
       },
     };
     const out = generateQuestionTuning(codexCtx);
-    expect(out).toContain('$GSTACK_BIN/gstack-question-preference');
-    expect(out).toContain('$GSTACK_BIN/gstack-question-log');
+    expect(out).toContain('$torch_BIN/torch-question-preference');
+    expect(out).toContain('$torch_BIN/torch-question-log');
   });
 });
 
@@ -533,9 +533,9 @@ describe('preamble — QUESTION_TUNING injection', () => {
 
 describe('end-to-end pipeline (binaries working together)', () => {
   test('log many expand choices → derive pushes scope_appetite up', () => {
-    const tmpHome = fs.mkdtempSync(path.join(require('os').tmpdir(), 'gstack-e2e-'));
+    const tmpHome = fs.mkdtempSync(path.join(require('os').tmpdir(), 'torch-e2e-'));
     try {
-      // GSTACK_QUESTION_LOG_NO_DERIVE=1 suppresses gstack-question-log's
+      // torch_QUESTION_LOG_NO_DERIVE=1 suppresses torch-question-log's
       // fire-and-forget background `--derive` (it nohups one per write). Without
       // it, the 5 rapid log writes spawn 5 racing background derives that collide
       // with this test's explicit --derive below — a late background derive that
@@ -543,10 +543,10 @@ describe('end-to-end pipeline (binaries working together)', () => {
       // one wrote sample_size=5, making the test flaky (~25-50% fail). The binary
       // documents this flag for exactly this case. The explicit --derive still
       // runs (it ignores the flag), so real derive behavior is still asserted.
-      const env = { ...process.env, GSTACK_HOME: tmpHome, GSTACK_QUESTION_LOG_NO_DERIVE: '1' };
+      const env = { ...process.env, torch_HOME: tmpHome, torch_QUESTION_LOG_NO_DERIVE: '1' };
       const { spawnSync } = require('child_process');
-      const logBin = path.join(ROOT, 'bin', 'gstack-question-log');
-      const devBin = path.join(ROOT, 'bin', 'gstack-developer-profile');
+      const logBin = path.join(ROOT, 'bin', 'torch-question-log');
+      const devBin = path.join(ROOT, 'bin', 'torch-developer-profile');
 
       for (let i = 0; i < 5; i++) {
         const r = spawnSync(
@@ -579,11 +579,11 @@ describe('end-to-end pipeline (binaries working together)', () => {
   });
 
   test('preference blocks tune: write from inline-tool-output in full pipeline', () => {
-    const tmpHome = fs.mkdtempSync(path.join(require('os').tmpdir(), 'gstack-e2e-'));
+    const tmpHome = fs.mkdtempSync(path.join(require('os').tmpdir(), 'torch-e2e-'));
     try {
-      const env = { ...process.env, GSTACK_HOME: tmpHome };
+      const env = { ...process.env, torch_HOME: tmpHome };
       const { spawnSync } = require('child_process');
-      const prefBin = path.join(ROOT, 'bin', 'gstack-question-preference');
+      const prefBin = path.join(ROOT, 'bin', 'torch-question-preference');
 
       const r = spawnSync(
         prefBin,
@@ -606,12 +606,12 @@ describe('end-to-end pipeline (binaries working together)', () => {
   });
 
   test('migration preserves sessions, builder-profile shim still works', () => {
-    const tmpHome = fs.mkdtempSync(path.join(require('os').tmpdir(), 'gstack-e2e-'));
+    const tmpHome = fs.mkdtempSync(path.join(require('os').tmpdir(), 'torch-e2e-'));
     try {
-      const env = { ...process.env, GSTACK_HOME: tmpHome };
+      const env = { ...process.env, torch_HOME: tmpHome };
       const { spawnSync } = require('child_process');
-      const devBin = path.join(ROOT, 'bin', 'gstack-developer-profile');
-      const shimBin = path.join(ROOT, 'bin', 'gstack-builder-profile');
+      const devBin = path.join(ROOT, 'bin', 'torch-developer-profile');
+      const shimBin = path.join(ROOT, 'bin', 'torch-builder-profile');
 
       // Seed a legacy file
       fs.writeFileSync(

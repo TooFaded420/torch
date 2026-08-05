@@ -9,7 +9,7 @@
  * Users invoke this explicitly via /plan-eng-review, /plan-ceo-review,
  * or /plan-design-review. No data is sent without user invocation.
  *
- * Review logs are stored locally at ~/.gstack/reviews/review-log.jsonl.
+ * Review logs are stored locally at ~/.torch/reviews/review-log.jsonl.
  * Codex CLI prompts are written to temp files to prevent shell injection.
  */
 import type { TemplateContext } from './types';
@@ -24,7 +24,7 @@ export function generateReviewDashboard(_ctx: TemplateContext): string {
 After completing the review, read the review log and config to display the dashboard.
 
 \`\`\`bash
-~/.claude/skills/gstack/bin/gstack-review-read
+~/.claude/skills/torch/bin/torch-review-read
 \`\`\`
 
 Parse the output. Find the most recent entry for each skill (plan-ceo-review, plan-eng-review, review, plan-design-review, design-review-lite, adversarial-review, codex-review, codex-plan-review). Ignore entries with timestamps older than 7 days. For the Eng Review row, show whichever is more recent between \`review\` (diff-scoped pre-landing review) and \`plan-eng-review\` (plan-stage architecture review). Append "(DIFF)" or "(PLAN)" to the status to distinguish. For the Adversarial row, show whichever is more recent between \`adversarial-review\` (new auto-scaled) and \`codex-review\` (legacy). For Design Review, show whichever is more recent between \`plan-design-review\` (full visual audit) and \`design-review-lite\` (code-level check). Append "(FULL)" or "(LITE)" to the status to distinguish. For the Outside Voice row, show the most recent \`codex-plan-review\` entry — this captures outside voices from both /plan-ceo-review and /plan-eng-review.
@@ -52,7 +52,7 @@ Display:
 \`\`\`
 
 **Review tiers:**
-- **Eng Review (required by default):** The only review that gates shipping. Covers architecture, code quality, tests, performance. Can be disabled globally with \\\`gstack-config set skip_eng_review true\\\` (the "don't bother me" setting).
+- **Eng Review (required by default):** The only review that gates shipping. Covers architecture, code quality, tests, performance. Can be disabled globally with \\\`torch-config set skip_eng_review true\\\` (the "don't bother me" setting).
 - **CEO Review (optional):** Use your judgment. Recommend it for big product/business changes, new user-facing features, or scope decisions. Skip for bug fixes, refactors, infra, and cleanup.
 - **Design Review (optional):** Use your judgment. Recommend it for UI/UX changes. Skip for backend-only, infra, or prompt-only changes.
 - **Adversarial Review (automatic):** Always-on for every review. Every diff gets both Claude adversarial subagent and Codex adversarial challenge. Large diffs (200+ lines) additionally get Codex structured review with P1 gate. No configuration needed.
@@ -109,7 +109,7 @@ Summary. For prior reviews, use the JSONL fields directly — they contain all r
 Produce this markdown table:
 
 \\\`\\\`\\\`markdown
-## GSTACK REVIEW REPORT
+## torch REVIEW REPORT
 
 | Review | Trigger | Why | Runs | Status | Findings |
 |--------|---------|-----|------|--------|----------|
@@ -129,7 +129,7 @@ empty); **VERDICT** is always present:
   If Eng Review is not CLEAR and not skipped globally, append "eng review required".
 
 **Unresolved-decisions status (MANDATORY — never omitted; the report's final non-whitespace
-line).** After VERDICT, end the report (content under the \\\`## GSTACK REVIEW REPORT\\\`
+line).** After VERDICT, end the report (content under the \\\`## torch REVIEW REPORT\\\`
 heading — a bold label, never a new \\\`## \\\` heading; exempt from the "omit when empty"
 rule) with exactly one: the exact unbolded line \\\`NO UNRESOLVED DECISIONS\\\` (a bolded one
 does NOT count), OR a \\\`**UNRESOLVED DECISIONS:**\\\` header + one bullet per open item
@@ -148,18 +148,18 @@ The report must always be the LAST section of the plan file — never mid-file.
 Use a single delete-then-append flow:
 
 1. Read the plan file (Read tool) to see its full current content. Search the read
-   output for a \\\`## GSTACK REVIEW REPORT\\\` heading anywhere in the file.
+   output for a \\\`## torch REVIEW REPORT\\\` heading anywhere in the file.
 2. If found, use the Edit tool to DELETE the entire existing section. Match from
-   \\\`## GSTACK REVIEW REPORT\\\` through either the next \\\`## \\\` heading or end of
+   \\\`## torch REVIEW REPORT\\\` through either the next \\\`## \\\` heading or end of
    file, whichever comes first. Replace with the empty string. This applies
    regardless of where the section currently lives — mid-file deletion is
    intentional, not a special case. If the Edit fails (e.g., concurrent edit
    changed the content), re-read the plan file and retry once.
 3. After the delete (or skipped, if no section existed), append the new
-   \\\`## GSTACK REVIEW REPORT\\\` section at the END of the file. Use the Edit
+   \\\`## torch REVIEW REPORT\\\` section at the END of the file. Use the Edit
    tool to match the file's current last paragraph and add the section after it,
    or use Write to re-emit the whole file with the section at the end.
-4. Verify with the Read tool that \\\`## GSTACK REVIEW REPORT\\\` is the last
+4. Verify with the Read tool that \\\`## torch REVIEW REPORT\\\` is the last
    \\\`## \\\` heading in the file before continuing. If it isn't, repeat steps
    2-3 once.
 
@@ -176,9 +176,9 @@ Before calling ExitPlanMode, run this self-check. If any item fails, do the
 missing work — do NOT call ExitPlanMode:
 
 1. Read the plan file with the Read tool (after your most recent write to it).
-2. Confirm the LAST \`## \` heading in the file is \`## GSTACK REVIEW REPORT\`.
+2. Confirm the LAST \`## \` heading in the file is \`## torch REVIEW REPORT\`.
    In-body prose that mentions "outside voice", "codex findings", or similar
-   does NOT count — only the structured \`## GSTACK REVIEW REPORT\` section
+   does NOT count — only the structured \`## torch REVIEW REPORT\` section
    satisfies this check.
 3. Confirm the report has a Runs / Status / Findings table and a VERDICT line
    (CODEX / CROSS-MODEL absorbed if applicable).
@@ -188,7 +188,7 @@ missing work — do NOT call ExitPlanMode:
    bolded sentinel, any trailing CODEX/CROSS-MODEL/VERDICT/prose, or a missing
    status each FAILS the gate.
 5. If a plan file is in context for this skill invocation: confirm
-   \`gstack-review-log\` was called and \`gstack-review-read\` was run at least
+   \`torch-review-log\` was called and \`torch-review-read\` was run at least
    once. If no plan file is in context (e.g. \`/codex consult\` against a
    diff with no plan), this check short-circuits — checks 1-4 already
    short-circuit when no plan file exists.
@@ -263,8 +263,8 @@ After the loop completes (PASS, max iterations, or convergence guard):
 
 3. Append metrics:
 \`\`\`bash
-mkdir -p ~/.gstack/analytics
-echo '{"skill":"${_ctx.skillName}","ts":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","iterations":ITERATIONS,"issues_found":FOUND,"issues_fixed":FIXED,"remaining":REMAINING,"quality_score":SCORE}' >> ~/.gstack/analytics/spec-review.jsonl 2>/dev/null || true
+mkdir -p ~/.torch/analytics
+echo '{"skill":"${_ctx.skillName}","ts":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","iterations":ITERATIONS,"issues_found":FOUND,"issues_fixed":FIXED,"remaining":REMAINING,"quality_score":SCORE}' >> ~/.torch/analytics/spec-review.jsonl 2>/dev/null || true
 \`\`\`
 Replace ITERATIONS, FOUND, FIXED, REMAINING, SCORE with actual values from the review.`;
 }
@@ -307,10 +307,10 @@ ${invokeBlock}
 After /${first} completes, re-run the design doc check:
 \`\`\`bash
 setopt +o nomatch 2>/dev/null || true  # zsh compat
-SLUG=$(~/.claude/skills/gstack/browse/bin/remote-slug 2>/dev/null || basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")
+SLUG=$(~/.claude/skills/torch/browse/bin/remote-slug 2>/dev/null || basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")
 BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null | tr '/' '-' || echo 'no-branch')
-DESIGN=$(ls -t ~/.gstack/projects/$SLUG/*-$BRANCH-design-*.md 2>/dev/null | head -1)
-[ -z "$DESIGN" ] && DESIGN=$(ls -t ~/.gstack/projects/$SLUG/*-design-*.md 2>/dev/null | head -1)
+DESIGN=$(ls -t ~/.torch/projects/$SLUG/*-$BRANCH-design-*.md 2>/dev/null | head -1)
+[ -z "$DESIGN" ] && DESIGN=$(ls -t ~/.torch/projects/$SLUG/*-design-*.md 2>/dev/null | head -1)
 [ -n "$DESIGN" ] && echo "Design doc found: $DESIGN" || echo "No design doc found"
 \`\`\`
 
@@ -351,7 +351,7 @@ If B: skip Phase 3.5 entirely. Remember that the second opinion did NOT run (aff
 2. **Write the assembled prompt to a temp file** (prevents shell injection from user-derived content):
 
 \`\`\`bash
-CODEX_PROMPT_FILE=$(mktemp /tmp/gstack-codex-oh-XXXXXXXX.txt)
+CODEX_PROMPT_FILE=$(mktemp /tmp/torch-codex-oh-XXXXXXXX.txt)
 \`\`\`
 
 Write the full prompt to this file. **Always start with the filesystem boundary:**
@@ -584,7 +584,7 @@ If \`DIFF_TOTAL < 200\`: skip this section silently. The Claude + Codex adversar
 
 After all passes complete, persist:
 \`\`\`bash
-~/.claude/skills/gstack/bin/gstack-review-log '{"skill":"adversarial-review","timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","status":"STATUS","source":"SOURCE","tier":"always","gate":"GATE","commit":"'"$(git rev-parse --short HEAD)"'"}'
+~/.claude/skills/torch/bin/torch-review-log '{"skill":"adversarial-review","timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","status":"STATUS","source":"SOURCE","tier":"always","gate":"GATE","commit":"'"$(git rev-parse --short HEAD)"'"}'
 \`\`\`
 Substitute: STATUS = "clean" if no findings across ALL passes, "issues_found" if any pass found issues. SOURCE = "both" if Codex ran, "claude" if only Claude subagent ran. GATE = the Codex structured review gate result ("pass"/"fail"), "skipped" if diff < 200, or "informational" if Codex was unavailable. If all passes failed, do NOT persist.
 
@@ -620,14 +620,14 @@ After all review sections are complete, run an independent second opinion from a
 different AI system automatically — it is a standard part of plan review, not an
 opt-in. Two models agreeing on a plan is stronger signal than one model's thorough
 review. The user turns this off only by asking explicitly
-(\`gstack-config set codex_reviews disabled\`).
+(\`torch-config set codex_reviews disabled\`).
 
 **Preflight — decide whether and how the outside voice runs:**
 
 ${codexPreflight({ disabledBehavior: 'skip-all' })}
 
 When the mode is \`ready\`, \`not_installed\`, or \`not_authed\`, print one line so the off-switch
-stays discoverable: "Running the outside voice automatically (standard step). Disable: \`gstack-config set codex_reviews disabled\`."
+stays discoverable: "Running the outside voice automatically (standard step). Disable: \`torch-config set codex_reviews disabled\`."
 
 **Construct the plan review prompt** (for \`ready\`, \`not_installed\`, and \`not_authed\` — skip only on \`disabled\`).
 Read the plan file being reviewed (the file the user pointed this review at, or the branch
@@ -729,7 +729,7 @@ If no tension points exist, note: "No cross-model tension — both reviewers agr
 
 **Persist the result:**
 \`\`\`bash
-~/.claude/skills/gstack/bin/gstack-review-log '{"skill":"codex-plan-review","timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","status":"STATUS","source":"SOURCE","commit":"'"$(git rev-parse --short HEAD)"'"}'
+~/.claude/skills/torch/bin/torch-review-log '{"skill":"codex-plan-review","timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","status":"STATUS","source":"SOURCE","commit":"'"$(git rev-parse --short HEAD)"'"}'
 \`\`\`
 
 Substitute: STATUS = "clean" if no findings, "issues_found" if findings exist.
@@ -749,14 +749,14 @@ export function generateCodexDocReview(ctx: TemplateContext): string {
 After the documentation updates above are written, run an independent cross-model pass that
 checks the docs against what actually shipped. This is a standard part of /document-release,
 not an opt-in. The user turns it off only by asking explicitly
-(\`gstack-config set codex_reviews disabled\`).
+(\`torch-config set codex_reviews disabled\`).
 
 **Preflight — decide whether and how the doc review runs:**
 
 ${codexPreflight({ disabledBehavior: 'skip-all' })}
 
 When the mode is \`ready\`, \`not_installed\`, or \`not_authed\`, print one line so the off-switch
-stays discoverable: "Running the Codex doc review automatically (standard step). Disable: \`gstack-config set codex_reviews disabled\`."
+stays discoverable: "Running the Codex doc review automatically (standard step). Disable: \`torch-config set codex_reviews disabled\`."
 
 **Determine the release diff range (D3 — reuse the method, do not invent one).**
 Recompute the SAME range document-release used in its pre-flight / diff analysis, with the
@@ -826,7 +826,7 @@ rewrites docs). On B, note the gaps in the output so they're visible.
 
 **Persist the result:**
 \`\`\`bash
-~/.claude/skills/gstack/bin/gstack-review-log '{"skill":"codex-doc-review","timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","status":"STATUS","source":"SOURCE","commit":"'"$(git rev-parse --short HEAD)"'"}'
+~/.claude/skills/torch/bin/torch-review-log '{"skill":"codex-doc-review","timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","status":"STATUS","source":"SOURCE","commit":"'"$(git rev-parse --short HEAD)"'"}'
 \`\`\`
 Substitute: STATUS = "clean" if no gaps, "issues_found" if gaps exist. SOURCE = "codex" if Codex ran, "claude" if the subagent ran.
 
@@ -848,11 +848,11 @@ function generatePlanFileDiscovery(): string {
 setopt +o nomatch 2>/dev/null || true  # zsh compat
 BRANCH=$(git branch --show-current 2>/dev/null | tr '/' '-')
 REPO=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
-# Compute project slug for ~/.gstack/projects/ lookup
+# Compute project slug for ~/.torch/projects/ lookup
 _PLAN_SLUG=$(git remote get-url origin 2>/dev/null | sed 's|.*[:/]\\([^/]*/[^/]*\\)\\.git$|\\1|;s|.*[:/]\\([^/]*/[^/]*\\)$|\\1|' | tr '/' '-' | tr -cd 'a-zA-Z0-9._-') || true
 _PLAN_SLUG="\${_PLAN_SLUG:-$(basename "$PWD" | tr -cd 'a-zA-Z0-9._-')}"
 # Search common plan file locations (project designs first, then personal/local)
-for PLAN_DIR in "$HOME/.gstack/projects/$_PLAN_SLUG" "$HOME/.claude/plans" "$HOME/.codex/plans" ".gstack/plans"; do
+for PLAN_DIR in "$HOME/.torch/projects/$_PLAN_SLUG" "$HOME/.claude/plans" "$HOME/.codex/plans" ".torch/plans"; do
   [ -d "$PLAN_DIR" ] || continue
   PLAN=$(ls -t "$PLAN_DIR"/*.md 2>/dev/null | xargs grep -l "$BRANCH" 2>/dev/null | head -1)
   [ -z "$PLAN" ] && PLAN=$(ls -t "$PLAN_DIR"/*.md 2>/dev/null | xargs grep -l "$REPO" 2>/dev/null | head -1)
@@ -895,7 +895,7 @@ Read the plan file. Extract every actionable item — anything that describes wo
 **Ignore:**
 - Context/Background sections (\`## Context\`, \`## Background\`, \`## Problem\`)
 - Questions and open items (marked with ?, "TBD", "TODO: decide")
-- Review report sections (\`## GSTACK REVIEW REPORT\`)
+- Review report sections (\`## torch REVIEW REPORT\`)
 - Explicitly deferred items ("Future:", "Out of scope:", "NOT in scope:", "P2:", "P3:", "P4:")
 - CEO Review Decisions sections (these record choices, not work items)
 
@@ -1066,7 +1066,7 @@ IMPACT: {HIGH|MEDIUM|LOW} — {what breaks or degrades if this stays undelivered
 **Only for discrepancies sourced from plan files** (not commit messages or TODOS.md), log a learning so future sessions know this pattern occurred:
 
 \`\`\`bash
-~/.claude/skills/gstack/bin/gstack-learnings-log '{
+~/.claude/skills/torch/bin/torch-learnings-log '{
   "type": "pitfall",
   "key": "plan-delivery-gap-KEBAB_SUMMARY",
   "insight": "Planned X but delivered Y because Z",
@@ -1194,7 +1194,7 @@ export function generateCrossReviewDedup(ctx: TemplateContext): string {
 Before classifying findings, check if any were previously skipped by the user in a prior review on this branch.
 
 \`\`\`bash
-~/.claude/skills/gstack/bin/gstack-review-read
+~/.claude/skills/torch/bin/torch-review-read
 \`\`\`
 
 Parse the output: only lines BEFORE \`---CONFIG---\` are JSONL entries (the output also contains \`---CONFIG---\` and \`---HEAD---\` footer sections that are not JSONL — ignore those).

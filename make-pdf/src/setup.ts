@@ -41,8 +41,8 @@ export async function runSetup(): Promise<void> {
   } catch (err: any) {
     process.stderr.write(" FAIL\n");
     process.stderr.write(`\nChromium failed to launch: ${err.message}\n`);
-    process.stderr.write("\nTo fix: run gstack setup from the gstack repo:\n");
-    process.stderr.write("  cd ~/.claude/skills/gstack && ./setup\n");
+    process.stderr.write("\nTo fix: run torch setup from the torch repo:\n");
+    process.stderr.write("  cd ~/.claude/skills/torch && ./setup\n");
     process.exit(4);
   } finally {
     if (chromiumTab !== null) {

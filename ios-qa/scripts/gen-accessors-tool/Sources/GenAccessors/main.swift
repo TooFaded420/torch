@@ -5,7 +5,7 @@
 //
 // Output goes to --output (default: same dir as input). Cache key is
 // computed from a composite hash and stored at
-// ~/.gstack/cache/gen-accessors/<hash>/StateAccessor.swift.
+// ~/.torch/cache/gen-accessors/<hash>/StateAccessor.swift.
 
 import Foundation
 import SwiftSyntax
@@ -79,8 +79,8 @@ struct GenAccessors {
         // separately computed accessorHash is schema-only and remains stable
         // across checkout paths, unrelated sources, and app rebuilds.
         let cacheKey = computeCacheKey(swiftFiles: swiftFiles, buildId: buildId)
-        let cacheDir = getEnv("GSTACK_IOS_CACHE_ROOT")
-            ?? ("~/.gstack/cache/gen-accessors" as NSString).expandingTildeInPath
+        let cacheDir = getEnv("torch_IOS_CACHE_ROOT")
+            ?? ("~/.torch/cache/gen-accessors" as NSString).expandingTildeInPath
         let cachedOutput = "\(cacheDir)/\(cacheKey)/StateAccessor.swift"
         do {
             try FileManager.default.createDirectory(atPath: outputDir, withIntermediateDirectories: true)
@@ -198,7 +198,7 @@ struct GenAccessors {
             // Swift types. Round-tripping through JSONDecoder enforces the
             // declared Codable shape (including every collection element)
             // and preserves a successful Optional nil as a double Optional.
-            out += "private enum _GStackDebugBridgeSnapshotJSON {\n"
+            out += "private enum _torchDebugBridgeSnapshotJSON {\n"
             out += "    private struct Box<Value: Decodable>: Decodable {\n"
             out += "        let value: Value\n"
             out += "    }\n\n"
@@ -238,7 +238,7 @@ struct GenAccessors {
                 out += "                guard let raw\(index) = keys[\"\(name)\"] else {\n"
                 out += "                    return .missingKey(\"\(name)\")\n"
                 out += "                }\n"
-                out += "                guard let restored\(index): \(typeText) = _GStackDebugBridgeSnapshotJSON.decode(raw\(index), as: \(typeText).self) else {\n"
+                out += "                guard let restored\(index): \(typeText) = _torchDebugBridgeSnapshotJSON.decode(raw\(index), as: \(typeText).self) else {\n"
                 out += "                    return .typeMismatch(\"\(name)\")\n"
                 out += "                }\n"
             }
@@ -264,7 +264,7 @@ struct GenAccessors {
                     out += "            read: { state.\(name) as Any? },\n"
                 }
                 out += "            write: { value in\n"
-                out += "                guard let typed: \(typeText) = _GStackDebugBridgeSnapshotJSON.decode(value, as: \(typeText).self) else { return false }\n"
+                out += "                guard let typed: \(typeText) = _torchDebugBridgeSnapshotJSON.decode(value, as: \(typeText).self) else { return false }\n"
                 out += "                state.\(name) = typed\n"
                 out += "                return true\n"
                 out += "            }\n"

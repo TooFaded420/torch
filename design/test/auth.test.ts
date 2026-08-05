@@ -2,7 +2,7 @@
  * Tests for $D OpenAI auth source reporting (#1278, closes #1248).
  *
  * Verifies that resolveApiKey + requireApiKey:
- *   - prefer ~/.gstack/openai.json over OPENAI_API_KEY
+ *   - prefer ~/.torch/openai.json over OPENAI_API_KEY
  *   - report when the env-var key matches a cwd .env / .env.local
  *   - never echo the key itself to stderr (only the source label)
  */
@@ -27,7 +27,7 @@ let originalNodeEnv: string | undefined;
 let originalCwd: string;
 
 beforeEach(() => {
-  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "gstack-design-auth-"));
+  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "torch-design-auth-"));
   tmpHome = path.join(tmpDir, "home");
   fs.mkdirSync(tmpHome, { recursive: true });
 
@@ -54,7 +54,7 @@ afterEach(() => {
 });
 
 describe("resolveApiKeyInfo", () => {
-  test("uses ~/.gstack/openai.json before OPENAI_API_KEY", () => {
+  test("uses ~/.torch/openai.json before OPENAI_API_KEY", () => {
     saveApiKey("sk-config");
     process.env.OPENAI_API_KEY = "sk-env";
 
@@ -62,7 +62,7 @@ describe("resolveApiKeyInfo", () => {
 
     expect(resolution?.key).toBe("sk-config");
     expect(resolution?.source).toBe("config");
-    expect(describeApiKeySource(resolution!)).toBe("~/.gstack/openai.json");
+    expect(describeApiKeySource(resolution!)).toBe("~/.torch/openai.json");
     expect(resolveApiKey()).toBe("sk-config");
   });
 

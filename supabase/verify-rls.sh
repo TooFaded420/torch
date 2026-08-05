@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
-# verify-rls.sh — smoke test after deploying 002_tighten_rls.sql
+# verify-rls.sh — smoke test after deploying the RLS migrations (002-006)
 #
 # Verifies:
-#   - SELECT denied on all tables and views (security fix)
-#   - UPDATE denied on installations (security fix)
+#   - SELECT denied on telemetry_events, update_checks, and views (privacy)
+#   - SELECT ALLOWED on installations (migration 006 — required because
+#     PostgreSQL RLS only lets UPDATE touch rows that are VISIBLE under a
+#     SELECT policy; without it the anon upsert silently matched 0 rows)
+#   - UPDATE allowed on installations for tracking columns (last_seen,
+#     torch_version, os) — scoped by column-level grants (003) + table-level
+#     UPDATE grant (005)
 #   - INSERT still allowed on tables (kept for old client compat)
 #
 # Run manually after deploying the migration:
@@ -13,8 +18,8 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 . "$SCRIPT_DIR/config.sh"
 
-URL="$GSTACK_SUPABASE_URL"
-KEY="$GSTACK_SUPABASE_ANON_KEY"
+URL="$torch_SUPABASE_URL"
+KEY="$torch_SUPABASE_ANON_KEY"
 PASS=0
 FAIL=0
 TOTAL=0
@@ -115,25 +120,28 @@ check() {
   rm -f "$resp_file" 2>/dev/null || true
 }
 
-echo "RLS Verification (after 002_tighten_rls.sql)"
+echo "RLS Verification (after 002-006)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "Read denial (should be blocked):"
 check "SELECT telemetry_events" deny GET "telemetry_events?select=*&limit=1"
-check "SELECT installations"    deny GET "installations?select=*&limit=1"
 check "SELECT update_checks"    deny GET "update_checks?select=*&limit=1"
 check "SELECT crash_clusters"   deny GET "crash_clusters?select=*&limit=1"
 check "SELECT skill_sequences"  deny GET "skill_sequences?select=skill_a&limit=1"
 
 echo ""
-echo "Update denial (should be blocked):"
-check "UPDATE installations"    deny PATCH "installations?installation_id=eq.test_verify_rls" '{"gstack_version":"hacked"}'
+echo "Read allowed (migration 006 — SELECT visibility unblocks anon upsert):"
+check "SELECT installations"    allow GET "installations?select=installation_id&limit=1"
 
 echo ""
 echo "Insert allowed (kept for old client compat):"
-check "INSERT telemetry_events" allow POST "telemetry_events" '{"gstack_version":"verify_rls_test","os":"test","event_timestamp":"2026-01-01T00:00:00Z","outcome":"test"}'
-check "INSERT update_checks"    allow POST "update_checks"    '{"gstack_version":"verify_rls_test","os":"test"}'
+check "INSERT telemetry_events" allow POST "telemetry_events" '{"torch_version":"verify_rls_test","os":"test","event_timestamp":"2026-01-01T00:00:00Z","outcome":"test"}'
+check "INSERT update_checks"    allow POST "update_checks"    '{"torch_version":"verify_rls_test","os":"test"}'
 check "INSERT installations"    allow POST "installations"    '{"installation_id":"verify_rls_test"}'
+
+echo ""
+echo "Update/upsert allowed (migration 005/006 — scoped to tracking columns):"
+check "UPDATE installations"    allow PATCH "installations?installation_id=eq.verify_rls_test" '{"torch_version":"hacked"}'
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -143,6 +151,6 @@ if [ "$FAIL" -gt 0 ]; then
   echo "VERDICT: FAIL"
   exit 1
 else
-  echo "VERDICT: PASS — reads/updates blocked, inserts allowed"
+  echo "VERDICT: PASS — sensitive reads blocked, tracking upsert allowed"
   exit 0
 fi

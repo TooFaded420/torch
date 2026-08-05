@@ -83,7 +83,7 @@ export interface ClaudePtyOptions {
   /** Terminal size. Default 120x40. Plan-mode UI lays out cleanly at this size. */
   cols?: number;
   rows?: number;
-  /** Working directory. Default: process.cwd(). The repo cwd has the gstack
+  /** Working directory. Default: process.cwd(). The repo cwd has the torch
    *  skill registry and trusted-folder cookie, so most tests want this. */
   cwd?: string;
   /** Extra env on top of process.env. */
@@ -334,7 +334,7 @@ export function isNumberedOptionListVisible(visible: string): boolean {
 //
 // Cost: ~$0.0005 per call using claude haiku 4.5. Cached by snapshot hash so
 // identical TTY frames don't re-charge. All verdicts logged to
-// ~/.gstack/analytics/pty-judge.jsonl for offline analysis.
+// ~/.torch/analytics/pty-judge.jsonl for offline analysis.
 // ────────────────────────────────────────────────────────────────────────────
 
 import { spawnSync as nodeSpawnSync } from 'node:child_process';
@@ -358,7 +358,7 @@ const PTY_VERDICT_CACHE = new Map<string, PtyStateVerdict>();
  */
 function logPtyJudge(record: Record<string, unknown>): void {
   try {
-    const dir = `${process.env.HOME}/.gstack/analytics`;
+    const dir = `${process.env.HOME}/.torch/analytics`;
     fs.mkdirSync(dir, { recursive: true });
     fs.appendFileSync(`${dir}/pty-judge.jsonl`, JSON.stringify(record) + '\n');
   } catch {
@@ -367,14 +367,14 @@ function logPtyJudge(record: Record<string, unknown>): void {
 }
 
 /**
- * Snapshot dump for postmortem debugging when GSTACK_PTY_LOG=1.
+ * Snapshot dump for postmortem debugging when torch_PTY_LOG=1.
  * Writes the last 4KB of visible TTY plus context to
- * ~/.gstack/analytics/pty-snapshots/<testName>-<elapsed>ms.txt.
+ * ~/.torch/analytics/pty-snapshots/<testName>-<elapsed>ms.txt.
  */
 export function logPtySnapshot(visible: string, ctx: { testName: string; elapsedMs: number; tag?: string }): void {
-  if (process.env.GSTACK_PTY_LOG !== '1') return;
+  if (process.env.torch_PTY_LOG !== '1') return;
   try {
-    const dir = `${process.env.HOME}/.gstack/analytics/pty-snapshots`;
+    const dir = `${process.env.HOME}/.torch/analytics/pty-snapshots`;
     fs.mkdirSync(dir, { recursive: true });
     const tag = ctx.tag ? `-${ctx.tag}` : '';
     const file = `${dir}/${ctx.testName}-${ctx.elapsedMs}ms${tag}.txt`;
@@ -783,7 +783,7 @@ export type ClassifyResult =
 
 const SANCTIONED_WRITE_SUBSTRINGS = [
   '.claude/plans',
-  '.gstack/',
+  '.torch/',
   '/.context/',
   'CHANGELOG.md',
   'TODOS.md',
@@ -1058,10 +1058,10 @@ export function auqFingerprint(
  * stop signal; this regex is the "we're done, go gracefully" hint.
  */
 export const COMPLETION_SUMMARY_RE =
-  /(GSTACK REVIEW REPORT|## Completion [Ss]ummary|Status:\s*(clean|issues_open)|^VERDICT:)/m;
+  /(torch REVIEW REPORT|## Completion [Ss]ummary|Status:\s*(clean|issues_open)|^VERDICT:)/m;
 
 /**
- * Result of asserting that a plan file ends with `## GSTACK REVIEW REPORT`
+ * Result of asserting that a plan file ends with `## torch REVIEW REPORT`
  * as its last `## ` heading. `ok` is true iff the report is present AND no
  * other `## ` heading appears after it. Diagnostic fields are populated only
  * on failure to keep the success path cheap.
@@ -1073,7 +1073,7 @@ export interface ReviewReportAtBottomResult {
 }
 
 /**
- * Assert that `## GSTACK REVIEW REPORT` is the last `## ` heading in a plan
+ * Assert that `## torch REVIEW REPORT` is the last `## ` heading in a plan
  * file's content. Pure string operation — no filesystem access. Used by the
  * finding-count E2E tests as a second assertion on each test's produced plan.
  *
@@ -1085,10 +1085,10 @@ export interface ReviewReportAtBottomResult {
 export function assertReviewReportAtBottom(
   content: string,
 ): ReviewReportAtBottomResult {
-  const re = /^## GSTACK REVIEW REPORT\s*$/m;
+  const re = /^## torch REVIEW REPORT\s*$/m;
   const match = re.exec(content);
   if (!match) {
-    return { ok: false, reason: 'no GSTACK REVIEW REPORT section' };
+    return { ok: false, reason: 'no torch REVIEW REPORT section' };
   }
   const after = content.slice(match.index + match[0].length);
   // Match any `## ` heading after the report. Reject `## ` followed by
@@ -1099,7 +1099,7 @@ export function assertReviewReportAtBottom(
   if (trailingHeadings.length > 0) {
     return {
       ok: false,
-      reason: 'trailing ## heading(s) after GSTACK REVIEW REPORT',
+      reason: 'trailing ## heading(s) after torch REVIEW REPORT',
       trailingHeadings,
     };
   }
@@ -1108,7 +1108,7 @@ export function assertReviewReportAtBottom(
 
 /**
  * Test helper: if `obs.planFile` was set, read it and assert
- * `## GSTACK REVIEW REPORT` is the last `## ` section. Throws on
+ * `## torch REVIEW REPORT` is the last `## ` section. Throws on
  * violation with a diagnostic message including the plan path,
  * the reason, any trailing headings, and the last 2KB of TTY output.
  *
@@ -1143,7 +1143,7 @@ export function assertReportAtBottomIfPlanWritten(
       ? `\ntrailing headings: ${verdict.trailingHeadings.join(', ')}`
       : '';
     throw new Error(
-      `GSTACK REVIEW REPORT contract violation in ${obs.planFile}: ${verdict.reason}${trailing}\n` +
+      `torch REVIEW REPORT contract violation in ${obs.planFile}: ${verdict.reason}${trailing}\n` +
         `--- evidence (last 2KB) ---\n${obs.evidence}`,
     );
   }
@@ -1680,7 +1680,7 @@ export async function runPlanSkillObservation(opts: {
       // burned >60s with periodic ticks, ask Haiku "is the model waiting,
       // working, or hung?" Treat 'waiting' as 'asked' (model surfaced a
       // question via prose the regex couldn't reassemble). Snapshot the
-      // visible buffer at each judge call when GSTACK_PTY_LOG=1.
+      // visible buffer at each judge call when torch_PTY_LOG=1.
       const elapsed = Date.now() - start;
       if (elapsed > JUDGE_AFTER_MS && Date.now() - lastJudgeAt > JUDGE_INTERVAL_MS) {
         lastJudgeAt = Date.now();
@@ -2184,7 +2184,7 @@ export async function runPlanSkillFloorCheck(opts: {
 
       // Reached terminal without AUQ → transcript-bug regression.
       // Note: COMPLETION_SUMMARY_RE is intentionally NOT checked here — it
-      // matches "GSTACK REVIEW REPORT" anywhere in the buffer, including
+      // matches "torch REVIEW REPORT" anywhere in the buffer, including
       // when the agent does recon by reading existing plan files (which
       // contain that string as a generated section). The plan_ready check
       // (claude's actual "Ready to execute" confirmation) is the reliable

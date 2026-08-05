@@ -115,7 +115,7 @@ export const CARVE_GUARDS: Record<string, CarveGuard> = {
       // The PR-title-version invariant MUST stay always-loaded: the v1.54.0.0
       // carve stranded it in pr-body.md and PRs started landing with bare titles
       // (CI backstop: test/pr-title-sync-workflow-safety.test.ts).
-      mustStayInSkeleton: ['v$NEW_VERSION', 'gstack-pr-title-rewrite'],
+      mustStayInSkeleton: ['v$NEW_VERSION', 'torch-pr-title-rewrite'],
       // ...while the full create/update procedure stays carved into pr-body.md
       // (out of the skeleton, present in the union). Asserts BOTH PR paths
       // survive: the create path and the idempotent update path.

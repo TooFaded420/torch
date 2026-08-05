@@ -4,11 +4,11 @@ preamble-tier: 2
 version: 1.0.0
 description: |
   Keep gbrain current with this repo's code and refresh agent search
-  guidance in CLAUDE.md. Wraps the gstack-gbrain-sync orchestrator with
+  guidance in CLAUDE.md. Wraps the torch-gbrain-sync orchestrator with
   state probing, native code-surface registration, capability checks,
   and a verdict block. Re-runnable, idempotent. Use when: "sync gbrain",
   "refresh gbrain", "re-index this repo", "gbrain search isn't finding
-  things". (gstack)
+  things". (torch)
 triggers:
   - sync gbrain
   - refresh gbrain
@@ -38,7 +38,7 @@ search over Grep.
 **native code surfaces** (`gbrain sources add`, `gbrain sync --strategy code`,
 `gbrain reindex-code`, `gbrain code-def/code-refs/code-callers/code-callees`).
 It does NOT use `gbrain import` (that path is for markdown directories).
-It does NOT touch `~/.gstack/` indexing (the existing `gstack-gbrain-source-wireup`
+It does NOT touch `~/.torch/` indexing (the existing `torch-gbrain-source-wireup`
 owns that — never double-store).
 
 ## User-invocable
@@ -54,21 +54,21 @@ the skill itself, not a dispatcher binary):
 - `/sync-gbrain --dry-run` — preview what would sync; no writes anywhere
 - `/sync-gbrain --no-memory` / `--no-brain-sync` — selectively skip stages
 - `/sync-gbrain --quiet` — suppress per-stage output
-- `/sync-gbrain --refresh-cache` — force-rebuild brain-aware planning cache (v1.48; replaces /brain-refresh-context per D1 fold). Skips code + memory stages; routes to `gstack-brain-cache refresh --project <slug>`.
-- `/sync-gbrain --audit` — emit summary of gstack-owned pages per project + sensitive-content audit (v1.48 / D10 lifecycle). Read-only.
+- `/sync-gbrain --refresh-cache` — force-rebuild brain-aware planning cache (v1.48; replaces /brain-refresh-context per D1 fold). Skips code + memory stages; routes to `torch-brain-cache refresh --project <slug>`.
+- `/sync-gbrain --audit` — emit summary of torch-owned pages per project + sensitive-content audit (v1.48 / D10 lifecycle). Read-only.
 
 Pass-through args go straight to the orchestrator at
-`{{BIN_DIR}}/gstack-gbrain-sync.ts`.
+`{{BIN_DIR}}/torch-gbrain-sync.ts`.
 
 **`--refresh-cache` short-circuit:** when this flag is present, the skill
-runs ONLY the cache refresh (`gstack-brain-cache refresh --project <slug>`
+runs ONLY the cache refresh (`torch-brain-cache refresh --project <slug>`
 for the current worktree's slug, plus a cross-project refresh of
-user-profile if `gstack/user-profile/<user-slug>` exists). Code +
+user-profile if `torch/user-profile/<user-slug>` exists). Code +
 memory + brain-sync stages are skipped. Useful when the user knows the
-brain has new info gstack should pick up before the next planning skill.
+brain has new info torch should pick up before the next planning skill.
 
 **`--audit` short-circuit:** when this flag is present, the skill runs
-`gstack-brain-cache list --project <slug> --json`, summarizes by page
+`torch-brain-cache list --project <slug> --json`, summarizes by page
 type, then scans for any cached salience entries that ended up outside
 the SALIENCE_DEFAULT_ALLOWLIST (T17 / D9 leak check). Read-only; no
 modifications to brain or cache.
@@ -80,7 +80,7 @@ modifications to brain or cache.
 Before doing anything, check that /setup-gbrain has been run on this Mac.
 
 ```bash
-~/.claude/skills/gstack/bin/gstack-gbrain-detect 2>/dev/null
+~/.claude/skills/torch/bin/torch-gbrain-detect 2>/dev/null
 ```
 
 **Brain trust policy gate (v1.48 / Phase 1.5 / D4 — added by T13+T5c):**
@@ -90,8 +90,8 @@ the orchestrator runs. Local engines auto-set to `personal` silently per
 the per-transport default table.
 
 ```bash
-_HASH=$(~/.claude/skills/gstack/bin/gstack-config endpoint-hash 2>/dev/null)
-_POLICY=$(~/.claude/skills/gstack/bin/gstack-config get brain_trust_policy@$_HASH 2>/dev/null || echo unset)
+_HASH=$(~/.claude/skills/torch/bin/torch-config endpoint-hash 2>/dev/null)
+_POLICY=$(~/.claude/skills/torch/bin/torch-config get brain_trust_policy@$_HASH 2>/dev/null || echo unset)
 echo "BRAIN_TRUST_POLICY[$_HASH]: $_POLICY"
 ```
 
@@ -103,17 +103,17 @@ flip for personal). Then continue.
 If `_POLICY == "unset"` AND `_HASH == "local"`, auto-set personal:
 
 ```bash
-~/.claude/skills/gstack/bin/gstack-config set brain_trust_policy@$_HASH personal
+~/.claude/skills/torch/bin/torch-config set brain_trust_policy@$_HASH personal
 ```
 
 **Split-engine model (v1.34.0.0+).** Code stage runs locally against the
 per-machine gbrain engine (PGLite or whatever `gbrain config` points to),
 with each worktree of a repo registered as its own source. **Memory stage
-also runs locally** in local-stdio MCP mode — `gstack-memory-ingest` shells
+also runs locally** in local-stdio MCP mode — `torch-memory-ingest` shells
 out to `gbrain import` against the same local engine. In remote-http MCP
 mode (Path 4), the memory stage instead persists staged markdown to
-`~/.gstack/transcripts/<run-id>/` and the artifacts pipeline pushes it to
-the brain admin's pull job (plan D11). Brain-sync (the `gstack-brain-sync`
+`~/.torch/transcripts/<run-id>/` and the artifacts pipeline pushes it to
+the brain admin's pull job (plan D11). Brain-sync (the `torch-brain-sync`
 push to git) is the one stage that never touches local engine and runs
 regardless of mode.
 
@@ -121,7 +121,7 @@ Practically: local PGLite stays code-only on remote-http machines; the
 remote brain holds everything else. Local-stdio machines mix code +
 transcripts in one local engine, as they always have.
 
-Also check the per-repo trust policy. If `gstack-gbrain-repo-policy get` for
+Also check the per-repo trust policy. If `torch-gbrain-repo-policy get` for
 this repo returns `deny`, STOP:
 
 > "This repo's gbrain trust policy is `deny`. Run `/setup-gbrain --repo` to
@@ -137,7 +137,7 @@ BEFORE invoking the orchestrator:
 - **`ok`**: proceed to Step 2 normally.
 - **`timeout`**: proceed to Step 2 — the engine is most likely healthy but
   slow (cold pooler connection, #1964). Tell the user in one line: "Engine
-  probe timed out (>15s) — proceeding; raise `GSTACK_GBRAIN_PROBE_TIMEOUT_MS`
+  probe timed out (>15s) — proceeding; raise `torch_GBRAIN_PROBE_TIMEOUT_MS`
   if your pooler is slow." Do NOT treat this as a broken config.
 - **`engine-locked`**: STOP. "The local PGLite database is busy, usually
   because `gbrain serve` from a live Claude session owns it. Stop that process
@@ -184,14 +184,14 @@ Pass user args to the orchestrator. Do not paraphrase them — pass through
 as-is.
 
 ```bash
-bun run ~/.claude/skills/gstack/bin/gstack-gbrain-sync.ts <user-args>
+bun run ~/.claude/skills/torch/bin/torch-gbrain-sync.ts <user-args>
 ```
 
 The orchestrator runs three stages: code → memory → brain-sync (per the
 plan's storage tiering). Each stage failure is non-fatal; subsequent stages
-still run. State is persisted to `~/.gstack/.gbrain-sync-state.json` via
+still run. State is persisted to `~/.torch/.gbrain-sync-state.json` via
 tmp-file + atomic rename. Concurrent runs are blocked by a lock file at
-`~/.gstack/.sync-gbrain.lock` (5-min stale-takeover).
+`~/.torch/.sync-gbrain.lock` (5-min stale-takeover).
 
 ---
 
@@ -200,7 +200,7 @@ tmp-file + atomic rename. Concurrent runs are blocked by a lock file at
 After the sync run, query gbrain for the cwd source's page_count:
 
 ```bash
-SOURCE_ID=$(grep -o '"source_id":"[^"]*"' ~/.gstack/.gbrain-sync-state.json 2>/dev/null \
+SOURCE_ID=$(grep -o '"source_id":"[^"]*"' ~/.torch/.gbrain-sync-state.json 2>/dev/null \
   | head -1 | sed 's/.*"source_id":"//;s/".*//')
 PAGES=$(gbrain sources list --json 2>/dev/null \
   | jq -r --arg id "$SOURCE_ID" '.sources[] | select(.id==$id) | .page_count' 2>/dev/null \
@@ -251,7 +251,7 @@ Detect whether this source's call graph is built via doctor's `cycle_freshness`
 check, matching the cwd `SOURCE_ID` literally:
 
 ```bash
-SOURCE_ID=$(grep -o '"source_id":"[^"]*"' ~/.gstack/.gbrain-sync-state.json 2>/dev/null \
+SOURCE_ID=$(grep -o '"source_id":"[^"]*"' ~/.torch/.gbrain-sync-state.json 2>/dev/null \
   | head -1 | sed 's/.*"source_id":"//;s/".*//')
 CYCLE=$(gbrain doctor --json --fast 2>/dev/null \
   | jq -r --arg id "$SOURCE_ID" '
@@ -342,7 +342,7 @@ Verbatim block content (copy exactly):
 
 ```markdown
 ## GBrain Search Guidance (configured by /sync-gbrain)
-<!-- gstack-gbrain-search-guidance:start -->
+<!-- torch-gbrain-search-guidance:start -->
 
 GBrain is set up and synced on this machine. The agent should prefer gbrain
 over Grep when the question is semantic or when you don't know the exact
@@ -365,7 +365,7 @@ and reports a WARN. `code-def`/`code-refs` need the same extraction.
 
 Two indexed corpora available via the `gbrain` CLI:
 - This worktree's code (auto-pinned via `.gbrain-source`).
-- `~/.gstack/` curated memory (registered as `gstack-brain-<user>` source via
+- `~/.torch/` curated memory (registered as `torch-brain-<user>` source via
   the existing federation pipeline).
 
 Prefer gbrain when:
@@ -376,7 +376,7 @@ Prefer gbrain when:
 - "What calls Y?" / "What does Y depend on?":
     `gbrain code-callers <symbol>` / `gbrain code-callees <symbol>`
 - "What did we decide last time?" / past plans, retros, learnings:
-    `gbrain search "<terms>" --source gstack-brain-<user>`
+    `gbrain search "<terms>" --source torch-brain-<user>`
 
 Grep is still right for known exact strings, regex, multiline patterns, and
 file globs. Run `/sync-gbrain` after meaningful code changes; for ongoing
@@ -389,12 +389,12 @@ to avoid racing it (#1734). Prefer registering user repos with `gbrain sources
 add --path <dir>` (no `--url`): URL-managed sources can auto-reclone, and the
 sync code walk for them requires an explicit `--allow-reclone` opt-in.
 
-<!-- gstack-gbrain-search-guidance:end -->
+<!-- torch-gbrain-search-guidance:end -->
 ```
 
 Use the Read + Edit tools. The find-and-replace target is the entire region
-from `<!-- gstack-gbrain-search-guidance:start -->` through
-`<!-- gstack-gbrain-search-guidance:end -->`. If those markers are missing,
+from `<!-- torch-gbrain-search-guidance:start -->` through
+`<!-- torch-gbrain-search-guidance:end -->`. If those markers are missing,
 search for `## GBrain Search Guidance (configured by /sync-gbrain)` heading
 and replace from there to the next `## ` or EOF. If no heading exists, append
 the entire block at the end of CLAUDE.md.
@@ -425,9 +425,9 @@ gbrain status: GREEN
   CLI ............. OK   <gbrain version>
   Engine .......... OK   <pglite|supabase>
   Capability ...... OK   write+search round-trip
-  CWD source ...... OK   <gstack-code-{repo_slug}> (page_count=<N>)
+  CWD source ...... OK   <torch-code-{repo_slug}> (page_count=<N>)
   Call graph ...... OK   <N> edges resolved (code-callers/callees live)
-  ~/.gstack source. OK   <gstack-brain-{user}> (page_count=<N>) — managed by /setup-gbrain
+  ~/.torch source. OK   <torch-brain-{user}> (page_count=<N>) — managed by /setup-gbrain
   Memory sync ..... OK   <artifacts_sync_mode>
   CLAUDE.md ....... OK   ## GBrain Search Guidance present
   Last sync ....... OK   <last_sync from state file>
@@ -462,15 +462,15 @@ A `never`/`unknown` Call graph row flips the verdict to YELLOW.
 ## Concurrency note
 
 This skill is safe to run concurrently from multiple terminals on the same
-Mac. The orchestrator acquires a lock at `~/.gstack/.sync-gbrain.lock` before
+Mac. The orchestrator acquires a lock at `~/.torch/.sync-gbrain.lock` before
 any state-file or CLAUDE.md mutation and exits with code 2 if another sync is
 in flight. Stale locks (process died) auto-clear after 5 minutes.
 
 ## Cross-machine note
 
 The `## GBrain Search Guidance` block is committed to the repo's CLAUDE.md
-and travels with `git push`/`git pull` — NOT through `~/.gstack/.brain-allowlist`
-(which is for `~/.gstack/` brain-sync only). On a different Mac with a synced
+and travels with `git push`/`git pull` — NOT through `~/.torch/.brain-allowlist`
+(which is for `~/.torch/` brain-sync only). On a different Mac with a synced
 CLAUDE.md but no local gbrain, /sync-gbrain detects the mismatch via the
 capability check and REMOVES the block (the local agent shouldn't be told to
 use a tool that isn't installed).

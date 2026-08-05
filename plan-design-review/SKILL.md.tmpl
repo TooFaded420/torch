@@ -10,7 +10,7 @@ description: |
   visual audits, use /design-review. Use when asked to "review the design plan"
   or "design critique".
   Proactively suggest when the user has a plan with UI/UX components that
-  should be reviewed before implementation. (gstack)
+  should be reviewed before implementation. (torch)
 allowed-tools:
   - Read
   - Edit
@@ -61,9 +61,9 @@ choices.
 Do NOT make any code changes. Do NOT start implementation. Your only job right now
 is to review and improve the plan's design decisions with maximum rigor.
 
-### The gstack designer — YOUR PRIMARY TOOL
+### The torch designer — YOUR PRIMARY TOOL
 
-You have the **gstack designer**, an AI mockup generator that creates real visual mockups
+You have the **torch designer**, an AI mockup generator that creates real visual mockups
 from design briefs. This is your signature capability. Use it by default, not as an
 afterthought.
 
@@ -186,10 +186,10 @@ AskUserQuestion: "I've rated this plan {N}/10 on design completeness. The bigges
 ## Step 0.5: Visual Mockups (DEFAULT when DESIGN_READY)
 
 If the plan involves any UI — screens, pages, components, visual changes — AND the
-gstack designer is available (`DESIGN_READY` was printed during setup), **generate
+torch designer is available (`DESIGN_READY` was printed during setup), **generate
 mockups immediately.** Do not ask permission. This is the default behavior.
 
-Tell the user: "Generating visual mockups with the gstack designer. This is how we
+Tell the user: "Generating visual mockups with the torch designer. This is how we
 review design — real visuals, not text descriptions."
 
 The ONLY time you skip mockups is when:
@@ -199,21 +199,21 @@ The ONLY time you skip mockups is when:
 If the user explicitly says "skip mockups" or "text only", respect that. Otherwise, generate.
 
 **PLAN MODE EXCEPTION — ALWAYS RUN:** These commands write design artifacts to
-`~/.gstack/projects/$SLUG/designs/` (user config directory, not project files).
-Mockups are design artifacts that inform the plan, not code changes. The gstack
+`~/.torch/projects/$SLUG/designs/` (user config directory, not project files).
+Mockups are design artifacts that inform the plan, not code changes. The torch
 designer outputs PNGs and HTML comparison boards for human review during the
 planning phase. Generating mockups during planning is the whole point.
 
 Allowed commands under this exception:
-- `mkdir -p ~/.gstack/projects/$SLUG/designs/...`
+- `mkdir -p ~/.torch/projects/$SLUG/designs/...`
 - `$D generate`, `$D variants`, `$D compare`, `$D iterate`, `$D evolve`, `$D check`
 - `open` (fallback for viewing boards when `$B` is not available)
 
 First, set up the output directory. Name it after the screen/feature being designed and today's date:
 
 ```bash
-eval "$(~/.claude/skills/gstack/bin/gstack-slug 2>/dev/null)"
-_DESIGN_DIR="$HOME/.gstack/projects/$SLUG/designs/<screen-name>-$(date +%Y%m%d)"
+eval "$(~/.claude/skills/torch/bin/torch-slug 2>/dev/null)"
+_DESIGN_DIR="$HOME/.torch/projects/$SLUG/designs/<screen-name>-$(date +%Y%m%d)"
 mkdir -p "$_DESIGN_DIR"
 echo "DESIGN_DIR: $_DESIGN_DIR"
 ```
@@ -252,7 +252,7 @@ Note which direction was approved. This becomes the visual reference for all sub
 
 **Multiple variants/screens:** If the user asked for multiple variants (e.g., "5 versions of the homepage"), generate ALL as separate variant sets with their own comparison boards. Each screen/variant set gets its own subdirectory under `designs/`. Complete all mockup generation and user selection before starting review passes.
 
-**If `DESIGN_NOT_AVAILABLE`:** Tell the user: "The gstack designer isn't set up yet. Run `$D setup` to enable visual mockups. Proceeding with text-only review, but you're missing the best part." Then proceed to review passes with text-based review.
+**If `DESIGN_NOT_AVAILABLE`:** Tell the user: "The torch designer isn't set up yet. Run `$D setup` to enable visual mockups. Proceeding with text-only review, but you're missing the best part." Then proceed to review passes with text-based review.
 
 {{DESIGN_OUTSIDE_VOICES}}
 
@@ -276,7 +276,7 @@ If `DESIGN_READY` was printed during setup AND a dimension rates below 7/10,
 offer to generate a visual mockup showing what the improved version would look like:
 
 ```bash
-$D generate --brief "<description of what 10/10 looks like for this dimension>" --output /tmp/gstack-ideal-<dimension>.png
+$D generate --brief "<description of what 10/10 looks like for this dimension>" --output /tmp/torch-ideal-<dimension>.png
 ```
 
 Show the mockup to the user via the Read tool. This makes the gap between

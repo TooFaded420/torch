@@ -7,7 +7,7 @@ description: |
   intelligent page breaks, page numbers, cover pages, running headers, curly
   quotes and em dashes, clickable TOC, diagonal DRAFT watermark. Not a draft
   artifact — a finished artifact. Use when asked to "make a PDF", "export to
-  PDF", "turn this markdown into a PDF", or "generate a document". (gstack)
+  PDF", "turn this markdown into a PDF", or "generate a document". (torch)
 voice-triggers:
   - "make this a pdf"
   - "make it a pdf"
@@ -45,7 +45,7 @@ Emoji need a color-emoji font. macOS (Apple Color Emoji) and Windows (Segoe UI
 Emoji) ship one; most Linux distros and containers ship none, so emoji render as
 empty boxes (▯). `./setup` auto-installs `fonts-noto-color-emoji` on Linux
 (apt/dnf/pacman/apk, best-effort) and the print CSS falls back through Apple /
-Segoe / Noto emoji families. Set `GSTACK_SKIP_FONTS=1` to skip the install (CI
+Segoe / Noto emoji families. Set `torch_SKIP_FONTS=1` to skip the install (CI
 without sudo, managed or offline machines).
 
 ## Core patterns

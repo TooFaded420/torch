@@ -28,8 +28,8 @@ describe('setup links sections/ for cherry-pick install targets', () => {
     const body = fnBody(SETUP, 'link_claude_skill_dirs');
     expect(body).toContain('sections');
     // sections install must route through the windows-safe helper, not raw ln.
-    expect(body).toMatch(/_link_or_copy\s+"\$gstack_dir\/\$dir_name\/sections"\s+"\$target\/sections"/);
-    expect(body).toMatch(/if \[ -d "\$gstack_dir\/\$dir_name\/sections" \]/);
+    expect(body).toMatch(/_link_or_copy\s+"\$torch_dir\/\$dir_name\/sections"\s+"\$target\/sections"/);
+    expect(body).toMatch(/if \[ -d "\$torch_dir\/\$dir_name\/sections" \]/);
   });
 
   test('kiro per-skill loop rewrites + copies sections/*', () => {

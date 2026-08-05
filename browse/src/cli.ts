@@ -1,8 +1,8 @@
 /**
- * gstack CLI — thin wrapper that talks to the persistent server
+ * torch CLI — thin wrapper that talks to the persistent server
  *
  * Flow:
- *   1. Read .gstack/browse.json for port + token
+ *   1. Read .torch/browse.json for port + token
  *   2. If missing or stale PID → start server in background
  *   3. Health check + version mismatch detection
  *   4. Send command via HTTP POST
@@ -174,7 +174,7 @@ async function killServer(pid: number): Promise<void> {
  * Verifies PID ownership before sending signals.
  */
 function cleanupLegacyState(): void {
-  // No legacy state on Windows — /tmp and `ps` don't exist, and gstack
+  // No legacy state on Windows — /tmp and `ps` don't exist, and torch
   // never ran on Windows before the Node.js fallback was added.
   if (IS_WINDOWS) return;
 
@@ -214,7 +214,7 @@ function cleanupLegacyState(): void {
 // ─── Chromium profile lock helpers (#1781) ─────────────────────
 /** Profile dir used by headed/connect Chromium sessions. */
 function chromiumProfileDir(): string {
-  return path.join(process.env.HOME || '/tmp', '.gstack', 'chromium-profile');
+  return path.join(process.env.HOME || '/tmp', '.torch', 'chromium-profile');
 }
 
 /** Remove Chromium SingletonLock/Socket/Cookie so a relaunch can acquire the
@@ -447,7 +447,7 @@ async function ensureServer(flags?: GlobalFlags): Promise<ServerState> {
   // fail fast with a clear error instead of silently starting a new one.
   if (process.env.BROWSE_NO_AUTOSTART === '1') {
     console.error('[browse] Server not available and BROWSE_NO_AUTOSTART is set.');
-    console.error('[browse] The headed browser may have been closed. Run /open-gstack-browser to restart.');
+    console.error('[browse] The headed browser may have been closed. Run /open-torch-browser to restart.');
     process.exit(1);
   }
 
@@ -456,7 +456,7 @@ async function ensureServer(flags?: GlobalFlags): Promise<ServerState> {
   // Silently replacing it would be confusing — tell the user to reconnect.
   if (state && state.mode === 'headed' && isProcessAlive(state.pid)) {
     console.error(`[browse] Headed server running (PID ${state.pid}) but not responding.`);
-    console.error(`[browse] Run '/open-gstack-browser' to restart.`);
+    console.error(`[browse] Run '/open-torch-browser' to restart.`);
     process.exit(1);
   }
 
@@ -623,10 +623,10 @@ let _globalFlags: GlobalFlags | null = null;
 
 // ─── Ngrok Detection ───────────────────────────────────────────
 
-/** Check if ngrok is installed and authenticated (native config or gstack env). */
+/** Check if ngrok is installed and authenticated (native config or torch env). */
 function isNgrokAvailable(): boolean {
-  // Check gstack's own ngrok env
-  const ngrokEnvPath = path.join(process.env.HOME || '/tmp', '.gstack', 'ngrok.env');
+  // Check torch's own ngrok env
+  const ngrokEnvPath = path.join(process.env.HOME || '/tmp', '.torch', 'ngrok.env');
   if (fs.existsSync(ngrokEnvPath)) return true;
 
   // Check NGROK_AUTHTOKEN env var
@@ -938,7 +938,7 @@ async function handlePairAgent(state: ServerState, args: string[]): Promise<void
     try {
       // Resolve host config for the globalRoot path
       const hostsPath = path.resolve(__dirname, '..', '..', 'hosts', 'index.ts');
-      let globalRoot = `.${localHost}/skills/gstack`;
+      let globalRoot = `.${localHost}/skills/torch`;
       try {
         const { getHostConfig } = await import(hostsPath);
         const hostConfig = getHostConfig(localHost);
@@ -998,7 +998,7 @@ async function main() {
   const args = globalFlags.args;
 
   if (args.length === 0 || args[0] === '--help' || args[0] === '-h') {
-    console.log(`gstack browse — Fast headless browser for AI coding agents
+    console.log(`torch browse — Fast headless browser for AI coding agents
 
 Usage: browse <command> [args...]
 
@@ -1183,12 +1183,12 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
     process.on('SIGTERM', () => teardownAndExit('SIGTERM'));
 
     const SUPERVISOR_TICK_MS = parseInt(
-      process.env.GSTACK_SUPERVISOR_TICK_MS || '30000',
+      process.env.torch_SUPERVISOR_TICK_MS || '30000',
       10,
     );
     const SUPERVISOR_GUARD_WINDOW_MS = 5 * 60_000;
     const SUPERVISOR_GUARD_MAX = 5;
-    const SUPERVISOR_BACKOFF_MS = (process.env.GSTACK_SUPERVISOR_BACKOFF || '1000,2000,4000,8000,30000')
+    const SUPERVISOR_BACKOFF_MS = (process.env.torch_SUPERVISOR_BACKOFF || '1000,2000,4000,8000,30000')
       .split(',').map(s => parseInt(s.trim(), 10)).filter(n => Number.isFinite(n));
     const respawns: number[] = [];
 
@@ -1322,7 +1322,7 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
     // Ensure headed mode — the user should see the browser window
     // when sharing it with another agent. Feels safer, more impressive.
     if (state.mode !== 'headed' && !hasFlag(commandArgs, '--headless')) {
-      console.log('[browse] Opening GStack Browser so you can see what the remote agent does...');
+      console.log('[browse] Opening torch Browser so you can see what the remote agent does...');
       // In compiled binaries, process.argv[1] is /$bunfs/... (virtual).
       // Use process.execPath which is the real binary on disk.
       const browseBin = process.execPath;

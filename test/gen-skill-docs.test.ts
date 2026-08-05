@@ -92,7 +92,7 @@ function isRepoRootSymlink(candidateDir: string): boolean {
 const ALL_SKILLS = (() => {
   const skills: Array<{ dir: string; name: string }> = [];
   if (fs.existsSync(path.join(ROOT, 'SKILL.md.tmpl'))) {
-    skills.push({ dir: '.', name: 'root gstack' });
+    skills.push({ dir: '.', name: 'root torch' });
   }
   for (const entry of fs.readdirSync(ROOT, { withFileTypes: true })) {
     if (!entry.isDirectory() || entry.name.startsWith('.') || entry.name === 'node_modules') continue;
@@ -300,11 +300,11 @@ describe('gen-skill-docs', () => {
   test('generated SKILL.md contains operational self-improvement (replaced contributor mode)', () => {
     const content = fs.readFileSync(path.join(ROOT, 'SKILL.md'), 'utf-8');
     expect(content).not.toContain('Contributor Mode');
-    expect(content).not.toContain('gstack_contributor');
+    expect(content).not.toContain('torch_contributor');
     expect(content).not.toContain('contributor-logs');
     expect(content).toContain('Operational Self-Improvement');
-    expect(content).toContain('gstack-learnings-log');
-    expect(content).toContain('gstack-learnings-search --limit 3');
+    expect(content).toContain('torch-learnings-log');
+    expect(content).toContain('torch-learnings-search --limit 3');
   });
 
   test('generated SKILL.md with LEARNINGS_LOG contains operational type', () => {
@@ -344,7 +344,7 @@ describe('gen-skill-docs', () => {
   test('generated SKILL.md contains telemetry line', () => {
     const content = fs.readFileSync(path.join(ROOT, 'SKILL.md'), 'utf-8');
     expect(content).toContain('skill-usage.jsonl');
-    expect(content).toContain('~/.gstack/analytics');
+    expect(content).toContain('~/.torch/analytics');
   });
 
   test('plan-review generated preambles stay under the Option A budget', () => {
@@ -371,7 +371,7 @@ describe('gen-skill-docs', () => {
     // \\u-escape CJK rule (rule 12 + self-check item) to the AskUserQuestion
     // preamble.
     // Ratcheted 39000 → 40000 in plan-tune cathedral T14: question-tuning
-    // resolver gained the <gstack-qid:...> marker convention + the
+    // resolver gained the <torch-qid:...> marker convention + the
     // (recommended) label requirement (D2 + D18 — both load-bearing for
     // hook enforcement). Adds ~700 bytes.
     // Ratcheted 40000 → 60000 in v1.52.0.0 cap audit: ~20K headroom so
@@ -393,7 +393,7 @@ describe('gen-skill-docs', () => {
     expect(Buffer.byteLength(writingStyle, 'utf-8')).toBeLessThan(2_000);
   });
 
-  test('slim voice section preserves the gstack voice contract', () => {
+  test('slim voice section preserves the torch voice contract', () => {
     const content = readSkillUnion('plan-eng-review'); // carved: review body moved to section
     const voice = extractMarkdownSection(content, '## Voice');
 
@@ -412,7 +412,7 @@ describe('gen-skill-docs', () => {
       // Must NOT have a bare shell glob ".pending-*" outside of find's -name argument
       expect(content).not.toMatch(/for _PF in [^\n]*\/\.pending-\*/);
       // Must use find to avoid zsh NOMATCH error on glob expansion
-      expect(content).toContain("find ~/.gstack/analytics -maxdepth 1 -name '.pending-*'");
+      expect(content).toContain("find ~/.torch/analytics -maxdepth 1 -name '.pending-*'");
     }
   });
 
@@ -455,7 +455,7 @@ describe('gen-skill-docs', () => {
 
   test('preamble-using skills have correct skill name in telemetry', () => {
     const PREAMBLE_SKILLS = [
-      { dir: '.', name: 'gstack' },
+      { dir: '.', name: 'torch' },
       { dir: 'ship', name: 'ship' },
       { dir: 'review', name: 'review' },
       { dir: 'qa', name: 'qa' },
@@ -677,7 +677,7 @@ describe('REVIEW_DASHBOARD resolver', () => {
   for (const skill of REVIEW_SKILLS) {
     test(`review dashboard appears in ${skill} generated file`, () => {
       const content = readSkillUnion(skill); // carved skills: union skeleton + sections
-      expect(content).toContain('gstack-review');
+      expect(content).toContain('torch-review');
       expect(content).toContain('REVIEW READINESS DASHBOARD');
     });
   }
@@ -968,7 +968,7 @@ describe('PLAN_FILE_REVIEW_REPORT resolver', () => {
   for (const skill of REVIEW_SKILLS) {
     test(`plan file review report appears in ${skill} generated file`, () => {
       const content = fs.readFileSync(path.join(ROOT, skill, 'SKILL.md'), 'utf-8');
-      expect(content).toContain('GSTACK REVIEW REPORT');
+      expect(content).toContain('torch REVIEW REPORT');
     });
   }
 
@@ -1150,7 +1150,7 @@ describe('Plan status footer in preamble', () => {
     // Read any skill that uses PREAMBLE
     const content = readSkillUnion('office-hours'); // carved: Phase 5/6 prose moved to section
     expect(content).toContain('Plan Status Footer');
-    expect(content).toContain('GSTACK REVIEW REPORT');
+    expect(content).toContain('torch REVIEW REPORT');
     expect(content).toContain('ExitPlanMode');
     expect(content).toContain('EXIT PLAN MODE GATE');
     // The preamble must NOT impose review-report rules on operational skills
@@ -1261,7 +1261,7 @@ describe('DESIGN_SKETCH resolver', () => {
 
 describe('CODEX_SECOND_OPINION resolver', () => {
   const content = readSkillUnion('office-hours'); // carved: Phase 5/6 prose moved to section
-  const codexContent = fs.readFileSync(path.join(ROOT, '.agents', 'skills', 'gstack-office-hours', 'SKILL.md'), 'utf-8');
+  const codexContent = fs.readFileSync(path.join(ROOT, '.agents', 'skills', 'torch-office-hours', 'SKILL.md'), 'utf-8');
 
   test('Phase 3.5 section appears in office-hours SKILL.md', () => {
     expect(content).toContain('Phase 3.5: Cross-Model Second Opinion');
@@ -1303,7 +1303,7 @@ describe('CODEX_SECOND_OPINION resolver', () => {
     // check for Phase 3.5-specific markers only.
     expect(codexContent).not.toContain('Phase 3.5: Cross-Model Second Opinion');
     expect(codexContent).not.toContain('TMPERR_OH');
-    expect(codexContent).not.toContain('gstack-codex-oh-');
+    expect(codexContent).not.toContain('torch-codex-oh-');
   });
 });
 
@@ -1340,7 +1340,7 @@ describe('Codex filesystem boundary', () => {
   test('codex skill has rabbit-hole detection rule', () => {
     const content = fs.readFileSync(path.join(ROOT, 'codex', 'SKILL.md'), 'utf-8');
     expect(content).toContain('Detect skill-file rabbit holes');
-    expect(content).toContain('gstack-update-check');
+    expect(content).toContain('torch-update-check');
     expect(content).toContain('Consider retrying');
   });
 
@@ -1357,14 +1357,14 @@ describe('Codex filesystem boundary', () => {
 
   test('autoplan boundary text avoids host-specific paths for cross-host compatibility', () => {
     const content = fs.readFileSync(path.join(ROOT, 'autoplan', 'SKILL.md.tmpl'), 'utf-8');
-    // autoplan template uses generic 'skills/gstack' pattern instead of host-specific
+    // autoplan template uses generic 'skills/torch' pattern instead of host-specific
     // paths like ~/.claude/ or .agents/skills (which break Codex/Claude output tests)
     const boundaryStart = content.indexOf('Filesystem Boundary');
     const boundaryEnd = content.indexOf('---', boundaryStart + 1);
     const boundarySection = content.slice(boundaryStart, boundaryEnd);
     expect(boundarySection).not.toContain('~/.claude/');
     expect(boundarySection).not.toContain('.agents/skills');
-    expect(boundarySection).toContain('skills/gstack');
+    expect(boundarySection).toContain('skills/torch');
     expect(boundarySection).toContain(BOUNDARY_MARKER);
   });
 });
@@ -1683,15 +1683,15 @@ describe('Codex generation (--host codex)', () => {
       } catch { return false; }
     };
     if (fs.existsSync(path.join(ROOT, 'SKILL.md.tmpl'))) {
-      if (!isSymlinkLoop('gstack')) {
-        skills.push({ dir: '.', codexName: 'gstack' });
+      if (!isSymlinkLoop('torch')) {
+        skills.push({ dir: '.', codexName: 'torch' });
       }
     }
     for (const entry of fs.readdirSync(ROOT, { withFileTypes: true })) {
       if (!entry.isDirectory() || entry.name.startsWith('.') || entry.name === 'node_modules') continue;
       if (entry.name === 'codex') continue; // /codex is excluded from Codex output
       if (!fs.existsSync(path.join(ROOT, entry.name, 'SKILL.md.tmpl'))) continue;
-      const codexName = entry.name.startsWith('gstack-') ? entry.name : `gstack-${entry.name}`;
+      const codexName = entry.name.startsWith('torch-') ? entry.name : `torch-${entry.name}`;
       if (isSymlinkLoop(codexName)) continue;
       skills.push({ dir: entry.name, codexName });
     }
@@ -1705,25 +1705,25 @@ describe('Codex generation (--host codex)', () => {
     }
   });
 
-  test('root gstack bundle has OpenAI metadata for Codex skill browsing', () => {
+  test('root torch bundle has OpenAI metadata for Codex skill browsing', () => {
     const rootMetadata = path.join(ROOT, 'agents', 'openai.yaml');
     expect(fs.existsSync(rootMetadata)).toBe(true);
     const content = fs.readFileSync(rootMetadata, 'utf-8');
-    expect(content).toContain('display_name: "gstack"');
-    expect(content).toContain('Use $gstack to locate the bundled gstack skills.');
+    expect(content).toContain('display_name: "torch"');
+    expect(content).toContain('Use $torch to locate the bundled torch skills.');
     expect(content).toContain('allow_implicit_invocation: true');
   });
 
-  test('externalSkillName mapping: root is gstack, others are gstack-{dir}', () => {
-    // Root → gstack
-    expect(fs.existsSync(path.join(AGENTS_DIR, 'gstack', 'SKILL.md'))).toBe(true);
-    // Subdirectories → gstack-{dir}
-    expect(fs.existsSync(path.join(AGENTS_DIR, 'gstack-review', 'SKILL.md'))).toBe(true);
-    expect(fs.existsSync(path.join(AGENTS_DIR, 'gstack-ship', 'SKILL.md'))).toBe(true);
-    // gstack-upgrade doesn't double-prefix
-    expect(fs.existsSync(path.join(AGENTS_DIR, 'gstack-upgrade', 'SKILL.md'))).toBe(true);
-    // No double-prefix: gstack-gstack-upgrade must NOT exist
-    expect(fs.existsSync(path.join(AGENTS_DIR, 'gstack-gstack-upgrade', 'SKILL.md'))).toBe(false);
+  test('externalSkillName mapping: root is torch, others are torch-{dir}', () => {
+    // Root → torch
+    expect(fs.existsSync(path.join(AGENTS_DIR, 'torch', 'SKILL.md'))).toBe(true);
+    // Subdirectories → torch-{dir}
+    expect(fs.existsSync(path.join(AGENTS_DIR, 'torch-review', 'SKILL.md'))).toBe(true);
+    expect(fs.existsSync(path.join(AGENTS_DIR, 'torch-ship', 'SKILL.md'))).toBe(true);
+    // torch-upgrade doesn't double-prefix
+    expect(fs.existsSync(path.join(AGENTS_DIR, 'torch-upgrade', 'SKILL.md'))).toBe(true);
+    // No double-prefix: torch-torch-upgrade must NOT exist
+    expect(fs.existsSync(path.join(AGENTS_DIR, 'torch-torch-upgrade', 'SKILL.md'))).toBe(false);
   });
 
   test('Codex frontmatter has ONLY name + description', () => {
@@ -1769,16 +1769,16 @@ describe('Codex generation (--host codex)', () => {
   });
 
   test('/codex skill excluded from Codex output', () => {
-    expect(fs.existsSync(path.join(AGENTS_DIR, 'gstack-codex', 'SKILL.md'))).toBe(false);
-    expect(fs.existsSync(path.join(AGENTS_DIR, 'gstack-codex'))).toBe(false);
+    expect(fs.existsSync(path.join(AGENTS_DIR, 'torch-codex', 'SKILL.md'))).toBe(false);
+    expect(fs.existsSync(path.join(AGENTS_DIR, 'torch-codex'))).toBe(false);
   });
 
   test('Codex output includes Claude outside-voice skill with read-only boundary', () => {
-    const content = fs.readFileSync(path.join(AGENTS_DIR, 'gstack-claude', 'SKILL.md'), 'utf-8');
+    const content = fs.readFileSync(path.join(AGENTS_DIR, 'torch-claude', 'SKILL.md'), 'utf-8');
     expect(content).toContain('claude -p');
-    expect(content).toContain('mktemp /tmp/gstack-claude-prompt-');
-    expect(content).toContain('mktemp /tmp/gstack-claude-diff-');
-    expect(content).not.toContain('/tmp/gstack-claude-diff-$$');
+    expect(content).toContain('mktemp /tmp/torch-claude-prompt-');
+    expect(content).toContain('mktemp /tmp/torch-claude-diff-');
+    expect(content).not.toContain('/tmp/torch-claude-diff-$$');
     expect(content).toContain('cat "$PROMPT_FILE" | claude -p');
     expect(content).toContain('--disable-slash-commands');
     expect(content).toContain('--tools ""');
@@ -1788,11 +1788,11 @@ describe('Codex generation (--host codex)', () => {
   });
 
   test('Codex review step stripped from Codex-host ship and review', () => {
-    const shipContent = fs.readFileSync(path.join(AGENTS_DIR, 'gstack-ship', 'SKILL.md'), 'utf-8');
+    const shipContent = fs.readFileSync(path.join(AGENTS_DIR, 'torch-ship', 'SKILL.md'), 'utf-8');
     expect(shipContent).not.toContain('codex review --base');
     expect(shipContent).not.toContain('CODEX_REVIEWS');
 
-    const reviewContent = fs.readFileSync(path.join(AGENTS_DIR, 'gstack-review', 'SKILL.md'), 'utf-8');
+    const reviewContent = fs.readFileSync(path.join(AGENTS_DIR, 'torch-review', 'SKILL.md'), 'utf-8');
     expect(reviewContent).not.toContain('codex review --base');
     expect(reviewContent).not.toContain('CODEX_REVIEWS');
   });
@@ -1831,7 +1831,7 @@ describe('Codex generation (--host codex)', () => {
 
   test('multiline descriptions preserved in Codex output', () => {
     // office-hours has a multiline description — verify it survives the frontmatter transform
-    const content = fs.readFileSync(path.join(AGENTS_DIR, 'gstack-office-hours', 'SKILL.md'), 'utf-8');
+    const content = fs.readFileSync(path.join(AGENTS_DIR, 'torch-office-hours', 'SKILL.md'), 'utf-8');
     const fmEnd = content.indexOf('\n---', 4);
     const frontmatter = content.slice(4, fmEnd);
     // Description should span multiple lines (block scalar)
@@ -1842,7 +1842,7 @@ describe('Codex generation (--host codex)', () => {
   });
 
   test('hook skills have safety prose and no hooks: in frontmatter', () => {
-    const HOOK_SKILLS = ['gstack-careful', 'gstack-freeze', 'gstack-guard'];
+    const HOOK_SKILLS = ['torch-careful', 'torch-freeze', 'torch-guard'];
     for (const skillName of HOOK_SKILLS) {
       const content = fs.readFileSync(path.join(AGENTS_DIR, skillName, 'SKILL.md'), 'utf-8');
       // Must have safety advisory prose
@@ -1862,58 +1862,58 @@ describe('Codex generation (--host codex)', () => {
     }
   });
 
-  test('Codex preamble resolves runtime assets from repo-local or global gstack roots', () => {
+  test('Codex preamble resolves runtime assets from repo-local or global torch roots', () => {
     // Check a skill that has a preamble (review is a good candidate)
-    const content = fs.readFileSync(path.join(AGENTS_DIR, 'gstack-review', 'SKILL.md'), 'utf-8');
-    expect(content).toContain('GSTACK_ROOT');
-    expect(content).toContain('$_ROOT/.agents/skills/gstack');
-    expect(content).toContain('$GSTACK_BIN/gstack-config');
-    expect(content).toContain('$GSTACK_ROOT/gstack-upgrade/SKILL.md');
-    expect(content).not.toContain('~/.codex/skills/gstack/bin/gstack-config get telemetry');
+    const content = fs.readFileSync(path.join(AGENTS_DIR, 'torch-review', 'SKILL.md'), 'utf-8');
+    expect(content).toContain('torch_ROOT');
+    expect(content).toContain('$_ROOT/.agents/skills/torch');
+    expect(content).toContain('$torch_BIN/torch-config');
+    expect(content).toContain('$torch_ROOT/torch-upgrade/SKILL.md');
+    expect(content).not.toContain('~/.codex/skills/torch/bin/torch-config get telemetry');
   });
 
   // ─── Path rewriting regression tests ─────────────────────────
 
-  test('sidecar paths point to .agents/skills/gstack/review/ (not gstack-review/)', () => {
-    // Regression: gen-skill-docs rewrote .claude/skills/review → .agents/skills/gstack-review
-    // but setup puts sidecars under .agents/skills/gstack/review/. Must match setup layout.
-    const content = fs.readFileSync(path.join(AGENTS_DIR, 'gstack-review', 'SKILL.md'), 'utf-8');
-    // Correct: references to sidecar files use gstack/review/ path
-    expect(content).toContain('.agents/skills/gstack/review/checklist.md');
+  test('sidecar paths point to .agents/skills/torch/review/ (not torch-review/)', () => {
+    // Regression: gen-skill-docs rewrote .claude/skills/review → .agents/skills/torch-review
+    // but setup puts sidecars under .agents/skills/torch/review/. Must match setup layout.
+    const content = fs.readFileSync(path.join(AGENTS_DIR, 'torch-review', 'SKILL.md'), 'utf-8');
+    // Correct: references to sidecar files use torch/review/ path
+    expect(content).toContain('.agents/skills/torch/review/checklist.md');
     // design-checklist.md is now referenced via Review Army specialist (Claude only, stripped for Codex)
-    // Wrong: must NOT reference gstack-review/checklist.md (file doesn't exist there)
-    expect(content).not.toContain('.agents/skills/gstack-review/checklist.md');
+    // Wrong: must NOT reference torch-review/checklist.md (file doesn't exist there)
+    expect(content).not.toContain('.agents/skills/torch-review/checklist.md');
   });
 
-  test('sidecar paths in ship skill point to gstack/review/ for pre-landing review', () => {
-    const content = fs.readFileSync(path.join(AGENTS_DIR, 'gstack-ship', 'SKILL.md'), 'utf-8');
+  test('sidecar paths in ship skill point to torch/review/ for pre-landing review', () => {
+    const content = fs.readFileSync(path.join(AGENTS_DIR, 'torch-ship', 'SKILL.md'), 'utf-8');
     // Ship references the review checklist in its pre-landing review step
     if (content.includes('checklist.md')) {
-      expect(content).toContain('.agents/skills/gstack/review/');
-      expect(content).not.toContain('.agents/skills/gstack-review/checklist');
+      expect(content).toContain('.agents/skills/torch/review/');
+      expect(content).not.toContain('.agents/skills/torch-review/checklist');
     }
   });
 
   test('greptile-triage sidecar path is correct', () => {
-    const content = fs.readFileSync(path.join(AGENTS_DIR, 'gstack-review', 'SKILL.md'), 'utf-8');
+    const content = fs.readFileSync(path.join(AGENTS_DIR, 'torch-review', 'SKILL.md'), 'utf-8');
     if (content.includes('greptile-triage')) {
-      expect(content).toContain('.agents/skills/gstack/review/greptile-triage.md');
-      expect(content).not.toContain('.agents/skills/gstack-review/greptile-triage');
+      expect(content).toContain('.agents/skills/torch/review/greptile-triage.md');
+      expect(content).not.toContain('.agents/skills/torch-review/greptile-triage');
     }
   });
 
   test('all four path rewrite rules produce correct output', () => {
     // Test each of the 4 path rewrite rules individually
-    const content = fs.readFileSync(path.join(AGENTS_DIR, 'gstack-review', 'SKILL.md'), 'utf-8');
+    const content = fs.readFileSync(path.join(AGENTS_DIR, 'torch-review', 'SKILL.md'), 'utf-8');
 
-    // Rule 1: ~/.claude/skills/gstack → $GSTACK_ROOT
-    expect(content).not.toContain('~/.claude/skills/gstack');
-    expect(content).toContain('$GSTACK_ROOT');
+    // Rule 1: ~/.claude/skills/torch → $torch_ROOT
+    expect(content).not.toContain('~/.claude/skills/torch');
+    expect(content).toContain('$torch_ROOT');
 
-    // Rule 2: .claude/skills/gstack → .agents/skills/gstack
-    expect(content).not.toContain('.claude/skills/gstack');
+    // Rule 2: .claude/skills/torch → .agents/skills/torch
+    expect(content).not.toContain('.claude/skills/torch');
 
-    // Rule 3: .claude/skills/review → .agents/skills/gstack/review
+    // Rule 3: .claude/skills/review → .agents/skills/torch/review
     expect(content).not.toContain('.claude/skills/review');
 
     // Rule 4: .claude/skills → .agents/skills (catch-all)
@@ -1927,12 +1927,12 @@ describe('Codex generation (--host codex)', () => {
       // No skill should reference Claude paths
       expect(content).not.toContain('~/.claude/skills');
       expect(content).not.toContain('.claude/skills');
-      if (content.includes('gstack-config') || content.includes('gstack-update-check') || content.includes('gstack-telemetry-log')) {
-        expect(content).toContain('$GSTACK_ROOT');
+      if (content.includes('torch-config') || content.includes('torch-update-check') || content.includes('torch-telemetry-log')) {
+        expect(content).toContain('$torch_ROOT');
       }
       // If a skill references checklist.md, it must use the correct sidecar path
       if (content.includes('checklist.md') && !content.includes('design-checklist.md')) {
-        expect(content).not.toContain('gstack-review/checklist.md');
+        expect(content).not.toContain('torch-review/checklist.md');
       }
     }
   });
@@ -1943,7 +1943,7 @@ describe('Codex generation (--host codex)', () => {
     // Codex changes must NOT affect Claude output
     const content = fs.readFileSync(path.join(ROOT, 'review', 'SKILL.md'), 'utf-8');
     expect(content).toContain('.claude/skills/review/checklist.md');
-    expect(content).toContain('~/.claude/skills/gstack');
+    expect(content).toContain('~/.claude/skills/torch');
     // Must NOT contain Codex paths
     expect(content).not.toContain('.agents/skills');
     expect(content).not.toContain('~/.codex/');
@@ -1951,7 +1951,7 @@ describe('Codex generation (--host codex)', () => {
 
   test('Claude output unchanged: ship skill still uses .claude/skills/ paths', () => {
     const content = readShipUnion();
-    expect(content).toContain('~/.claude/skills/gstack');
+    expect(content).toContain('~/.claude/skills/torch');
     expect(content).not.toContain('.agents/skills');
     expect(content).not.toContain('~/.codex/');
   });
@@ -1962,12 +1962,12 @@ describe('Codex generation (--host codex)', () => {
       // pair-agent legitimately documents how Codex agents store credentials.
       // codex + autoplan document the Codex CLI auth file (~/.codex/auth.json)
       // and log path (~/.codex/logs/) — those are user-facing Codex CLI paths,
-      // not the gstack Codex host install path.
+      // not the torch Codex host install path.
       if (skill.dir !== 'pair-agent' && skill.dir !== 'codex' && skill.dir !== 'autoplan') {
         expect(content).not.toContain('~/.codex/');
       }
-      // gstack-upgrade legitimately references .agents/skills for cross-platform detection
-      if (skill.dir !== 'gstack-upgrade') {
+      // torch-upgrade legitimately references .agents/skills for cross-platform detection
+      if (skill.dir !== 'torch-upgrade') {
         expect(content).not.toContain('.agents/skills');
       }
     }
@@ -1976,12 +1976,12 @@ describe('Codex generation (--host codex)', () => {
   // ─── Design outside voices: Codex host guard ─────────────────
 
   test('codex host produces empty outside voices in design-review', () => {
-    const codexContent = fs.readFileSync(path.join(AGENTS_DIR, 'gstack-design-review', 'SKILL.md'), 'utf-8');
+    const codexContent = fs.readFileSync(path.join(AGENTS_DIR, 'torch-design-review', 'SKILL.md'), 'utf-8');
     expect(codexContent).not.toContain('Design Outside Voices');
   });
 
   test('codex host does not include Codex design block in ship', () => {
-    const codexContent = fs.readFileSync(path.join(AGENTS_DIR, 'gstack-ship', 'SKILL.md'), 'utf-8');
+    const codexContent = fs.readFileSync(path.join(AGENTS_DIR, 'torch-ship', 'SKILL.md'), 'utf-8');
     expect(codexContent).not.toContain('Codex design voice');
   });
 });
@@ -2004,13 +2004,13 @@ describe('Factory generation (--host factory)', () => {
       catch { return false; }
     };
     if (fs.existsSync(path.join(ROOT, 'SKILL.md.tmpl'))) {
-      if (!isSymlinkLoop('gstack')) skills.push({ dir: '.', factoryName: 'gstack' });
+      if (!isSymlinkLoop('torch')) skills.push({ dir: '.', factoryName: 'torch' });
     }
     for (const entry of fs.readdirSync(ROOT, { withFileTypes: true })) {
       if (!entry.isDirectory() || entry.name.startsWith('.') || entry.name === 'node_modules') continue;
       if (entry.name === 'codex') continue;
       if (!fs.existsSync(path.join(ROOT, entry.name, 'SKILL.md.tmpl'))) continue;
-      const factoryName = entry.name.startsWith('gstack-') ? entry.name : `gstack-${entry.name}`;
+      const factoryName = entry.name.startsWith('torch-') ? entry.name : `torch-${entry.name}`;
       if (isSymlinkLoop(factoryName)) continue;
       skills.push({ dir: entry.name, factoryName });
     }
@@ -2039,7 +2039,7 @@ describe('Factory generation (--host factory)', () => {
   });
 
   test('sensitive skills have disable-model-invocation', () => {
-    const SENSITIVE = ['gstack-ship', 'gstack-land-and-deploy', 'gstack-guard', 'gstack-careful', 'gstack-freeze', 'gstack-unfreeze'];
+    const SENSITIVE = ['torch-ship', 'torch-land-and-deploy', 'torch-guard', 'torch-careful', 'torch-freeze', 'torch-unfreeze'];
     for (const name of SENSITIVE) {
       const content = fs.readFileSync(path.join(FACTORY_DIR, name, 'SKILL.md'), 'utf-8');
       const fmEnd = content.indexOf('\n---', 4);
@@ -2049,7 +2049,7 @@ describe('Factory generation (--host factory)', () => {
   });
 
   test('non-sensitive skills lack disable-model-invocation', () => {
-    const NON_SENSITIVE = ['gstack-qa', 'gstack-review', 'gstack-investigate', 'gstack-browse'];
+    const NON_SENSITIVE = ['torch-qa', 'torch-review', 'torch-investigate', 'torch-browse'];
     for (const name of NON_SENSITIVE) {
       const content = fs.readFileSync(path.join(FACTORY_DIR, name, 'SKILL.md'), 'utf-8');
       const fmEnd = content.indexOf('\n---', 4);
@@ -2075,13 +2075,13 @@ describe('Factory generation (--host factory)', () => {
   });
 
   test('/codex skill excluded from Factory output', () => {
-    expect(fs.existsSync(path.join(FACTORY_DIR, 'gstack-codex', 'SKILL.md'))).toBe(false);
-    expect(fs.existsSync(path.join(FACTORY_DIR, 'gstack-codex'))).toBe(false);
+    expect(fs.existsSync(path.join(FACTORY_DIR, 'torch-codex', 'SKILL.md'))).toBe(false);
+    expect(fs.existsSync(path.join(FACTORY_DIR, 'torch-codex'))).toBe(false);
   });
 
   test('Factory keeps Codex integration blocks', () => {
     // Factory users CAN use Codex second opinions (codex exec is a standalone binary)
-    const shipContent = fs.readFileSync(path.join(FACTORY_DIR, 'gstack-ship', 'SKILL.md'), 'utf-8');
+    const shipContent = fs.readFileSync(path.join(FACTORY_DIR, 'torch-ship', 'SKILL.md'), 'utf-8');
     expect(shipContent).toContain('codex');
   });
 
@@ -2117,10 +2117,10 @@ describe('Factory generation (--host factory)', () => {
   });
 
   test('Factory preamble uses .factory paths', () => {
-    const content = fs.readFileSync(path.join(FACTORY_DIR, 'gstack-review', 'SKILL.md'), 'utf-8');
-    expect(content).toContain('GSTACK_ROOT');
-    expect(content).toContain('$_ROOT/.factory/skills/gstack');
-    expect(content).toContain('$GSTACK_BIN/gstack-config');
+    const content = fs.readFileSync(path.join(FACTORY_DIR, 'torch-review', 'SKILL.md'), 'utf-8');
+    expect(content).toContain('torch_ROOT');
+    expect(content).toContain('$_ROOT/.factory/skills/torch');
+    expect(content).toContain('$torch_BIN/torch-config');
   });
 });
 
@@ -2167,7 +2167,7 @@ describe('Parameterized host smoke tests', () => {
         if (!fs.existsSync(hostDir)) return; // skip if not generated
         const skills = fs.readdirSync(hostDir);
         for (const skill of skills) {
-          // Dev installs may mount the repo root at host/skills/gstack as a runtime
+          // Dev installs may mount the repo root at host/skills/torch as a runtime
           // sidecar. The generator skips that symlink loop, so leakage checks should too.
           if (isRepoRootSymlink(path.join(hostDir, skill))) continue;
           const skillMd = path.join(hostDir, skill, 'SKILL.md');
@@ -2196,7 +2196,7 @@ describe('Parameterized host smoke tests', () => {
       });
 
       test('generates Claude outside-voice skill for external hosts', () => {
-        const skillMd = path.join(hostDir, 'gstack-claude', 'SKILL.md');
+        const skillMd = path.join(hostDir, 'torch-claude', 'SKILL.md');
         expect(fs.existsSync(skillMd)).toBe(true);
         const content = fs.readFileSync(skillMd, 'utf-8');
         expect(content).toContain('claude -p');
@@ -2217,7 +2217,7 @@ describe('Parameterized host smoke tests', () => {
 
       if (hostConfig.generation.skipSkills?.includes('codex')) {
         test('/codex skill excluded', () => {
-          expect(fs.existsSync(path.join(hostDir, 'gstack-codex', 'SKILL.md'))).toBe(false);
+          expect(fs.existsSync(path.join(hostDir, 'torch-codex', 'SKILL.md'))).toBe(false);
         });
       }
     });
@@ -2285,7 +2285,7 @@ describe('setup script validation', () => {
     expect(codexSection).toContain('create_codex_runtime_root');
     expect(codexSection).toContain('link_codex_skill_dirs');
     expect(codexSection).not.toContain('link_claude_skill_dirs');
-    expect(codexSection).not.toContain('_link_or_copy "$GSTACK_DIR" "$CODEX_GSTACK"');
+    expect(codexSection).not.toContain('_link_or_copy "$torch_DIR" "$CODEX_torch"');
   });
 
   test('Codex install prefers repo-local .agents/skills when setup runs from there', () => {
@@ -2297,16 +2297,16 @@ describe('setup script validation', () => {
   });
 
   test('setup separates install path from source path for symlinked repo-local installs', () => {
-    expect(setupContent).toContain('INSTALL_GSTACK_DIR=');
-    expect(setupContent).toContain('SOURCE_GSTACK_DIR=');
+    expect(setupContent).toContain('INSTALL_torch_DIR=');
+    expect(setupContent).toContain('SOURCE_torch_DIR=');
     expect(setupContent).toContain('INSTALL_SKILLS_DIR=');
-    expect(setupContent).toContain('CODEX_GSTACK="$INSTALL_GSTACK_DIR"');
-    expect(setupContent).toContain('link_codex_skill_dirs "$SOURCE_GSTACK_DIR" "$CODEX_SKILLS"');
+    expect(setupContent).toContain('CODEX_torch="$INSTALL_torch_DIR"');
+    expect(setupContent).toContain('link_codex_skill_dirs "$SOURCE_torch_DIR" "$CODEX_SKILLS"');
   });
 
   test('Codex installs always create sidecar runtime assets for the real skill target', () => {
     expect(setupContent).toContain('if [ "$INSTALL_CODEX" -eq 1 ]; then');
-    expect(setupContent).toContain('create_agents_sidecar "$SOURCE_GSTACK_DIR"');
+    expect(setupContent).toContain('create_agents_sidecar "$SOURCE_torch_DIR"');
   });
 
   test('link_codex_skill_dirs reads from .agents/skills/', () => {
@@ -2315,18 +2315,18 @@ describe('setup script validation', () => {
     const fnEnd = setupContent.indexOf('}', setupContent.indexOf('linked[@]}', fnStart));
     const fnBody = setupContent.slice(fnStart, fnEnd);
     expect(fnBody).toContain('.agents/skills');
-    expect(fnBody).toContain('gstack*');
+    expect(fnBody).toContain('torch*');
   });
 
   test('link_claude_skill_dirs creates real directories with absolute SKILL.md symlinks', () => {
     // Claude links should be real directories with absolute SKILL.md symlinks
-    // to ensure Claude Code discovers them as top-level skills (not nested under gstack/)
+    // to ensure Claude Code discovers them as top-level skills (not nested under torch/)
     const fnStart = setupContent.indexOf('link_claude_skill_dirs()');
     const fnEnd = setupContent.indexOf('}', setupContent.indexOf('linked[@]}', fnStart));
     const fnBody = setupContent.slice(fnStart, fnEnd);
     expect(fnBody).toContain('mkdir -p "$target"');
     // v1.36.0.0: routes through _link_or_copy helper for Windows fallback (cp on MSYS2/Git Bash).
-    expect(fnBody).toContain('_link_or_copy "$gstack_dir/$dir_name/SKILL.md" "$target/SKILL.md"');
+    expect(fnBody).toContain('_link_or_copy "$torch_dir/$dir_name/SKILL.md" "$target/SKILL.md"');
   });
 
   // REGRESSION: cleanup functions must handle both old symlinks AND new real-directory pattern
@@ -2358,18 +2358,18 @@ describe('setup script validation', () => {
     expect(fnBody).toContain('rm -f "$target"');
   });
 
-  test('setup links root gstack skill through a thin Claude wrapper alias', () => {
+  test('setup links root torch skill through a thin Claude wrapper alias', () => {
     const fnStart = setupContent.indexOf('link_claude_root_skill_alias()');
     const fnEnd = setupContent.indexOf('# ─── Helper: remove old unprefixed Claude skill entries', fnStart);
     const fnBody = setupContent.slice(fnStart, fnEnd);
-    expect(fnBody).toContain('_gstack-command');
-    expect(fnBody).toContain('_link_or_copy "$gstack_dir/SKILL.md" "$target/SKILL.md"');
+    expect(fnBody).toContain('_torch-command');
+    expect(fnBody).toContain('_link_or_copy "$torch_dir/SKILL.md" "$target/SKILL.md"');
 
     const claudeSection = setupContent.slice(
       setupContent.indexOf('# 4. Install for Claude'),
       setupContent.indexOf('# 5. Install for Codex')
     );
-    expect(claudeSection).toContain('link_claude_root_skill_alias "$SOURCE_GSTACK_DIR" "$INSTALL_SKILLS_DIR"');
+    expect(claudeSection).toContain('link_claude_root_skill_alias "$SOURCE_torch_DIR" "$INSTALL_SKILLS_DIR"');
   });
 
   test('setup supports --host auto|claude|codex|kiro|opencode', () => {
@@ -2384,37 +2384,37 @@ describe('setup script validation', () => {
     expect(setupContent).toContain('command -v opencode');
   });
 
-  // T1: Sidecar skip guard — prevents .agents/skills/gstack from being linked as a skill
-  test('link_codex_skill_dirs skips the gstack sidecar directory', () => {
+  // T1: Sidecar skip guard — prevents .agents/skills/torch from being linked as a skill
+  test('link_codex_skill_dirs skips the torch sidecar directory', () => {
     const fnStart = setupContent.indexOf('link_codex_skill_dirs()');
     const fnEnd = setupContent.indexOf('}', setupContent.indexOf('done', fnStart));
     const fnBody = setupContent.slice(fnStart, fnEnd);
-    expect(fnBody).toContain('[ "$skill_name" = "gstack" ] && continue');
+    expect(fnBody).toContain('[ "$skill_name" = "torch" ] && continue');
   });
 
-  // T2: Dynamic $GSTACK_ROOT paths in generated Codex preambles
-  test('generated Codex preambles use dynamic GSTACK_ROOT paths', () => {
-    const codexSkillDir = path.join(ROOT, '.agents', 'skills', 'gstack-ship');
+  // T2: Dynamic $torch_ROOT paths in generated Codex preambles
+  test('generated Codex preambles use dynamic torch_ROOT paths', () => {
+    const codexSkillDir = path.join(ROOT, '.agents', 'skills', 'torch-ship');
     if (!fs.existsSync(codexSkillDir)) return; // skip if .agents/ not generated
     const content = fs.readFileSync(path.join(codexSkillDir, 'SKILL.md'), 'utf-8');
-    expect(content).toContain('GSTACK_ROOT=');
-    expect(content).toContain('$GSTACK_BIN/');
+    expect(content).toContain('torch_ROOT=');
+    expect(content).toContain('$torch_BIN/');
   });
 
   test('setup supports --host kiro with install section and sed rewrites', () => {
     expect(setupContent).toContain('INSTALL_KIRO=');
     expect(setupContent).toContain('kiro-cli');
     expect(setupContent).toContain('KIRO_SKILLS=');
-    expect(setupContent).toContain('~/.kiro/skills/gstack');
+    expect(setupContent).toContain('~/.kiro/skills/torch');
   });
 
   test('setup supports --host opencode with install section and OpenCode skill path vars', () => {
     expect(setupContent).toContain('INSTALL_OPENCODE=');
     expect(setupContent).toContain('OPENCODE_SKILLS="$HOME/.config/opencode/skills"');
-    expect(setupContent).toContain('OPENCODE_GSTACK="$OPENCODE_SKILLS/gstack"');
+    expect(setupContent).toContain('OPENCODE_torch="$OPENCODE_SKILLS/torch"');
   });
 
-  test('setup installs OpenCode skills into a nested gstack runtime root', () => {
+  test('setup installs OpenCode skills into a nested torch runtime root', () => {
     expect(setupContent).toContain('create_opencode_runtime_root');
     expect(setupContent).toContain('.opencode/skills');
     expect(setupContent).toContain('review/specialists');
@@ -2438,40 +2438,40 @@ describe('setup script validation', () => {
     const fnStart = setupContent.indexOf('create_codex_runtime_root()');
     const fnEnd = setupContent.indexOf('}', setupContent.indexOf('done', setupContent.indexOf('review/', fnStart)));
     const fnBody = setupContent.slice(fnStart, fnEnd);
-    expect(fnBody).toContain('gstack/SKILL.md');
+    expect(fnBody).toContain('torch/SKILL.md');
     expect(fnBody).toContain('browse/dist');
     expect(fnBody).toContain('browse/bin');
-    expect(fnBody).toContain('gstack-upgrade/SKILL.md');
+    expect(fnBody).toContain('torch-upgrade/SKILL.md');
     // Review runtime assets (individual files, not the whole dir)
     expect(fnBody).toContain('checklist.md');
     expect(fnBody).toContain('design-checklist.md');
     expect(fnBody).toContain('greptile-triage.md');
     expect(fnBody).toContain('TODOS-format.md');
-    expect(fnBody).not.toContain('_link_or_copy "$gstack_dir" "$codex_gstack"');
+    expect(fnBody).not.toContain('_link_or_copy "$torch_dir" "$codex_torch"');
   });
 
-  test('direct Codex installs are migrated out of ~/.codex/skills/gstack', () => {
+  test('direct Codex installs are migrated out of ~/.codex/skills/torch', () => {
     expect(setupContent).toContain('migrate_direct_codex_install');
-    expect(setupContent).toContain('$HOME/.gstack/repos/gstack');
+    expect(setupContent).toContain('$HOME/.torch/repos/torch');
     expect(setupContent).toContain('avoid duplicate skill discovery');
   });
 
   // --- Symlink prefix tests (PR #503) ---
 
-  test('link_claude_skill_dirs applies gstack- prefix by default', () => {
+  test('link_claude_skill_dirs applies torch- prefix by default', () => {
     const fnStart = setupContent.indexOf('link_claude_skill_dirs()');
     const fnEnd = setupContent.indexOf('}', setupContent.indexOf('linked[@]}', fnStart));
     const fnBody = setupContent.slice(fnStart, fnEnd);
     expect(fnBody).toContain('SKILL_PREFIX');
-    expect(fnBody).toContain('link_name="gstack-$skill_name"');
+    expect(fnBody).toContain('link_name="torch-$skill_name"');
   });
 
   test('link_claude_skill_dirs preserves already-prefixed dirs', () => {
     const fnStart = setupContent.indexOf('link_claude_skill_dirs()');
     const fnEnd = setupContent.indexOf('}', setupContent.indexOf('linked[@]}', fnStart));
     const fnBody = setupContent.slice(fnStart, fnEnd);
-    // gstack-* dirs should keep their name (e.g., gstack-upgrade stays gstack-upgrade)
-    expect(fnBody).toContain('gstack-*) link_name="$skill_name"');
+    // torch-* dirs should keep their name (e.g., torch-upgrade stays torch-upgrade)
+    expect(fnBody).toContain('torch-*) link_name="$skill_name"');
   });
 
   test('setup supports --no-prefix flag', () => {
@@ -2479,16 +2479,16 @@ describe('setup script validation', () => {
     expect(setupContent).toContain('SKILL_PREFIX=0');
   });
 
-  test('cleanup_old_claude_symlinks removes only gstack-pointing symlinks', () => {
+  test('cleanup_old_claude_symlinks removes only torch-pointing symlinks', () => {
     expect(setupContent).toContain('cleanup_old_claude_symlinks');
     const fnStart = setupContent.indexOf('cleanup_old_claude_symlinks()');
     const fnEnd = setupContent.indexOf('}', setupContent.indexOf('removed[@]}', fnStart));
     const fnBody = setupContent.slice(fnStart, fnEnd);
     // Should check readlink before removing
     expect(fnBody).toContain('readlink');
-    expect(fnBody).toContain('gstack/*');
+    expect(fnBody).toContain('torch/*');
     // Should skip already-prefixed dirs
-    expect(fnBody).toContain('gstack-*) continue');
+    expect(fnBody).toContain('torch-*) continue');
   });
 
   test('cleanup runs before link when prefix is enabled', () => {
@@ -2504,7 +2504,7 @@ describe('setup script validation', () => {
 
   test('setup reads skill_prefix from config', () => {
     expect(setupContent).toContain('get skill_prefix');
-    expect(setupContent).toContain('GSTACK_CONFIG');
+    expect(setupContent).toContain('torch_CONFIG');
   });
 
   test('setup supports --prefix flag', () => {
@@ -2533,7 +2533,7 @@ describe('setup script validation', () => {
     const fnEnd = setupContent.indexOf('}', setupContent.indexOf('removed[@]}', fnStart));
     const fnBody = setupContent.slice(fnStart, fnEnd);
     expect(fnBody).toContain('readlink');
-    expect(fnBody).toContain('gstack-$skill_name');
+    expect(fnBody).toContain('torch-$skill_name');
   });
 
   test('reverse cleanup runs before link when prefix is disabled', () => {
@@ -2545,15 +2545,15 @@ describe('setup script validation', () => {
   });
 
   test('welcome message references SKILL_PREFIX', () => {
-    // gstack-upgrade is always called gstack-upgrade (it's the actual dir name)
+    // torch-upgrade is always called torch-upgrade (it's the actual dir name)
     // but the welcome section should exist near the prefix logic
-    expect(setupContent).toContain('Run /gstack-upgrade anytime');
+    expect(setupContent).toContain('Run /torch-upgrade anytime');
   });
 });
 
 describe('discover-skills hidden directory filtering', () => {
   test('discoverTemplates skips dot-prefixed directories', () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gstack-discover-'));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'torch-discover-'));
     try {
       // Create a hidden dir with a template (should be excluded)
       fs.mkdirSync(path.join(tmpDir, '.hidden'), { recursive: true });
@@ -2581,22 +2581,22 @@ describe('telemetry', () => {
     expect(content).toContain('_SESSION_ID');
     expect(content).toContain('TELEMETRY:');
     expect(content).toContain('TEL_PROMPTED:');
-    expect(content).toContain('gstack-config get telemetry');
+    expect(content).toContain('torch-config get telemetry');
   });
 
   test('generated SKILL.md contains telemetry opt-in prompt', () => {
     const content = fs.readFileSync(path.join(ROOT, 'SKILL.md'), 'utf-8');
     expect(content).toContain('.telemetry-prompted');
-    expect(content).toContain('Help gstack get better');
-    expect(content).toContain('gstack-config set telemetry community');
-    expect(content).toContain('gstack-config set telemetry anonymous');
-    expect(content).toContain('gstack-config set telemetry off');
+    expect(content).toContain('Help torch get better');
+    expect(content).toContain('torch-config set telemetry community');
+    expect(content).toContain('torch-config set telemetry anonymous');
+    expect(content).toContain('torch-config set telemetry off');
   });
 
   test('generated SKILL.md contains telemetry epilogue', () => {
     const content = fs.readFileSync(path.join(ROOT, 'SKILL.md'), 'utf-8');
     expect(content).toContain('Telemetry (run last)');
-    expect(content).toContain('gstack-telemetry-log');
+    expect(content).toContain('torch-telemetry-log');
     expect(content).toContain('_TEL_END');
     expect(content).toContain('_TEL_DUR');
     expect(content).toContain('SKILL_NAME');
@@ -2641,13 +2641,13 @@ describe('community fixes wave', () => {
     return results;
   }
 
-  // #594 — Discoverability: every SKILL.md.tmpl description contains "gstack"
-  test('every SKILL.md.tmpl description contains "gstack"', () => {
+  // #594 — Discoverability: every SKILL.md.tmpl description contains "torch"
+  test('every SKILL.md.tmpl description contains "torch"', () => {
     for (const skill of ALL_SKILLS) {
       const tmplPath = skill.dir === '.' ? path.join(ROOT, 'SKILL.md.tmpl') : path.join(ROOT, skill.dir, 'SKILL.md.tmpl');
       const content = fs.readFileSync(tmplPath, 'utf-8');
       const desc = extractDescription(content);
-      expect(desc.toLowerCase()).toContain('gstack');
+      expect(desc.toLowerCase()).toContain('torch');
     }
   });
 
@@ -2724,7 +2724,7 @@ describe('codex commands must not use inline $(git rev-parse --show-toplevel) fo
   // The fix is to resolve _REPO_ROOT eagerly at the top of each bash block.
 
   // Scan all source files that could contain codex commands
-  // Use Bun.Glob to avoid ELOOP from .claude/skills/gstack symlink back to ROOT
+  // Use Bun.Glob to avoid ELOOP from .claude/skills/torch symlink back to ROOT
   const tmplGlob = new Bun.Glob('**/*.tmpl');
   const sourceFiles = [
     ...Array.from(tmplGlob.scanSync({ cwd: ROOT, followSymlinks: false })),
@@ -2831,7 +2831,7 @@ describe('LEARNINGS_SEARCH resolver', () => {
     test(`${skill} generated SKILL.md contains learnings search`, () => {
       const content = readSkillUnion(skill); // ship: moved to sections/plan-completion.md
       expect(content).toContain('Prior Learnings');
-      expect(content).toContain('gstack-learnings-search');
+      expect(content).toContain('torch-learnings-search');
     });
   }
 
@@ -2860,7 +2860,7 @@ describe('LEARNINGS_LOG resolver', () => {
     test(`${skill} generated SKILL.md contains learnings log`, () => {
       const content = fs.readFileSync(path.join(ROOT, skill, 'SKILL.md'), 'utf-8');
       expect(content).toContain('Capture Learnings');
-      expect(content).toContain('gstack-learnings-log');
+      expect(content).toContain('torch-learnings-log');
     });
   }
 
@@ -2936,13 +2936,13 @@ describe('gen-skill-docs prefix warning (#620/#578)', () => {
   const { execSync } = require('child_process');
 
   test('warns about skill_prefix when config has prefix=true', () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gstack-prefix-warn-'));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'torch-prefix-warn-'));
     try {
-      // Create a fake ~/.gstack/config.yaml with skill_prefix: true
+      // Create a fake ~/.torch/config.yaml with skill_prefix: true
       const fakeHome = tmpDir;
-      const fakeGstack = path.join(fakeHome, '.gstack');
-      fs.mkdirSync(fakeGstack, { recursive: true });
-      fs.writeFileSync(path.join(fakeGstack, 'config.yaml'), 'skill_prefix: true\n');
+      const faketorch = path.join(fakeHome, '.torch');
+      fs.mkdirSync(faketorch, { recursive: true });
+      fs.writeFileSync(path.join(faketorch, 'config.yaml'), 'skill_prefix: true\n');
 
       const output = execSync('bun run scripts/gen-skill-docs.ts', {
         cwd: ROOT,
@@ -2951,19 +2951,19 @@ describe('gen-skill-docs prefix warning (#620/#578)', () => {
         timeout: 30000,
       });
       expect(output).toContain('skill_prefix is true');
-      expect(output).toContain('gstack-relink');
+      expect(output).toContain('torch-relink');
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
   });
 
   test('no warning when skill_prefix is false or absent', () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gstack-prefix-warn-'));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'torch-prefix-warn-'));
     try {
       const fakeHome = tmpDir;
-      const fakeGstack = path.join(fakeHome, '.gstack');
-      fs.mkdirSync(fakeGstack, { recursive: true });
-      fs.writeFileSync(path.join(fakeGstack, 'config.yaml'), 'skill_prefix: false\n');
+      const faketorch = path.join(fakeHome, '.torch');
+      fs.mkdirSync(faketorch, { recursive: true });
+      fs.writeFileSync(path.join(faketorch, 'config.yaml'), 'skill_prefix: false\n');
 
       const output = execSync('bun run scripts/gen-skill-docs.ts', {
         cwd: ROOT,
@@ -2996,13 +2996,13 @@ describe('voice-triggers processing', () => {
   });
 
   test('processVoiceTriggers appends voice triggers to description', () => {
-    const content = `---\nname: cso\ndescription: |\n  Security audit. (gstack)\nvoice-triggers:\n  - "see-so"\n  - "security review"\n---\nBody`;
+    const content = `---\nname: cso\ndescription: |\n  Security audit. (torch)\nvoice-triggers:\n  - "see-so"\n  - "security review"\n---\nBody`;
     const result = processVoiceTriggers(content);
     expect(result).toContain('Voice triggers (speech-to-text aliases): "see-so", "security review".');
   });
 
   test('processVoiceTriggers strips voice-triggers field from output', () => {
-    const content = `---\nname: cso\ndescription: |\n  Security audit. (gstack)\nvoice-triggers:\n  - "see-so"\n---\nBody`;
+    const content = `---\nname: cso\ndescription: |\n  Security audit. (torch)\nvoice-triggers:\n  - "see-so"\n---\nBody`;
     const result = processVoiceTriggers(content);
     expect(result).not.toContain('voice-triggers:');
   });
@@ -3122,7 +3122,7 @@ describe('plan-mode-info resolver (handshake-replacement)', () => {
   });
 });
 
-// GSTACK REVIEW REPORT report-at-bottom contract — verifies the prompt-text
+// torch REVIEW REPORT report-at-bottom contract — verifies the prompt-text
 // fix in scripts/resolvers/review.ts (the load-bearing change for the
 // "report not at bottom of plan in plan mode" bug). The bug is in the
 // prompt's contradictory write-flow instructions, not in observable
@@ -3131,7 +3131,7 @@ describe('plan-mode-info resolver (handshake-replacement)', () => {
 // PTY harness can't reliably drive (autoplan needs auto-progression of
 // AskUserQuestions to reach the report-write step, which the harness
 // doesn't support today).
-describe('GSTACK REVIEW REPORT delete-then-append flow', () => {
+describe('torch REVIEW REPORT delete-then-append flow', () => {
   const PLAN_REVIEW_SKILLS = [
     'plan-ceo-review',
     'plan-design-review',
@@ -3190,7 +3190,7 @@ describe('LEARNINGS_SEARCH resolver: query parameter', () => {
   test('claude host + query=foo bar → both cross-project and project-scoped branches contain --query', () => {
     const out = generateLearningsSearch(claudeCtx, ['query=foo bar']);
     // Both branches of the if/else must carry the flag.
-    const lines = out.split('\n').filter(l => l.includes('gstack-learnings-search'));
+    const lines = out.split('\n').filter(l => l.includes('torch-learnings-search'));
     expect(lines.length).toBeGreaterThanOrEqual(2);
     for (const line of lines) {
       expect(line).toContain('--query "foo bar"');
@@ -3200,7 +3200,7 @@ describe('LEARNINGS_SEARCH resolver: query parameter', () => {
   test('codex host + query=foo bar → codex bash variant contains --query', () => {
     const out = generateLearningsSearch(codexCtx, ['query=foo bar']);
     expect(out).toContain('--query "foo bar"');
-    expect(out).toContain('$GSTACK_BIN/gstack-learnings-search');
+    expect(out).toContain('$torch_BIN/torch-learnings-search');
   });
 
   test('empty value query= → bash does not contain --query (locked semantics: falls through)', () => {
@@ -3222,8 +3222,8 @@ describe('EXIT PLAN MODE GATE placement', () => {
   const planSkills = ['plan-eng-review', 'plan-ceo-review', 'plan-design-review', 'plan-devex-review'];
 
   // Strip fenced code blocks before matching headings — PLAN_FILE_REVIEW_REPORT
-  // already contains `## GSTACK REVIEW REPORT` inside a markdown example fence,
-  // and the gate text itself shows `## GSTACK REVIEW REPORT` inside a fence too.
+  // already contains `## torch REVIEW REPORT` inside a markdown example fence,
+  // and the gate text itself shows `## torch REVIEW REPORT` inside a fence too.
   const stripFences = (md: string) => md.replace(/```[\s\S]*?```/g, '');
 
   test('gate is the terminal ## heading in every plan-* review SKILL.md', () => {
@@ -3244,7 +3244,7 @@ describe('EXIT PLAN MODE GATE placement', () => {
   });
 });
 
-describe('GSTACK REVIEW REPORT mandatory unresolved-decisions status', () => {
+describe('torch REVIEW REPORT mandatory unresolved-decisions status', () => {
   // Report text rides in PLAN_FILE_REVIEW_REPORT → every report consumer gets it.
   // devex-review is a report consumer but NOT a gate consumer, so the two target
   // sets differ (CP5/CX5). Regression guard: a future token-cut that drops the

@@ -73,9 +73,9 @@ describe('hermetic wiring tripwire', () => {
   });
 
   test('no test callsite passes the whole operator env as a RUNNER override', () => {
-    // Overrides merge last by design (per-test GSTACK_HOME etc.) — passing
+    // Overrides merge last by design (per-test torch_HOME etc.) — passing
     // process.env itself through that hole defeats the entire scrub. Scoped
-    // to OUR runner calls: unit tests that spawnSync gstack bin scripts with
+    // to OUR runner calls: unit tests that spawnSync torch bin scripts with
     // `...process.env` are test-process spawns, not eval children, and are
     // legitimately the test's own business.
     const RUNNER_CALL =

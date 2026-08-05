@@ -1,4 +1,4 @@
-// AUTO-GENERATED from gstack/ios-qa/templates/DebugBridgeManager.swift.template
+// AUTO-GENERATED from torch/ios-qa/templates/DebugBridgeManager.swift.template
 //
 // Bootstraps StateServer on app launch. Lives in DebugBridgeCore (no UIKit
 // dependency). The DebugOverlay install is wired separately by the consuming

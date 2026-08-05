@@ -24,7 +24,7 @@ export interface DaemonState {
 
 // String we grep for in the spawned daemon's cmdline to confirm a pid is
 // ours before sending any signal. Must appear in argv at spawn time.
-export const CMDLINE_MARKER = "gstack-design-daemon";
+export const CMDLINE_MARKER = "torch-design-daemon";
 
 export function resolveStateFilePath(): string {
   // Env override has highest precedence so tests can point both client and
@@ -36,11 +36,11 @@ export function resolveStateFilePath(): string {
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"],
     }).trim();
-    if (root) return path.join(root, ".gstack", "design.json");
+    if (root) return path.join(root, ".torch", "design.json");
   } catch {
     // not in a git repo — fall through
   }
-  return path.join(process.cwd(), ".gstack", "design.json");
+  return path.join(process.cwd(), ".torch", "design.json");
 }
 
 export function resolveLockFilePath(stateFile: string = resolveStateFilePath()): string {
@@ -48,15 +48,15 @@ export function resolveLockFilePath(stateFile: string = resolveStateFilePath()):
 }
 
 export function resolveDaemonLogPath(): string {
-  return path.join(os.homedir(), ".gstack", "design-daemon.log");
+  return path.join(os.homedir(), ".torch", "design-daemon.log");
 }
 
 export function resolveStartupLogPath(): string {
-  return path.join(os.homedir(), ".gstack", "design-daemon-startup.log");
+  return path.join(os.homedir(), ".torch", "design-daemon-startup.log");
 }
 
 /**
- * Read the gstack version both client and daemon should agree on. Looks
+ * Read the torch version both client and daemon should agree on. Looks
  * (in order): DESIGN_DAEMON_VERSION env, design/dist/.version baked at
  * build time, VERSION at the source-tree root (dev), then "unknown".
  *

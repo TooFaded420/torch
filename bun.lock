@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "gstack",
+      "name": "torch",
       "dependencies": {
         "@huggingface/transformers": "^4.1.0",
         "@ngrok/ngrok": "^1.7.0",

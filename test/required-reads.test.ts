@@ -14,7 +14,7 @@ describe('assertRequiredReads', () => {
   test('passes when every required section was Read', () => {
     const result = {
       toolCalls: [
-        read('/Users/x/.claude/skills/gstack/ship/sections/version-bump.md'),
+        read('/Users/x/.claude/skills/torch/ship/sections/version-bump.md'),
         read('ship/sections/changelog.md'),
       ],
     };
@@ -31,7 +31,7 @@ describe('assertRequiredReads', () => {
   });
 
   test('tolerates a sections/ prefix in the required list', () => {
-    const result = { toolCalls: [read('/abs/gstack/ship/sections/review-army.md')] };
+    const result = { toolCalls: [read('/abs/torch/ship/sections/review-army.md')] };
     expect(assertRequiredReads(result, ['sections/review-army.md']).ok).toBe(true);
   });
 

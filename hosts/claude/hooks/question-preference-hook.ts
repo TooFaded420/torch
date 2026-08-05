@@ -6,7 +6,7 @@
  * deterministically — no agent compliance required.
  *
  * Decision tree (per question in tool_input.questions):
- *   1. Extract question_id via marker (<gstack-qid:foo-bar>). If no marker,
+ *   1. Extract question_id via marker (<torch-qid:foo-bar>). If no marker,
  *      enforcement is skipped for this question (D18 — hash IDs are
  *      observed-only, never used as preference keys).
  *   2. Look up door_type from scripts/question-registry.ts (default two-way).
@@ -33,7 +33,7 @@
  *   - Refuse to auto-decide if ambiguous (multiple labels OR no parseable
  *     recommendation): defer instead of silent-wrong.
  *
- * Always exits 0. Hook errors land in ~/.gstack/hook-errors.log.
+ * Always exits 0. Hook errors land in ~/.torch/hook-errors.log.
  * See docs/spikes/claude-code-hook-mutation.md for the protocol contract.
  */
 import * as fs from 'fs';
@@ -57,14 +57,14 @@ interface HookStdin {
   cwd?: string;
 }
 
-const MARKER_RE = /<gstack-qid:([a-z0-9-]{1,64})>/i;
+const MARKER_RE = /<torch-qid:([a-z0-9-]{1,64})>/i;
 const RECOMMENDED_LABEL_RE = /\(recommended\)\s*$/i;
 
 function stateRoot(): string {
   return (
-    process.env.GSTACK_STATE_ROOT ||
-    process.env.GSTACK_HOME ||
-    path.join(os.homedir(), '.gstack')
+    process.env.torch_STATE_ROOT ||
+    process.env.torch_HOME ||
+    path.join(os.homedir(), '.torch')
   );
 }
 
@@ -158,7 +158,7 @@ interface MemoryNugget {
 
 /**
  * Read per-session cache first, fall back to canonical local file. Cache
- * invalidates by being missing — gstack-distill-apply doesn't touch the
+ * invalidates by being missing — torch-distill-apply doesn't touch the
  * cache because the canonical file is always the source-of-truth on read
  * miss. Sub-1ms cache reads (D13 perf).
  */
@@ -282,7 +282,7 @@ function extractRecommended(
 }
 
 function slugFromCwd(cwd: string | undefined): string {
-  // Mirror gstack-slug's basename fallback. The full slug resolver shells out
+  // Mirror torch-slug's basename fallback. The full slug resolver shells out
   // to git, which is too expensive on a hot hook path; the basename is close
   // enough for preference lookup (preferences are keyed by question_id, slug
   // is just the directory bucket).
@@ -319,7 +319,7 @@ function logAutoDecided(
   try {
     const here = path.dirname(new URL(import.meta.url).pathname);
     const repoRoot = path.resolve(here, '..', '..', '..');
-    const bin = path.join(repoRoot, 'bin', 'gstack-question-log');
+    const bin = path.join(repoRoot, 'bin', 'torch-question-log');
     const payload: Record<string, unknown> = {
       skill: 'unknown',
       question_id: questionId,
@@ -335,7 +335,7 @@ function logAutoDecided(
       encoding: 'utf-8',
       stdio: ['ignore', 'pipe', 'pipe'],
       timeout: 3000,
-      // cwd of the originating tool call so gstack-slug resolves to the
+      // cwd of the originating tool call so torch-slug resolves to the
       // project the user is actually in, not the hook script's location.
       cwd: cwd && fs.existsSync(cwd) ? cwd : undefined,
     });
@@ -464,7 +464,7 @@ async function main(): Promise<void> {
       'PROSE decision brief now: a D<N> label, an ELI10 of the issue, a Recommendation line, then one ' +
       'paragraph per choice carrying its `(recommended)` marker and `Completeness: X/10`; tell the user ' +
       'to reply with a letter, then STOP. For a one-way/destructive confirmation, require an explicit ' +
-      'typed confirmation and do NOT proceed on a vague reply. Capture the decision with gstack-question-log ' +
+      'typed confirmation and do NOT proceed on a vague reply. Capture the decision with torch-question-log ' +
       '(PostToolUse will not fire on a prose path).' +
       (memoryContext ? `\n${memoryContext}` : '');
     deny(conductorReason);

@@ -57,7 +57,7 @@ function testIfSelected(testName: string, fn: () => Promise<void>, timeout: numb
   (shouldRun ? test : test.skip)(testName, fn, timeout);
 }
 
-// Eval result collector — accumulates test results, writes to ~/.gstack-dev/evals/ on finalize
+// Eval result collector — accumulates test results, writes to ~/.torch-dev/evals/ on finalize
 const evalCollector = evalsEnabled ? new EvalCollector('e2e') : null;
 
 // Unique run ID for this E2E session — used for heartbeat + per-run log directory
@@ -148,7 +148,7 @@ function logCost(label: string, result: { costEstimate: { turnsUsed: number; est
  */
 function dumpOutcomeDiagnostic(dir: string, label: string, report: string, judgeResult: any) {
   try {
-    const transcriptDir = path.join(dir, '.gstack', 'test-transcripts');
+    const transcriptDir = path.join(dir, '.torch', 'test-transcripts');
     fs.mkdirSync(transcriptDir, { recursive: true });
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     fs.writeFileSync(
@@ -260,7 +260,7 @@ Report whether it worked.`,
   }, 90_000);
 
   testIfSelected('skillmd-no-local-binary', async () => {
-    // Create a tmpdir with no browse binary — no local .claude/skills/gstack/browse/dist/browse
+    // Create a tmpdir with no browse binary — no local .claude/skills/torch/browse/dist/browse
     const emptyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-e2e-empty-'));
 
     const skillMd = fs.readFileSync(path.join(ROOT, 'SKILL.md'), 'utf-8');
@@ -282,8 +282,8 @@ Report the exact output. Do NOT try to fix or install anything — just report w
     });
 
     // Setup block should either find the global binary (READY) or show NEEDS_SETUP.
-    // On dev machines with gstack installed globally, the fallback path
-    // ~/.claude/skills/gstack/browse/dist/browse exists, so we get READY.
+    // On dev machines with torch installed globally, the fallback path
+    // ~/.claude/skills/torch/browse/dist/browse exists, so we get READY.
     // The important thing is it doesn't crash or give a confusing error.
     const allText = result.output || '';
     recordE2E('SKILL.md setup block (no local binary)', 'Skill E2E tests', result);
@@ -350,7 +350,7 @@ Report the exact output — either "READY: <path>" or "NEEDS_SETUP".`,
     const outputPath = path.join(sessionDir, 'question-output.md');
 
     const result = await runSkillTest({
-      prompt: `You are running a gstack skill. The session preamble detected _SESSIONS=4 (the user has 4 gstack windows open).
+      prompt: `You are running a torch skill. The session preamble detected _SESSIONS=4 (the user has 4 torch windows open).
 
 ${aqBlock}
 
@@ -1275,7 +1275,7 @@ Write your report to ${qaOnlyDir}/qa-reports/qa-only-report.md`,
       cwd: qaOnlyDir, stdio: 'pipe',
     });
     const statusLines = gitStatus.stdout.toString().trim().split('\n').filter(
-      (l: string) => l.trim() && !l.includes('.prompt-tmp') && !l.includes('.gstack/') && !l.includes('qa-reports/'),
+      (l: string) => l.trim() && !l.includes('.prompt-tmp') && !l.includes('.torch/') && !l.includes('qa-reports/'),
     );
     expect(statusLines.filter((l: string) => l.startsWith(' M') || l.startsWith('M '))).toHaveLength(0);
   }, 240_000);
@@ -1459,7 +1459,7 @@ export function main() { return Dashboard(); }
     setupBrowseShims(planDir);
 
     // Create project directory for artifacts
-    projectDir = path.join(os.homedir(), '.gstack', 'projects', 'test-project');
+    projectDir = path.join(os.homedir(), '.torch', 'projects', 'test-project');
     fs.mkdirSync(projectDir, { recursive: true });
   });
 
@@ -1476,7 +1476,7 @@ export function main() { return Dashboard(); }
     } catch {}
   });
 
-  test('/plan-eng-review writes test-plan artifact to ~/.gstack/projects/', async () => {
+  test('/plan-eng-review writes test-plan artifact to ~/.torch/projects/', async () => {
     // Count existing test-plan files before
     const beforeFiles = fs.readdirSync(projectDir).filter(f => f.includes('test-plan'));
 
@@ -1826,15 +1826,15 @@ describeE2E('Deferred skill E2E', () => {
 
 });
 
-// --- gstack-upgrade E2E ---
+// --- torch-upgrade E2E ---
 
-describeIfSelected('gstack-upgrade E2E', ['gstack-upgrade-happy-path'], () => {
+describeIfSelected('torch-upgrade E2E', ['torch-upgrade-happy-path'], () => {
   let upgradeDir: string;
   let remoteDir: string;
 
   beforeAll(() => {
     upgradeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-e2e-upgrade-'));
-    remoteDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gstack-remote-'));
+    remoteDir = fs.mkdtempSync(path.join(os.tmpdir(), 'torch-remote-'));
 
     const run = (cmd: string, args: string[], cwd: string) =>
       spawnSync(cmd, args, { cwd, stdio: 'pipe', timeout: 5000 });
@@ -1844,47 +1844,47 @@ describeIfSelected('gstack-upgrade E2E', ['gstack-upgrade-happy-path'], () => {
     run('git', ['config', 'user.email', 'test@test.com'], upgradeDir);
     run('git', ['config', 'user.name', 'Test'], upgradeDir);
 
-    // Create mock gstack install directory (local-git type)
-    const mockGstack = path.join(upgradeDir, '.claude', 'skills', 'gstack');
-    fs.mkdirSync(mockGstack, { recursive: true });
+    // Create mock torch install directory (local-git type)
+    const mocktorch = path.join(upgradeDir, '.claude', 'skills', 'torch');
+    fs.mkdirSync(mocktorch, { recursive: true });
 
     // Init as a git repo
-    run('git', ['init'], mockGstack);
-    run('git', ['config', 'user.email', 'test@test.com'], mockGstack);
-    run('git', ['config', 'user.name', 'Test'], mockGstack);
+    run('git', ['init'], mocktorch);
+    run('git', ['config', 'user.email', 'test@test.com'], mocktorch);
+    run('git', ['config', 'user.name', 'Test'], mocktorch);
 
     // Create bare remote
     run('git', ['init', '--bare'], remoteDir);
-    run('git', ['remote', 'add', 'origin', remoteDir], mockGstack);
+    run('git', ['remote', 'add', 'origin', remoteDir], mocktorch);
 
     // Write old version files
-    fs.writeFileSync(path.join(mockGstack, 'VERSION'), '0.5.0\n');
-    fs.writeFileSync(path.join(mockGstack, 'CHANGELOG.md'),
+    fs.writeFileSync(path.join(mocktorch, 'VERSION'), '0.5.0\n');
+    fs.writeFileSync(path.join(mocktorch, 'CHANGELOG.md'),
       '# Changelog\n\n## 0.5.0 — 2026-03-01\n\n- Initial release\n');
-    fs.writeFileSync(path.join(mockGstack, 'setup'),
+    fs.writeFileSync(path.join(mocktorch, 'setup'),
       '#!/bin/bash\necho "Setup completed"\n', { mode: 0o755 });
 
     // Initial commit + push
-    run('git', ['add', '.'], mockGstack);
-    run('git', ['commit', '-m', 'initial'], mockGstack);
-    run('git', ['push', '-u', 'origin', 'HEAD:main'], mockGstack);
+    run('git', ['add', '.'], mocktorch);
+    run('git', ['commit', '-m', 'initial'], mocktorch);
+    run('git', ['push', '-u', 'origin', 'HEAD:main'], mocktorch);
 
     // Create new version (simulate upstream release)
-    fs.writeFileSync(path.join(mockGstack, 'VERSION'), '0.6.0\n');
-    fs.writeFileSync(path.join(mockGstack, 'CHANGELOG.md'),
+    fs.writeFileSync(path.join(mocktorch, 'VERSION'), '0.6.0\n');
+    fs.writeFileSync(path.join(mocktorch, 'CHANGELOG.md'),
       '# Changelog\n\n## 0.6.0 — 2026-03-15\n\n- New feature: interactive design review\n- Fix: snapshot flag validation\n\n## 0.5.0 — 2026-03-01\n\n- Initial release\n');
-    run('git', ['add', '.'], mockGstack);
-    run('git', ['commit', '-m', 'release 0.6.0'], mockGstack);
-    run('git', ['push', 'origin', 'HEAD:main'], mockGstack);
+    run('git', ['add', '.'], mocktorch);
+    run('git', ['commit', '-m', 'release 0.6.0'], mocktorch);
+    run('git', ['push', 'origin', 'HEAD:main'], mocktorch);
 
     // Reset working copy back to old version
-    run('git', ['reset', '--hard', 'HEAD~1'], mockGstack);
+    run('git', ['reset', '--hard', 'HEAD~1'], mocktorch);
 
-    // Copy gstack-upgrade skill
-    fs.mkdirSync(path.join(upgradeDir, 'gstack-upgrade'), { recursive: true });
+    // Copy torch-upgrade skill
+    fs.mkdirSync(path.join(upgradeDir, 'torch-upgrade'), { recursive: true });
     fs.copyFileSync(
-      path.join(ROOT, 'gstack-upgrade', 'SKILL.md'),
-      path.join(upgradeDir, 'gstack-upgrade', 'SKILL.md'),
+      path.join(ROOT, 'torch-upgrade', 'SKILL.md'),
+      path.join(upgradeDir, 'torch-upgrade', 'SKILL.md'),
     );
 
     // Commit so git repo is clean
@@ -1897,12 +1897,12 @@ describeIfSelected('gstack-upgrade E2E', ['gstack-upgrade-happy-path'], () => {
     try { fs.rmSync(remoteDir, { recursive: true, force: true }); } catch {}
   });
 
-  testIfSelected('gstack-upgrade-happy-path', async () => {
-    const mockGstack = path.join(upgradeDir, '.claude', 'skills', 'gstack');
+  testIfSelected('torch-upgrade-happy-path', async () => {
+    const mocktorch = path.join(upgradeDir, '.claude', 'skills', 'torch');
     const result = await runSkillTest({
-      prompt: `Read gstack-upgrade/SKILL.md for the upgrade workflow.
+      prompt: `Read torch-upgrade/SKILL.md for the upgrade workflow.
 
-You are running /gstack-upgrade standalone. The gstack installation is at ./.claude/skills/gstack (local-git type — it has a .git directory with an origin remote).
+You are running /torch-upgrade standalone. The torch installation is at ./.claude/skills/torch (local-git type — it has a .git directory with an origin remote).
 
 Current version: 0.5.0. A new version 0.6.0 is available on origin/main.
 
@@ -1914,24 +1914,24 @@ Follow the standalone upgrade flow:
 
 Skip any AskUserQuestion calls — auto-approve the upgrade. Write a summary of what you did to stdout.
 
-IMPORTANT: The install directory is at ./.claude/skills/gstack — use that exact path.`,
+IMPORTANT: The install directory is at ./.claude/skills/torch — use that exact path.`,
       workingDirectory: upgradeDir,
       maxTurns: 20,
       timeout: 180_000,
-      testName: 'gstack-upgrade-happy-path',
+      testName: 'torch-upgrade-happy-path',
       runId,
     });
 
-    logCost('/gstack-upgrade happy path', result);
+    logCost('/torch-upgrade happy path', result);
 
     // Check that the version was updated
-    const versionAfter = fs.readFileSync(path.join(mockGstack, 'VERSION'), 'utf-8').trim();
+    const versionAfter = fs.readFileSync(path.join(mocktorch, 'VERSION'), 'utf-8').trim();
     const output = result.output || '';
     const mentionsUpgrade = output.toLowerCase().includes('0.6.0') ||
       output.toLowerCase().includes('upgrade') ||
       output.toLowerCase().includes('updated');
 
-    recordE2E('/gstack-upgrade happy path', 'gstack-upgrade E2E', result, {
+    recordE2E('/torch-upgrade happy path', 'torch-upgrade E2E', result, {
       passed: versionAfter === '0.6.0' && ['success', 'error_max_turns'].includes(result.exitReason),
     });
 

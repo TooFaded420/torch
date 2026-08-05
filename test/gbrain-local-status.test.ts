@@ -11,13 +11,13 @@
  *   2. missing-config — gbrain present, config.json absent (honors GBRAIN_HOME)
  *   3. broken-config  — gbrain present, config exists, stderr contains "config.json"
  *   4. broken-db      — gbrain present, config exists, stderr contains "Cannot connect to database"
- *   5. timeout        — probe exceeds GSTACK_GBRAIN_PROBE_TIMEOUT_MS with no recognized error (#1964)
+ *   5. timeout        — probe exceeds torch_GBRAIN_PROBE_TIMEOUT_MS with no recognized error (#1964)
  *   6. engine-locked  — PGLite CLI exits 124 because another process owns the DB (#2194)
  *   7. ok             — gbrain present, config exists, sources list returns valid JSON
  *
  * Plus cache behavior: hit, TTL expiry, invariant invalidation (HOME change,
  * probe-timeout change), --no-cache bypass. Timeout tests keep runtime sane by
- * setting GSTACK_GBRAIN_PROBE_TIMEOUT_MS=300 against a fake gbrain that sleeps 2s.
+ * setting torch_GBRAIN_PROBE_TIMEOUT_MS=300 against a fake gbrain that sleeps 2s.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
@@ -49,13 +49,13 @@ interface FakeEnv {
   tmp: string;
   bindir: string;
   home: string;
-  gstackHome: string;
+  torchHome: string;
   configPath: string;
   cleanup: () => void;
 }
 
 /**
- * Build a tmp HOME + GSTACK_HOME + optional fake `gbrain` on PATH.
+ * Build a tmp HOME + torch_HOME + optional fake `gbrain` on PATH.
  *
  * The classifier reads HOME via os.homedir() which reads process.env.HOME, so
  * we mutate process.env ambiently in each test (restored in afterEach).
@@ -68,13 +68,13 @@ function makeEnv(opts: {
   const tmp = mkdtempSync(join(tmpdir(), "gbrain-local-status-test-"));
   const bindir = join(tmp, "bin");
   const home = join(tmp, "home");
-  const gstackHome = join(home, ".gstack");
+  const torchHome = join(home, ".torch");
   const configDir = join(home, ".gbrain");
   const configPath = join(configDir, "config.json");
 
   mkdirSync(bindir, { recursive: true });
   mkdirSync(home, { recursive: true });
-  mkdirSync(gstackHome, { recursive: true });
+  mkdirSync(torchHome, { recursive: true });
   mkdirSync(configDir, { recursive: true });
 
   if (opts.withConfig) {
@@ -96,7 +96,7 @@ function makeEnv(opts: {
     tmp,
     bindir,
     home,
-    gstackHome,
+    torchHome,
     configPath,
     cleanup: () => rmSync(tmp, { recursive: true, force: true }),
   };
@@ -160,15 +160,15 @@ function applyEnv(env: FakeEnv): () => void {
   const prev = {
     HOME: process.env.HOME,
     PATH: process.env.PATH,
-    GSTACK_HOME: process.env.GSTACK_HOME,
+    torch_HOME: process.env.torch_HOME,
     GBRAIN_HOME: process.env.GBRAIN_HOME,
-    GSTACK_GBRAIN_PROBE_TIMEOUT_MS: process.env.GSTACK_GBRAIN_PROBE_TIMEOUT_MS,
+    torch_GBRAIN_PROBE_TIMEOUT_MS: process.env.torch_GBRAIN_PROBE_TIMEOUT_MS,
   };
   process.env.HOME = env.home;
   process.env.PATH = `${env.bindir}:/usr/bin:/bin`;
-  process.env.GSTACK_HOME = env.gstackHome;
+  process.env.torch_HOME = env.torchHome;
   delete process.env.GBRAIN_HOME;
-  delete process.env.GSTACK_GBRAIN_PROBE_TIMEOUT_MS;
+  delete process.env.torch_GBRAIN_PROBE_TIMEOUT_MS;
   return () => {
     for (const [k, v] of Object.entries(prev)) {
       if (v === undefined) delete process.env[k];
@@ -250,7 +250,7 @@ describe("lib/gbrain-local-status — status classification", () => {
   it("returns 'timeout' (not broken-config) when the probe exceeds the deadline (#1964)", () => {
     env = makeEnv({ withGbrain: true, gbrainBehavior: "slow", withConfig: true });
     restoreEnv = applyEnv(env);
-    process.env.GSTACK_GBRAIN_PROBE_TIMEOUT_MS = "300";
+    process.env.torch_GBRAIN_PROBE_TIMEOUT_MS = "300";
     expect(localEngineStatus({ noCache: true })).toBe("timeout");
   });
 
@@ -272,21 +272,21 @@ describe("lib/gbrain-local-status — status classification", () => {
   });
 });
 
-describe("gstack-gbrain-detect --is-ok — timeout is usable (eng review D1)", () => {
+describe("torch-gbrain-detect --is-ok — timeout is usable (eng review D1)", () => {
   it("exits 0 when the engine probe times out (slow-but-healthy must not suppress brain features)", () => {
     const env = makeEnv({ withGbrain: true, gbrainBehavior: "slow", withConfig: true });
     try {
-      const detect = join(import.meta.dir, "..", "bin", "gstack-gbrain-detect");
+      const detect = join(import.meta.dir, "..", "bin", "torch-gbrain-detect");
       const r = spawnSync(process.execPath, [detect, "--is-ok"], {
         encoding: "utf-8",
         timeout: 20_000,
         env: {
           ...process.env,
           HOME: env.home,
-          GSTACK_HOME: env.gstackHome,
+          torch_HOME: env.torchHome,
           PATH: `${env.bindir}:/usr/bin:/bin`,
-          GSTACK_GBRAIN_PROBE_TIMEOUT_MS: "300",
-          GSTACK_DETECT_NO_CACHE: "1",
+          torch_GBRAIN_PROBE_TIMEOUT_MS: "300",
+          torch_DETECT_NO_CACHE: "1",
           GBRAIN_HOME: "",
         },
       });
@@ -304,19 +304,19 @@ describe("probeTimeoutMs — env override parsing", () => {
   });
 
   it("parses a numeric override", () => {
-    expect(probeTimeoutMs({ GSTACK_GBRAIN_PROBE_TIMEOUT_MS: "300" })).toBe(300);
+    expect(probeTimeoutMs({ torch_GBRAIN_PROBE_TIMEOUT_MS: "300" })).toBe(300);
   });
 
   it("falls back to the default on non-numeric, empty, and non-positive values", () => {
-    expect(probeTimeoutMs({ GSTACK_GBRAIN_PROBE_TIMEOUT_MS: "fast" })).toBe(DEFAULT_PROBE_TIMEOUT_MS);
-    expect(probeTimeoutMs({ GSTACK_GBRAIN_PROBE_TIMEOUT_MS: "" })).toBe(DEFAULT_PROBE_TIMEOUT_MS);
-    expect(probeTimeoutMs({ GSTACK_GBRAIN_PROBE_TIMEOUT_MS: "0" })).toBe(DEFAULT_PROBE_TIMEOUT_MS);
-    expect(probeTimeoutMs({ GSTACK_GBRAIN_PROBE_TIMEOUT_MS: "-5" })).toBe(DEFAULT_PROBE_TIMEOUT_MS);
+    expect(probeTimeoutMs({ torch_GBRAIN_PROBE_TIMEOUT_MS: "fast" })).toBe(DEFAULT_PROBE_TIMEOUT_MS);
+    expect(probeTimeoutMs({ torch_GBRAIN_PROBE_TIMEOUT_MS: "" })).toBe(DEFAULT_PROBE_TIMEOUT_MS);
+    expect(probeTimeoutMs({ torch_GBRAIN_PROBE_TIMEOUT_MS: "0" })).toBe(DEFAULT_PROBE_TIMEOUT_MS);
+    expect(probeTimeoutMs({ torch_GBRAIN_PROBE_TIMEOUT_MS: "-5" })).toBe(DEFAULT_PROBE_TIMEOUT_MS);
   });
 
   it("never returns 0 for fractional sub-millisecond values (0 = NO timeout in execFileSync)", () => {
-    expect(probeTimeoutMs({ GSTACK_GBRAIN_PROBE_TIMEOUT_MS: "0.5" })).toBe(1);
-    expect(probeTimeoutMs({ GSTACK_GBRAIN_PROBE_TIMEOUT_MS: "0.0001" })).toBe(1);
+    expect(probeTimeoutMs({ torch_GBRAIN_PROBE_TIMEOUT_MS: "0.5" })).toBe(1);
+    expect(probeTimeoutMs({ torch_GBRAIN_PROBE_TIMEOUT_MS: "0.0001" })).toBe(1);
   });
 });
 
@@ -390,7 +390,7 @@ describe("lib/gbrain-local-status — cache behavior", () => {
   it("caches a 'timeout' result (sync probes 3x/run — uncached would cost 3 deadlines)", () => {
     env = makeEnv({ withGbrain: true, gbrainBehavior: "slow", withConfig: true });
     restoreEnv = applyEnv(env);
-    process.env.GSTACK_GBRAIN_PROBE_TIMEOUT_MS = "300";
+    process.env.torch_GBRAIN_PROBE_TIMEOUT_MS = "300";
     expect(localEngineStatus({ noCache: false })).toBe("timeout");
 
     // Swap the fake to a fast-ok binary; the cached timeout should still win
@@ -400,15 +400,15 @@ describe("lib/gbrain-local-status — cache behavior", () => {
     expect(localEngineStatus({ noCache: false })).toBe("timeout");
   });
 
-  it("invalidates a cached 'timeout' when GSTACK_GBRAIN_PROBE_TIMEOUT_MS changes (key invariant, codex D13)", () => {
+  it("invalidates a cached 'timeout' when torch_GBRAIN_PROBE_TIMEOUT_MS changes (key invariant, codex D13)", () => {
     env = makeEnv({ withGbrain: true, gbrainBehavior: "slow", withConfig: true });
     restoreEnv = applyEnv(env);
-    process.env.GSTACK_GBRAIN_PROBE_TIMEOUT_MS = "300";
+    process.env.torch_GBRAIN_PROBE_TIMEOUT_MS = "300";
     expect(localEngineStatus({ noCache: false })).toBe("timeout");
 
     // User raises the timeout past the fake's 2s sleep: cache key changes,
     // re-probe succeeds.
-    process.env.GSTACK_GBRAIN_PROBE_TIMEOUT_MS = "5000";
+    process.env.torch_GBRAIN_PROBE_TIMEOUT_MS = "5000";
     expect(localEngineStatus({ noCache: false })).toBe("ok");
   });
 
@@ -431,7 +431,7 @@ describe("lib/gbrain-local-status — cache behavior", () => {
     restoreEnv = applyEnv(env);
     expect(localEngineStatus({ noCache: false })).toBe("ok");
 
-    // Switch to a new HOME (different user). Same gstack home (shared cache file).
+    // Switch to a new HOME (different user). Same torch home (shared cache file).
     const env2 = makeEnv({
       withGbrain: true,
       gbrainBehavior: "broken-db",
@@ -439,7 +439,7 @@ describe("lib/gbrain-local-status — cache behavior", () => {
     });
     process.env.HOME = env2.home;
     process.env.PATH = `${env2.bindir}:/usr/bin:/bin`;
-    // GSTACK_HOME stays pointing at env.gstackHome (the original cache file).
+    // torch_HOME stays pointing at env.torchHome (the original cache file).
 
     try {
       expect(localEngineStatus({ noCache: false })).toBe("broken-db");

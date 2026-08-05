@@ -6,7 +6,7 @@ description: |
   optionally spawns a Claude Code agent in a fresh worktree, and lets /ship close
   the source issue on merge. Use when asked to "spec this out", "file an issue",
   "write up a ticket", "make this a GitHub issue", or "turn this into a backlog item".
-  (gstack)
+  (torch)
 allowed-tools:
   - Bash
   - Read
@@ -198,7 +198,7 @@ categories that fired plus a sha256 of the body:
 
 ```bash
 printf '%s' "<the final draft body>" > /tmp/spec-semantic-$$.txt
-bun ~/.claude/skills/gstack/lib/redact-audit-log.ts \
+bun ~/.claude/skills/torch/lib/redact-audit-log.ts \
   "{\"repo_visibility\":\"$REDACT_VIS\",\"outcome\":\"<clean|flagged>\",\"categories_flagged\":[<...>],\"spec_archive_path\":\"\"}" \
   /tmp/spec-semantic-$$.txt
 rm -f /tmp/spec-semantic-$$.txt
@@ -286,15 +286,15 @@ contributor's "match template to content" rules.
 
 #### Phase 5 dispatch logic (plan-mode-aware default)
 
-Read `GSTACK_PLAN_MODE` from the environment (emitted by `{{PREAMBLE}}`'s
+Read `torch_PLAN_MODE` from the environment (emitted by `{{PREAMBLE}}`'s
 preamble bash). Then:
 
 1. **`--file-only` or `--no-execute` flag present** → file-only path.
 2. **`--execute` flag present** → file + spawn path.
-3. **No flag, `GSTACK_PLAN_MODE=active`** → file-only path. Also load the spec
+3. **No flag, `torch_PLAN_MODE=active`** → file-only path. Also load the spec
    into the active plan file (specified by `--plan-file <path>` or inferred from
    harness context as the work-to-do).
-4. **No flag, `GSTACK_PLAN_MODE=inactive`** → file + spawn path. The default in
+4. **No flag, `torch_PLAN_MODE=inactive`** → file + spawn path. The default in
    execution mode is to spawn an agent immediately (this is the agent-feedstock
    pipeline). User can opt out with `--no-execute`.
 5. **No flag, env unset** (older host, or Codex without contract) → treat as
@@ -317,7 +317,7 @@ If `gh` is available and authenticated, file from the scanned temp file:
 ISSUE_URL=$(gh issue create --title "<title>" --body-file "$REDACT_FILE")
 ISSUE_NUMBER=$(echo "$ISSUE_URL" | sed -E 's|.*/issues/([0-9]+)$|\1|')
 echo "Filed: $ISSUE_URL"
-~/.claude/skills/gstack/bin/gstack-decision-log '{"decision":"Spec filed #ISSUE_NUMBER: TITLE","rationale":"APPROACH","scope":"issue","issue":"ISSUE_NUMBER","source":"skill","confidence":7}' 2>/dev/null || true
+~/.claude/skills/torch/bin/torch-decision-log '{"decision":"Spec filed #ISSUE_NUMBER: TITLE","rationale":"APPROACH","scope":"issue","issue":"ISSUE_NUMBER","source":"skill","confidence":7}' 2>/dev/null || true
 ```
 
 The last line records the spec as a durable, issue-scoped cross-session decision so a future session (or `/ship` closing the issue) inherits the core approach and why, not just the issue link. Non-interactive, best-effort (`|| true`). Substitute `ISSUE_NUMBER` (from the filed issue), `TITLE` (the issue title), and `APPROACH` (the one core approach/decision the spec settled). Only fires when the issue was actually filed.
@@ -339,13 +339,13 @@ is consumed by `/ship` for auto-close.
 MUST be the sanitized body (`$REDACT_FILE`), not the original draft — one body for
 all sinks. The user's on-disk source draft keeps the original.
 
-Resolve the archive path via the existing `gstack-paths` helper (handles
-`GSTACK_HOME`, `CLAUDE_PLUGIN_DATA`, Windows fallback):
+Resolve the archive path via the existing `torch-paths` helper (handles
+`torch_HOME`, `CLAUDE_PLUGIN_DATA`, Windows fallback):
 
 ```bash
-eval "$(~/.claude/skills/gstack/bin/gstack-paths)"
-eval "$(~/.claude/skills/gstack/bin/gstack-slug)"
-ARCHIVE_DIR="$GSTACK_STATE_ROOT/projects/$SLUG/specs"
+eval "$(~/.claude/skills/torch/bin/torch-paths)"
+eval "$(~/.claude/skills/torch/bin/torch-slug)"
+ARCHIVE_DIR="$torch_STATE_ROOT/projects/$SLUG/specs"
 mkdir -p "$ARCHIVE_DIR"
 SLUG_TITLE=$(echo "<title>" | tr ' ' '-' | tr -cd 'a-zA-Z0-9-' | tr A-Z a-z | cut -c1-60)
 ARCHIVE_NAME="$(date +%Y%m%d-%H%M%S)-$$-${SLUG_TITLE}.md"
@@ -357,7 +357,7 @@ spec_issue_number: ${ISSUE_NUMBER:-}
 spec_issue_url: ${ISSUE_URL:-}
 spec_filed_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)
 spec_branch: $(git branch --show-current 2>/dev/null || echo unknown)
-spec_plan_mode: ${GSTACK_PLAN_MODE:-unset}
+spec_plan_mode: ${torch_PLAN_MODE:-unset}
 spec_executed: ${WILL_EXECUTE:-false}
 spec_worktree_path:
 ttfc_ms: ${TTFC_MS:-}

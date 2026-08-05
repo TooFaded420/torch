@@ -27,11 +27,11 @@ const ROOT = path.resolve(import.meta.dir, '..');
 const DRY_RUN = process.argv.includes('--dry-run');
 
 // ─── GBrain Detection Override ──────────────────────────────
-// When --respect-detection is passed, read ~/.gstack/gbrain-detection.json
+// When --respect-detection is passed, read ~/.torch/gbrain-detection.json
 // and un-suppress GBRAIN_CONTEXT_LOAD + GBRAIN_SAVE_RESULTS for hosts that
 // statically suppress them (claude, codex, slate, factory, opencode,
 // openclaw, cursor, kiro). Detection state is produced by
-// bin/gstack-gbrain-detect and persisted by `gstack-config gbrain-refresh`
+// bin/torch-gbrain-detect and persisted by `torch-config gbrain-refresh`
 // or by ./setup.
 //
 // Default (no flag): static suppressedResolvers honored as-is. Used by
@@ -43,12 +43,12 @@ const RESPECT_DETECTION = process.argv.includes('--respect-detection');
 
 function loadGbrainOverride(): { detected: boolean } {
   if (!RESPECT_DETECTION) return { detected: false };
-  const stateDir = process.env.GSTACK_HOME || path.join(process.env.HOME || '', '.gstack');
+  const stateDir = process.env.torch_HOME || path.join(process.env.HOME || '', '.torch');
   const detectionPath = path.join(stateDir, 'gbrain-detection.json');
   try {
     const json = JSON.parse(fs.readFileSync(detectionPath, 'utf-8')) as { gbrain_local_status?: string };
     // "timeout" = slow-but-healthy engine (#1964) — same treatment as "ok",
-    // matching gstack-gbrain-detect --is-ok.
+    // matching torch-gbrain-detect --is-ok.
     return { detected: json.gbrain_local_status === 'ok' || json.gbrain_local_status === 'timeout' };
   } catch {
     return { detected: false };
@@ -142,7 +142,7 @@ const EXPLAIN_LEVEL: 'default' | 'terse' = (() => {
 // ─── Out-dir (dev workspace render isolation) ───────────────
 // --out-dir <abs-dir> redirects Claude SKILL.md + section output to a separate
 // (untracked) directory instead of writing in place, AND rewrites the literal
-// section-base path (`~/.claude/skills/gstack/<skill>/sections/`) inside the
+// section-base path (`~/.claude/skills/torch/<skill>/sections/`) inside the
 // generated content to point at the out-dir, so section Reads resolve to the
 // rendered copy rather than the global install. Used by bin/dev-setup to render
 // the gbrain `:user` variant for a Conductor workspace without dirtying tracked
@@ -161,13 +161,13 @@ const OUT_DIR: string | null = (() => {
  * When rendering to an out-dir, repoint the literal section-base path at the
  * out-dir so section Reads resolve to the rendered copy, not the global install.
  * Surgical: ONLY paths containing `/sections/` are rewritten — bin/, browse/,
- * docs/ references keep pointing at `~/.claude/skills/gstack` (the global
+ * docs/ references keep pointing at `~/.claude/skills/torch` (the global
  * install, which still works). No-op when --out-dir is unset.
  */
 function rewriteSectionBase(content: string): string {
   if (!OUT_DIR) return content;
   return content.replace(
-    /~\/\.claude\/skills\/gstack\/([^\s)`"'*]+\/sections\/)/g,
+    /~\/\.claude\/skills\/torch\/([^\s)`"'*]+\/sections\/)/g,
     `${OUT_DIR}/$1`,
   );
 }
@@ -181,13 +181,13 @@ function rewriteSectionBase(content: string): string {
 // Re-export local copy for use in this file (matches codex-helpers.ts)
 // Accepts optional frontmatter name to support directory/invocation name divergence
 function externalSkillName(skillDir: string, frontmatterName?: string): string {
-  // Root skill (skillDir === '' or '.') always maps to 'gstack' regardless of frontmatter
-  if (skillDir === '.' || skillDir === '') return 'gstack';
+  // Root skill (skillDir === '' or '.') always maps to 'torch' regardless of frontmatter
+  if (skillDir === '.' || skillDir === '') return 'torch';
   // Use frontmatter name when it differs from directory name (e.g., run-tests/ with name: test)
   const baseName = frontmatterName && frontmatterName !== skillDir ? frontmatterName : skillDir;
-  // Don't double-prefix: gstack-upgrade → gstack-upgrade (not gstack-gstack-upgrade)
-  if (baseName.startsWith('gstack-')) return baseName;
-  return `gstack-${baseName}`;
+  // Don't double-prefix: torch-upgrade → torch-upgrade (not torch-torch-upgrade)
+  if (baseName.startsWith('torch-')) return baseName;
+  return `torch-${baseName}`;
 }
 
 function extractNameAndDescription(content: string): { name: string; description: string } {
@@ -289,9 +289,9 @@ export { extractVoiceTriggers, processVoiceTriggers };
 //
 // Frontmatter `description:` blocks today pack: a one-line outcome, "Use when
 // asked to..." voice triggers, "Proactively..." routing guidance, and a
-// "(gstack)" tag. This pile is the always-loaded catalog surface — every
+// "(torch)" tag. This pile is the always-loaded catalog surface — every
 // session pays for the full text. The catalog trim splits the description
-// into a one-line catalog entry (lead sentence + "(gstack)") that stays in
+// into a one-line catalog entry (lead sentence + "(torch)") that stays in
 // the frontmatter, and a "## When to invoke" body section that holds the
 // routing/voice triggers prose for in-skill discovery. A registry written
 // to scripts/proactive-suggestions.json (one entry per skill) makes routing
@@ -305,7 +305,7 @@ export interface CatalogParts {
   lead: string;            // First sentence — kept in catalog
   routingProse: string;    // "Use when asked to...", "Proactively..." paragraphs
   voiceLine: string | null; // "Voice triggers (speech-to-text aliases): ..." line if present
-  hasGstackTag: boolean;
+  hastorchTag: boolean;
 }
 
 export function splitCatalogDescription(description: string): CatalogParts {
@@ -314,8 +314,8 @@ export function splitCatalogDescription(description: string): CatalogParts {
   const voiceLine = voiceMatch ? voiceMatch[0] : null;
   let working = voiceLine ? description.replace(voiceLine, '').trim() : description.trim();
 
-  const hasGstackTag = /\(gstack\)/.test(working);
-  if (hasGstackTag) working = working.replace(/\(gstack\)/, '').trim();
+  const hastorchTag = /\(torch\)/.test(working);
+  if (hastorchTag) working = working.replace(/\(torch\)/, '').trim();
 
   // Lead = first sentence (up to first period followed by space or end of string).
   // We tolerate sentences with embedded periods (URLs, "v1.45.0.0") by requiring
@@ -367,13 +367,13 @@ export function splitCatalogDescription(description: string): CatalogParts {
     if (tail.length > 0) routingProse = tail;
   }
 
-  return { lead, routingProse, voiceLine, hasGstackTag };
+  return { lead, routingProse, voiceLine, hastorchTag };
 }
 
 /** Build the catalog-trimmed `description:` block. */
 export function buildTrimmedDescription(parts: CatalogParts): string {
   const lead = parts.lead.trim();
-  const suffix = parts.hasGstackTag ? ' (gstack)' : '';
+  const suffix = parts.hastorchTag ? ' (torch)' : '';
   return `${lead}${suffix}`;
 }
 
@@ -415,7 +415,7 @@ export function toYamlInlineScalar(s: string): string {
 
 /**
  * Apply catalog trim to a SKILL.md body:
- *  - shorten frontmatter `description:` to lead + (gstack)
+ *  - shorten frontmatter `description:` to lead + (torch)
  *  - insert "## When to invoke" body section AFTER the generated header
  *    (so it lands near the top of body content, where routing guidance
  *    belongs)
@@ -448,7 +448,7 @@ export function applyCatalogTrim(content: string, skillName: string): { content:
   if (descText.length < 120) return null;
 
   const parts = splitCatalogDescription(descText);
-  // If lead + (gstack) is already most of the text, no trim needed.
+  // If lead + (torch) is already most of the text, no trim needed.
   const trimmedLen = buildTrimmedDescription(parts).length;
   if (trimmedLen >= descText.length - 20) return null;
 
@@ -967,14 +967,14 @@ for (const currentHost of hostsToRun) {
       if (catalogParts) {
         // Root-skill detection: when the template lives at ROOT/SKILL.md.tmpl,
         // path.basename(path.dirname(tmplPath)) returns the repo's directory
-        // name (e.g. "seville-v3" in a Conductor worktree, "gstack" on CI).
+        // name (e.g. "seville-v3" in a Conductor worktree, "torch" on CI).
         // That's non-deterministic across machines and breaks CI freshness
         // checks. Use the frontmatter `name` field as the registry key — the
-        // root SKILL.md.tmpl declares `name: gstack` explicitly. For all other
+        // root SKILL.md.tmpl declares `name: torch` explicitly. For all other
         // skills, `dir` matches the directory name which matches the
         // frontmatter name by convention.
         const isRoot = path.dirname(tmplPath) === ROOT;
-        const key = isRoot ? 'gstack' : dir;
+        const key = isRoot ? 'torch' : dir;
         proactiveAggregate[key] = {
           lead: catalogParts.lead,
           routing: catalogParts.routingProse,
@@ -1055,12 +1055,12 @@ for (const currentHost of hostsToRun) {
       });
     }
 
-    // Generate gstack-lite and gstack-full for OpenClaw host
+    // Generate torch-lite and torch-full for OpenClaw host
     if (currentHost === 'openclaw' && !DRY_RUN) {
       const openclawDir = path.join(ROOT, 'openclaw');
       if (!fs.existsSync(openclawDir)) fs.mkdirSync(openclawDir, { recursive: true });
 
-      const gstackLite = `# gstack-lite Planning Discipline
+      const torchLite = `# torch-lite Planning Discipline
 
 Injected by the orchestrator into spawned Claude Code sessions. Append to existing CLAUDE.md.
 
@@ -1073,10 +1073,10 @@ Injected by the orchestrator into spawned Claude Code sessions. Append to existi
    imports, untested paths, style inconsistencies.
 5. Report when done: what shipped, what decisions you made, anything uncertain.
 `;
-      fs.writeFileSync(path.join(openclawDir, 'gstack-lite-CLAUDE.md'), gstackLite);
-      console.log('GENERATED: openclaw/gstack-lite-CLAUDE.md');
+      fs.writeFileSync(path.join(openclawDir, 'torch-lite-CLAUDE.md'), torchLite);
+      console.log('GENERATED: openclaw/torch-lite-CLAUDE.md');
 
-      const gstackFull = `# gstack-full Pipeline
+      const torchFull = `# torch-full Pipeline
 
 Injected by the orchestrator for complete feature builds. Append to existing CLAUDE.md.
 
@@ -1089,10 +1089,10 @@ Injected by the orchestrator for complete feature builds. Append to existing CLA
 
 Do not ask for human input until the PR is ready for review.
 `;
-      fs.writeFileSync(path.join(openclawDir, 'gstack-full-CLAUDE.md'), gstackFull);
-      console.log('GENERATED: openclaw/gstack-full-CLAUDE.md');
+      fs.writeFileSync(path.join(openclawDir, 'torch-full-CLAUDE.md'), torchFull);
+      console.log('GENERATED: openclaw/torch-full-CLAUDE.md');
 
-      const gstackPlan = `# gstack-plan: Full Review Gauntlet
+      const torchPlan = `# torch-plan: Full Review Gauntlet
 
 Injected by the orchestrator when the user wants to plan a Claude Code project.
 Append to existing CLAUDE.md.
@@ -1108,13 +1108,13 @@ Append to existing CLAUDE.md.
    - Plan file path
    - One-paragraph summary of what was designed and the key decisions
    - List of accepted scope expansions (if any)
-   - Recommended next step (usually: spawn a new session with gstack-full to implement)
+   - Recommended next step (usually: spawn a new session with torch-full to implement)
 
 Do not implement anything. This is planning only.
 The orchestrator will persist the plan link to its own memory/knowledge store.
 `;
-      fs.writeFileSync(path.join(openclawDir, 'gstack-plan-CLAUDE.md'), gstackPlan);
-      console.log('GENERATED: openclaw/gstack-plan-CLAUDE.md');
+      fs.writeFileSync(path.join(openclawDir, 'torch-plan-CLAUDE.md'), torchPlan);
+      console.log('GENERATED: openclaw/torch-plan-CLAUDE.md');
     }
 
     if (DRY_RUN && hasChanges) {
@@ -1143,7 +1143,7 @@ The orchestrator will persist the plan link to its own memory/knowledge store.
         sortedSkills[key] = proactiveAggregate[key];
       }
       const payload = {
-        $schema: 'https://gstack.dev/schemas/proactive-suggestions.json',
+        $schema: 'https://torch.dev/schemas/proactive-suggestions.json',
         catalog_mode: 'trim',
         note: 'Routing / voice-trigger prose extracted from SKILL.md frontmatter descriptions during catalog trim. Loaded on demand when routing guidance is needed.',
         skills: sortedSkills,
@@ -1197,17 +1197,17 @@ if (failures.length > 0 && HOST_ARG_VAL === 'all') {
 // After all hosts processed, warn if prefix patches may need re-applying
 if (!DRY_RUN) {
   try {
-    const configPath = path.join(process.env.HOME || '', '.gstack', 'config.yaml');
+    const configPath = path.join(process.env.HOME || '', '.torch', 'config.yaml');
     if (fs.existsSync(configPath)) {
       const config = fs.readFileSync(configPath, 'utf-8');
       if (/^skill_prefix:\s*true/m.test(config)) {
-        console.log('\nNote: skill_prefix is true. Run gstack-relink to re-apply name: patches.');
+        console.log('\nNote: skill_prefix is true. Run torch-relink to re-apply name: patches.');
       }
     }
   } catch { /* non-fatal */ }
 }
 
-// Regenerate gstack/llms.txt — single-file capability index for AI agents.
+// Regenerate torch/llms.txt — single-file capability index for AI agents.
 // Runs after SKILL.md generation so it sees current skill descriptions and
 // browse command list. Wrapped in an IIFE so the await-import doesn't make
 // this module async (test/gen-skill-docs.test.ts uses require() to pull
@@ -1220,7 +1220,7 @@ if (!DRY_RUN) {
       if (result.warnings.length > 0) {
         for (const w of result.warnings) console.error(`[gen-llms-txt] WARN: ${w}`);
       } else {
-        console.log(`[gen-llms-txt] gstack/llms.txt: ${result.skills.length} skills, ${result.browseCommands.length} browse commands`);
+        console.log(`[gen-llms-txt] torch/llms.txt: ${result.skills.length} skills, ${result.browseCommands.length} browse commands`);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);

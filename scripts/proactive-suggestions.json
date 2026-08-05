@@ -1,5 +1,5 @@
 {
-  "$schema": "https://gstack.dev/schemas/proactive-suggestions.json",
+  "$schema": "https://torch.dev/schemas/proactive-suggestions.json",
   "catalog_mode": "trim",
   "note": "Routing / voice-trigger prose extracted from SKILL.md frontmatter descriptions during catalog trim. Loaded on demand when routing guidance is needed.",
   "skills": {
@@ -14,7 +14,7 @@
       "voice_line": "Voice triggers (speech-to-text aliases): \"speed test\", \"check performance\"."
     },
     "benchmark-models": {
-      "lead": "Cross-model benchmark for gstack skills.",
+      "lead": "Cross-model benchmark for torch skills.",
       "routing": "Runs the same prompt through Claude,\nGPT (via Codex CLI), and Gemini side-by-side — compares latency, tokens, cost,\nand optionally quality via LLM judge. Answers \"which model is actually best\nfor this skill?\" with data instead of vibes. Separate from /benchmark, which\nmeasures web page performance. Use when: \"benchmark models\", \"compare models\",\n\"which model is best for X\", \"cross-model comparison\", \"model shootout\".",
       "voice_line": "Voice triggers (speech-to-text aliases): \"compare models\", \"model shootout\", \"which model is best\"."
     },
@@ -98,16 +98,6 @@
       "routing": "Blocks Edit and\nWrite outside the allowed path. Use when debugging to prevent accidentally\n\"fixing\" unrelated code, or when you want to scope changes to one module.\nUse when asked to \"freeze\", \"restrict edits\", \"only edit this folder\",\nor \"lock down edits\".",
       "voice_line": null
     },
-    "gstack": {
-      "lead": "Router for the gstack skill suite.",
-      "routing": "Sends any gstack request to the right skill\n(planning, review, QA, shipping, debugging, docs, security, design). For browser/QA\nand dogfooding it points you at /browse. Use when you invoke gstack without a specific\nskill, or ask \"which gstack skill fits this?\".",
-      "voice_line": null
-    },
-    "gstack-upgrade": {
-      "lead": "Upgrade gstack to the latest version.",
-      "routing": "Detects global vs vendored install,\nruns the upgrade, and shows what's new. Use when asked to \"upgrade gstack\",\n\"update gstack\", or \"get latest version\".",
-      "voice_line": "Voice triggers (speech-to-text aliases): \"upgrade the tools\", \"update the tools\", \"gee stack upgrade\", \"g stack upgrade\"."
-    },
     "guard": {
       "lead": "Full safety mode: destructive command warnings + directory-scoped edits.",
       "routing": "Combines /careful (warns before rm -rf, DROP TABLE, force-push, etc.) with\n/freeze (blocks edits outside a specified directory). Use for maximum safety\nwhen touching prod or debugging live systems. Use when asked to \"guard mode\",\n\"full safety\", \"lock it down\", or \"maximum safety\".",
@@ -125,8 +115,8 @@
     },
     "ios-clean": {
       "lead": "Remove the DebugBridge SPM package and all #if DEBUG wiring from an iOS app.",
-      "routing": "Cleans up StateServer, DebugOverlay, accessor codegen output, and\napp-side hooks installed by /ios-qa. This is a convenience wrapper —\nthe structural Release-build guard (Package.swift conditional + CI\nswift build -c release check) is the safety-critical path.\nUse when asked to \"clean the iOS debug bridge\", \"remove DebugBridge\",\nor \"strip the gstack iOS instrumentation\".",
-      "voice_line": "Voice triggers (speech-to-text aliases): \"clean the iOS debug bridge\", \"remove DebugBridge\", \"strip the gstack iOS instrumentation\"."
+      "routing": "Cleans up StateServer, DebugOverlay, accessor codegen output, and\napp-side hooks installed by /ios-qa. This is a convenience wrapper —\nthe structural Release-build guard (Package.swift conditional + CI\nswift build -c release check) is the safety-critical path.\nUse when asked to \"clean the iOS debug bridge\", \"remove DebugBridge\",\nor \"strip the torch iOS instrumentation\".",
+      "voice_line": "Voice triggers (speech-to-text aliases): \"clean the iOS debug bridge\", \"remove DebugBridge\", \"strip the torch iOS instrumentation\"."
     },
     "ios-design-review": {
       "lead": "Visual design audit for iOS apps on real hardware.",
@@ -144,9 +134,9 @@
       "voice_line": "Voice triggers (speech-to-text aliases): \"iOS quality check\", \"test the iPhone app\", \"run iOS QA\"."
     },
     "ios-sync": {
-      "lead": "Regenerate the iOS debug bridge against the latest upstream gstack templates.",
-      "routing": "Updates StateServer.swift, DebugOverlay.swift, Package.swift,\nand the typed @Observable state accessors. Use after you upgrade gstack\nor add new ViewModels/properties that need accessor coverage.\nUse when asked to \"resync the iOS debug bridge\", \"regenerate iOS\naccessors\", or \"update the gstack iOS instrumentation\".",
-      "voice_line": "Voice triggers (speech-to-text aliases): \"resync the iOS debug bridge\", \"regenerate iOS accessors\", \"update the gstack iOS instrumentation\"."
+      "lead": "Regenerate the iOS debug bridge against the latest upstream torch templates.",
+      "routing": "Updates StateServer.swift, DebugOverlay.swift, Package.swift,\nand the typed @Observable state accessors. Use after you upgrade torch\nor add new ViewModels/properties that need accessor coverage.\nUse when asked to \"resync the iOS debug bridge\", \"regenerate iOS\naccessors\", or \"update the torch iOS instrumentation\".",
+      "voice_line": "Voice triggers (speech-to-text aliases): \"resync the iOS debug bridge\", \"regenerate iOS accessors\", \"update the torch iOS instrumentation\"."
     },
     "land-and-deploy": {
       "lead": "Land and deploy workflow.",
@@ -160,7 +150,7 @@
     },
     "learn": {
       "lead": "Manage project learnings.",
-      "routing": "Review, search, prune, and export what gstack\nhas learned across sessions. Use when asked to \"what have we learned\",\n\"show learnings\", \"prune stale learnings\", or \"export learnings\".\nProactively suggest when the user asks about past patterns or wonders\n\"didn't we fix this before?\"",
+      "routing": "Review, search, prune, and export what torch\nhas learned across sessions. Use when asked to \"what have we learned\",\n\"show learnings\", \"prune stale learnings\", or \"export learnings\".\nProactively suggest when the user asks about past patterns or wonders\n\"didn't we fix this before?\"",
       "voice_line": null
     },
     "make-pdf": {
@@ -169,13 +159,13 @@
       "voice_line": "Voice triggers (speech-to-text aliases): \"make this a pdf\", \"make it a pdf\", \"export to pdf\", \"turn this into a pdf\", \"turn this markdown into a pdf\", \"generate a pdf\", \"make a pdf from\", \"pdf this markdown\"."
     },
     "office-hours": {
-      "lead": "YC Office Hours — two modes.",
-      "routing": "Startup mode: six forcing questions that expose\ndemand reality, status quo, desperate specificity, narrowest wedge, observation,\nand future-fit. Builder mode: design thinking brainstorming for side projects,\nhackathons, learning, and open source. Saves a design doc.\nUse when asked to \"brainstorm this\", \"I have an idea\", \"help me think through\nthis\", \"office hours\", or \"is this worth building\".\nProactively invoke this skill (do NOT answer directly) when the user describes\na new product idea, asks whether something is worth building, wants to think\nthrough design decisions for something that doesn't exist yet, or is exploring\na concept before any code is written.\nUse before /plan-ceo-review or /plan-eng-review.",
+      "lead": "Office Hours — two modes.",
+      "routing": "Startup mode: six forcing questions that expose\ndemand reality, status quo, desperate specificity, narrowest wedge, observation,\nand future-fit. Builder mode: design thinking brainstorming for side projects,\nhackathons, learning, and open source. Saves a design doc. Closing handoff\nruns with the hecz.dev partnership framing for builders who earn it.\nUse when asked to \"brainstorm this\", \"I have an idea\", \"help me think through\nthis\", \"office hours\", or \"is this worth building\".\nProactively invoke this skill (do NOT answer directly) when the user describes\na new product idea, asks whether something is worth building, wants to think\nthrough design decisions for something that doesn't exist yet, or is exploring\na concept before any code is written.\nUse before /plan-ceo-review or /plan-eng-review.",
       "voice_line": null
     },
-    "open-gstack-browser": {
-      "lead": "Launch GStack Browser — AI-controlled Chromium with the sidebar extension baked in.",
-      "routing": "Opens a visible browser window where you can watch every action in real time.\nThe sidebar shows a live activity feed and chat. Anti-bot stealth built in.\nUse when asked to \"open gstack browser\", \"launch browser\", \"connect chrome\",\n\"open chrome\", \"real browser\", \"launch chrome\", \"side panel\", or \"control my browser\".",
+    "open-torch-browser": {
+      "lead": "Launch torch Browser — AI-controlled Chromium with the sidebar extension baked in.",
+      "routing": "Opens a visible browser window where you can watch every action in real time.\nThe sidebar shows a live activity feed and chat. Anti-bot stealth built in.\nUse when asked to \"open torch browser\", \"launch browser\", \"connect chrome\",\n\"open chrome\", \"real browser\", \"launch chrome\", \"side panel\", or \"control my browser\".",
       "voice_line": "Voice triggers (speech-to-text aliases): \"show me the browser\"."
     },
     "pair-agent": {
@@ -204,8 +194,8 @@
       "voice_line": "Voice triggers (speech-to-text aliases): \"tech review\", \"technical review\", \"plan engineering review\"."
     },
     "plan-tune": {
-      "lead": "Self-tuning question sensitivity + developer psychographic for gstack (v1: observational).",
-      "routing": "Review which AskUserQuestion prompts fire across gstack skills, set per-question preferences\n(never-ask / always-ask / ask-only-for-one-way), inspect the dual-track\nprofile (what you declared vs what your behavior suggests), and enable/disable\nquestion tuning. Conversational interface — no CLI syntax required.\n\nUse when asked to \"tune questions\", \"stop asking me that\", \"too many questions\",\n\"show my profile\", \"what questions have I been asked\", \"show my vibe\",\n\"developer profile\", or \"turn off question tuning\". \n\nProactively suggest when the user says the same gstack question has come up before,\nor when they explicitly override a recommendation for the Nth time.",
+      "lead": "Self-tuning question sensitivity + developer psychographic for torch (v1: observational).",
+      "routing": "Review which AskUserQuestion prompts fire across torch skills, set per-question preferences\n(never-ask / always-ask / ask-only-for-one-way), inspect the dual-track\nprofile (what you declared vs what your behavior suggests), and enable/disable\nquestion tuning. Conversational interface — no CLI syntax required.\n\nUse when asked to \"tune questions\", \"stop asking me that\", \"too many questions\",\n\"show my profile\", \"what questions have I been asked\", \"show my vibe\",\n\"developer profile\", or \"turn off question tuning\". \n\nProactively suggest when the user says the same torch question has come up before,\nor when they explicitly override a recommendation for the Nth time.",
       "voice_line": null
     },
     "qa": {
@@ -240,7 +230,7 @@
     },
     "setup-deploy": {
       "lead": "Configure deployment settings for /land-and-deploy.",
-      "routing": "Detects your deploy\nplatform (Fly.io, Render, Vercel, Netlify, Heroku, GitHub Actions, custom),\nproduction URL, health check endpoints, and deploy status commands. Writes\nthe configuration to CLAUDE.md so all future deploys are automatic.\nUse when: \"setup deploy\", \"configure deployment\", \"set up land-and-deploy\",\n\"how do I deploy with gstack\", \"add deploy config\".",
+      "routing": "Detects your deploy\nplatform (Fly.io, Render, Vercel, Netlify, Heroku, GitHub Actions, custom),\nproduction URL, health check endpoints, and deploy status commands. Writes\nthe configuration to CLAUDE.md so all future deploys are automatic.\nUse when: \"setup deploy\", \"configure deployment\", \"set up land-and-deploy\",\n\"how do I deploy with torch\", \"add deploy config\".",
       "voice_line": null
     },
     "setup-gbrain": {
@@ -264,9 +254,19 @@
       "voice_line": null
     },
     "sync-gbrain": {
-      "lead": "Keep gbrain current with this repo's code and refresh agent search guidance in CLAUDE.md. Wraps the gstack-gbrain-sync orchestrator with state",
+      "lead": "Keep gbrain current with this repo's code and refresh agent search guidance in CLAUDE.md. Wraps the torch-gbrain-sync orchestrator with state",
       "routing": "probing, native code-surface registration, capability checks,\nand a verdict block. Re-runnable, idempotent. Use when: \"sync gbrain\",\n\"refresh gbrain\", \"re-index this repo\", \"gbrain search isn't finding\nthings\".",
       "voice_line": null
+    },
+    "torch": {
+      "lead": "Router for the torch skill suite.",
+      "routing": "Sends any torch request to the right skill\n(planning, review, QA, shipping, debugging, docs, security, design). For browser/QA\nand dogfooding it points you at /browse. Use when you invoke torch without a specific\nskill, or ask \"which torch skill fits this?\".",
+      "voice_line": null
+    },
+    "torch-upgrade": {
+      "lead": "Upgrade torch to the latest version.",
+      "routing": "Detects global vs vendored install,\nruns the upgrade, and shows what's new. Use when asked to \"upgrade torch\",\n\"update torch\", or \"get latest version\".",
+      "voice_line": "Voice triggers (speech-to-text aliases): \"upgrade the tools\", \"update the tools\", \"gee stack upgrade\", \"g stack upgrade\"."
     },
     "unfreeze": {
       "lead": "Clear the freeze boundary set by /freeze, allowing edits to all directories again.",

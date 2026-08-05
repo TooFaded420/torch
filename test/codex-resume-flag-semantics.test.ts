@@ -5,7 +5,7 @@
  * That regex catches the SKILL.md regressing back to `-C/-s` flags, but it
  * does not catch the codex CLI itself flipping flag semantics again. This
  * test probes the live `codex exec resume --help` output and asserts the
- * surface the gstack /codex skill depends on.
+ * surface the torch /codex skill depends on.
  *
  * Skips silently when codex is not on PATH, so dev machines without codex
  * installed never see this fail. CI lanes that run with codex installed
@@ -30,7 +30,7 @@ describe.skipIf(!codexAvailable)(
       const helpText = (result.stdout || '') + '\n' + (result.stderr || '');
       // The /codex skill builds resume invocations with `-c 'sandbox_mode="read-only"'`.
       // If codex stops accepting `-c sandbox_mode=...` for the resume subcommand,
-      // every resume invocation through gstack starts failing.
+      // every resume invocation through torch starts failing.
       expect(helpText).toMatch(/-c\b|--config\b|sandbox_mode/i);
     });
 

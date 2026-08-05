@@ -3,12 +3,12 @@
  * override (T2 / v1.50.0.0).
  *
  * The override mechanism lives in scripts/gen-skill-docs.ts: when invoked
- * with --respect-detection, it reads ~/.gstack/gbrain-detection.json and
+ * with --respect-detection, it reads ~/.torch/gbrain-detection.json and
  * un-suppresses GBRAIN_CONTEXT_LOAD + GBRAIN_SAVE_RESULTS for hosts that
  * statically list them in suppressedResolvers (claude, codex, slate,
  * factory, opencode, openclaw, cursor, kiro).
  *
- * Tests drive gen-skill-docs as a subprocess against a temp GSTACK_HOME
+ * Tests drive gen-skill-docs as a subprocess against a temp torch_HOME
  * with each detection state, then assert what landed in the generated
  * Claude-host SKILL.md. This is end-to-end through the actual override
  * pipeline — no mocking — so it catches regressions in either the loader
@@ -49,7 +49,7 @@ function makeFixture(detectionJson: string | null): FixtureEnv {
 }
 
 /**
- * Run gen-skill-docs with --respect-detection and an isolated GSTACK_HOME.
+ * Run gen-skill-docs with --respect-detection and an isolated torch_HOME.
  * Returns the regenerated office-hours/SKILL.md content WITHOUT writing
  * over the committed file: we use --dry-run to keep the working tree
  * clean, then parse the output via re-reading the committed file... no,
@@ -82,7 +82,7 @@ function regenAndSnapshot(opts: {
   try {
     execFileSync('bun', args, {
       cwd: REPO_ROOT,
-      env: { ...process.env, GSTACK_HOME: opts.tmpHome },
+      env: { ...process.env, torch_HOME: opts.tmpHome },
       stdio: ['ignore', 'pipe', 'pipe'],
       timeout: 30_000,
     });
@@ -149,7 +149,7 @@ describe('gbrain detection override → gen-skill-docs', () => {
       const content = probeUnion(snap);
 
       // A slow engine must not silently suppress brain features — same
-      // treatment as "ok" (matches gstack-gbrain-detect --is-ok).
+      // treatment as "ok" (matches torch-gbrain-detect --is-ok).
       expect(content).toContain('## Save Results to Brain');
       expect(content).toContain('gbrain put "office-hours/');
     } finally {

@@ -21,8 +21,8 @@ import {
   SKILL_CALIBRATION_WEIGHTS,
   TRANSPORT_DEFAULT_POLICY,
   USER_SLUG_RESOLUTION_ORDER,
-  GSTACK_SCHEMA_PACK_NAME,
-  GSTACK_SCHEMA_PACK_VERSION,
+  torch_SCHEMA_PACK_NAME,
+  torch_SCHEMA_PACK_VERSION,
   CACHE_REFRESH_LOCK_TIMEOUT_MS,
   SKILL_RUN_RETENTION_DAYS,
   getCacheFile,
@@ -95,9 +95,9 @@ describe('brain-cache-spec internal consistency', () => {
     for (const prefix of blocked) {
       expect(SALIENCE_DEFAULT_ALLOWLIST.some((p) => p.startsWith(prefix))).toBe(false);
     }
-    // Must contain at least projects/ + gstack/ (work-flow surfaces)
+    // Must contain at least projects/ + torch/ (work-flow surfaces)
     expect(SALIENCE_DEFAULT_ALLOWLIST).toContain('projects/');
-    expect(SALIENCE_DEFAULT_ALLOWLIST).toContain('gstack/');
+    expect(SALIENCE_DEFAULT_ALLOWLIST).toContain('torch/');
   });
 
   test('calibration weights are bounded 0-1 and present for all preflight skills', () => {
@@ -126,8 +126,8 @@ describe('brain-cache-spec internal consistency', () => {
   });
 
   test('schema pack identity is stable strings', () => {
-    expect(GSTACK_SCHEMA_PACK_NAME).toBe('gstack-core');
-    expect(GSTACK_SCHEMA_PACK_VERSION).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(torch_SCHEMA_PACK_NAME).toBe('torch-core');
+    expect(torch_SCHEMA_PACK_VERSION).toMatch(/^\d+\.\d+\.\d+$/);
   });
 
   test('refresh lock timeout matches /sync-gbrain convention (5 min)', () => {

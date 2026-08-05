@@ -11,7 +11,7 @@ description: |
   Use when asked to "DX review", "developer experience audit", "devex review",
   or "API design review".
   Proactively suggest when the user has a plan for developer-facing products
-  (APIs, CLIs, SDKs, libraries, platforms, docs). (gstack)
+  (APIs, CLIs, SDKs, libraries, platforms, docs). (torch)
 voice-triggers:
   - "dx review"
   - "developer experience review"
@@ -97,10 +97,10 @@ Then read:
 **Design doc check:**
 ```bash
 setopt +o nomatch 2>/dev/null || true
-SLUG=$(~/.claude/skills/gstack/browse/bin/remote-slug 2>/dev/null || basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")
+SLUG=$(~/.claude/skills/torch/browse/bin/remote-slug 2>/dev/null || basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")
 BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null | tr '/' '-' || echo 'no-branch')
-DESIGN=$(ls -t ~/.gstack/projects/$SLUG/*-$BRANCH-design-*.md 2>/dev/null | head -1)
-[ -z "$DESIGN" ] && DESIGN=$(ls -t ~/.gstack/projects/$SLUG/*-design-*.md 2>/dev/null | head -1)
+DESIGN=$(ls -t ~/.torch/projects/$SLUG/*-$BRANCH-design-*.md 2>/dev/null | head -1)
+[ -z "$DESIGN" ] && DESIGN=$(ls -t ~/.torch/projects/$SLUG/*-design-*.md 2>/dev/null | head -1)
 [ -n "$DESIGN" ] && echo "Design doc found: $DESIGN" || echo "No design doc found"
 ```
 If a design doc exists, read it.
@@ -266,7 +266,7 @@ AskUserQuestion:
 Every great developer tool has a magical moment: the instant a developer goes from
 "is this worth my time?" to "oh wow, this is real."
 
-Load the "## Pass 1" section from `~/.claude/skills/gstack/plan-devex-review/dx-hall-of-fame.md`
+Load the "## Pass 1" section from `~/.claude/skills/torch/plan-devex-review/dx-hall-of-fame.md`
 for gold standard examples.
 
 Identify the most likely magical moment for this product type, then present delivery

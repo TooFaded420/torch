@@ -11,20 +11,20 @@ const MAX_BYTES = 10 * 1024 * 1024;
 const MAX_GENS = 5;
 
 export function defaultAuditPath(): string {
-  return process.env.GSTACK_IOS_AUDIT_PATH
-    ?? join(homedir(), '.gstack', 'security', 'ios-qa-audit.jsonl');
+  return process.env.torch_IOS_AUDIT_PATH
+    ?? join(homedir(), '.torch', 'security', 'ios-qa-audit.jsonl');
 }
 
 export function defaultAttemptsPath(): string {
-  return process.env.GSTACK_IOS_ATTEMPTS_PATH
-    ?? join(homedir(), '.gstack', 'security', 'attempts.jsonl');
+  return process.env.torch_IOS_ATTEMPTS_PATH
+    ?? join(homedir(), '.torch', 'security', 'attempts.jsonl');
 }
 
 let _saltCache: string | null = null;
 
 async function loadDeviceSalt(): Promise<string> {
   if (_saltCache) return _saltCache;
-  const path = join(homedir(), '.gstack', 'security', 'device-salt');
+  const path = join(homedir(), '.torch', 'security', 'device-salt');
   try {
     _saltCache = (await readFile(path, 'utf-8')).trim();
   } catch {

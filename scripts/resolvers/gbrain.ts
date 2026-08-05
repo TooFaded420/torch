@@ -1,7 +1,7 @@
 /**
  * GBrain resolver — brain-first lookup and save-to-brain for thinking skills.
  *
- * GBrain is a "mod" for gstack. When installed, coding skills become brain-aware:
+ * GBrain is a "mod" for torch. When installed, coding skills become brain-aware:
  * they search the brain for context before starting and save results after finishing.
  *
  * These resolvers are suppressed on hosts that don't support brain features
@@ -12,7 +12,7 @@
  * Compatible with GBrain >= v0.10.0 (search CLI, doctor --fast --json, entity enrichment).
  *
  * Brain-aware planning (T4 / v1.48 plan): adds three new resolvers powered by
- * the bin/gstack-brain-cache CLI and scripts/brain-cache-spec.ts. The new
+ * the bin/torch-brain-cache CLI and scripts/brain-cache-spec.ts. The new
  * resolvers fire only for the 5 planning skills registered in
  * SKILL_DIGEST_SUBSETS (office-hours, plan-ceo-review, plan-eng-review,
  * plan-design-review, plan-devex-review).
@@ -132,7 +132,7 @@ function isPreflightSkill(skillName: string): boolean {
 /**
  * Renders the per-skill BRAIN_PREFLIGHT block. The rendered output is a single
  * bash script that:
- *   1. Reads each digest file from gstack-brain-cache get (one call per digest)
+ *   1. Reads each digest file from torch-brain-cache get (one call per digest)
  *   2. Falls back to "(brain context unavailable)" on missing
  *   3. Concatenates outputs into a single ## Brain Context block injected
  *      into the skill's prompt context
@@ -151,7 +151,7 @@ export function generateBrainPreflight(ctx: TemplateContext): string {
     const entity = BRAIN_CACHE_ENTITIES[entityName];
     if (!entity) return '';
     const projectFlag = entity.scope === 'per-project' ? '--project "$SLUG"' : '';
-    return `  printf '\\n### %s\\n\\n' "${entityName}"\n  ${binDir}/gstack-brain-cache get ${entityName} ${projectFlag} 2>/dev/null || printf '_(no ${entityName} digest available yet)_\\n'`;
+    return `  printf '\\n### %s\\n\\n' "${entityName}"\n  ${binDir}/torch-brain-cache get ${entityName} ${projectFlag} 2>/dev/null || printf '_(no ${entityName} digest available yet)_\\n'`;
   }).join('\n');
 
   return `## Brain Context (preflight)
@@ -163,13 +163,13 @@ present in the loaded context; ground recommendations in what the brain
 already knows about the user, the product, the goals, and recent decisions.
 
 \`\`\`bash
-eval "$(${binDir}/gstack-slug 2>/dev/null)" 2>/dev/null || true
+eval "$(${binDir}/torch-slug 2>/dev/null)" 2>/dev/null || true
 {
   printf '## Brain Context\\n\\n'
 ${loadLines}
-} > /tmp/.gstack-brain-context-$$.md 2>/dev/null
-[ -s /tmp/.gstack-brain-context-$$.md ] && cat /tmp/.gstack-brain-context-$$.md
-rm -f /tmp/.gstack-brain-context-$$.md 2>/dev/null || true
+} > /tmp/.torch-brain-context-$$.md 2>/dev/null
+[ -s /tmp/.torch-brain-context-$$.md ] && cat /tmp/.torch-brain-context-$$.md
+rm -f /tmp/.torch-brain-context-$$.md 2>/dev/null || true
 \`\`\`
 
 **How to use this context:**
@@ -180,7 +180,7 @@ rm -f /tmp/.gstack-brain-context-$$.md 2>/dev/null || true
 - If a digest is \`(no X digest available yet)\`, treat that section as cold; ask the user.
 
 **Privacy:** Salience digest is filtered by allowlist (D9 default: \`projects/\`,
-\`gstack/\`, \`concepts/\` only). Personal/family/therapy content never leaks here.
+\`torch/\`, \`concepts/\` only). Personal/family/therapy content never leaks here.
 `;
 }
 
@@ -203,8 +203,8 @@ This is non-blocking — the user doesn't wait. Next invocation benefits
 from the warm cache.
 
 \`\`\`bash
-eval "$(${binDir}/gstack-slug 2>/dev/null)" 2>/dev/null || true
-(${binDir}/gstack-brain-cache refresh --project "$SLUG" 2>/dev/null &) || true
+eval "$(${binDir}/torch-slug 2>/dev/null)" 2>/dev/null || true
+(${binDir}/torch-brain-cache refresh --project "$SLUG" 2>/dev/null &) || true
 \`\`\`
 `;
 }
@@ -227,7 +227,7 @@ export function generateBrainWriteBack(ctx: TemplateContext): string {
   // skills write to multiple entities; the invalidation map captures this.
   const invalidatesEntities = getInvalidationTargets(`/${ctx.skillName}`);
   const invalidateBash = invalidatesEntities
-    .map((e) => `  ${ctx.paths.binDir}/gstack-brain-cache invalidate ${e} --project "$SLUG" 2>/dev/null || true`)
+    .map((e) => `  ${ctx.paths.binDir}/torch-brain-cache invalidate ${e} --project "$SLUG" 2>/dev/null || true`)
     .join('\n');
 
   return `## Brain Calibration Write-Back (Phase 2 / gated)
@@ -238,7 +238,7 @@ TTHW target, architectural bet, wedge commitment), it MAY write a
 
 **Gated on two things:**
 1. Brain trust policy for the active endpoint is \`personal\` (check via
-   \`${ctx.paths.binDir}/gstack-config get brain_trust_policy@<endpoint-hash>\`).
+   \`${ctx.paths.binDir}/torch-config get brain_trust_policy@<endpoint-hash>\`).
    Shared brains skip write-back to avoid polluting team calibration.
 2. Feature flag \`BRAIN_CALIBRATION_WRITEBACK\` is set (today: false; flips
    to true when upstream gbrain v0.42+ ships \`takes_add\` MCP op).
@@ -246,7 +246,7 @@ TTHW target, architectural bet, wedge commitment), it MAY write a
 When both gates pass, the write-back path uses \`mcp__gbrain__takes_add\`
 to record a take with weight ${weight} (per SKILL_CALIBRATION_WEIGHTS).
 If the MCP op is unavailable, fall back to \`mcp__gbrain__put_page\` with
-a gstack:takes fence block (documented but uglier path).
+a torch:takes fence block (documented but uglier path).
 
 Mandatory take frontmatter shape:
 \`\`\`yaml
@@ -263,7 +263,7 @@ After write, invalidate the affected digests so the next preflight reflects
 the new state:
 
 \`\`\`bash
-eval "$(${ctx.paths.binDir}/gstack-slug 2>/dev/null)" 2>/dev/null || true
+eval "$(${ctx.paths.binDir}/torch-slug 2>/dev/null)" 2>/dev/null || true
 ${invalidateBash || '  # (no per-skill invalidation targets configured)'}
 \`\`\`
 `;

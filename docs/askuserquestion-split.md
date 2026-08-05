@@ -154,7 +154,7 @@ Examples:
 suffix with `-2`, `-3`, etc.
 
 **Length.** Total length must be ≤64 chars (validated by
-`bin/gstack-question-preference --write`). Truncate the option slug if
+`bin/torch-question-preference --write`). Truncate the option slug if
 needed, preserving the `<skill>-split-` prefix.
 
 ## AUTO_DECIDE behavior with split chains
@@ -166,7 +166,7 @@ option, so preferences set on one option's id cannot leak across the
 chain. A `never-ask` on `ship-split-rspec` does not silently approve
 `ship-split-minitest`.
 
-**Layer 2 — runtime enforcement.** `bin/gstack-question-preference
+**Layer 2 — runtime enforcement.** `bin/torch-question-preference
 --check` detects any id matching `*-split-*` (the canonical slug pattern
 emitted by split chains) and forces `ASK_NORMALLY` even when a
 `never-ask` or `ask-only-for-one-way` preference exists for that exact

@@ -7,10 +7,10 @@ make-pdf/dist/
 # diagram-render ships its built bundle (offline-at-install premise, eng-review D2)
 !lib/diagram-render/dist/
 !lib/diagram-render/dist/**
-bin/gstack-global-discover*
-.gstack/
+bin/torch-global-discover*
+.torch/
 .claude/skills/
-.claude/gstack-rendered/
+.claude/torch-rendered/
 .claude/scheduled_tasks.lock
 .claude/*.lock
 .agents/
@@ -29,7 +29,7 @@ extension/.auth.json
 extension/lib/xterm.js
 extension/lib/xterm.css
 extension/lib/xterm-addon-fit.js
-.gstack-worktrees/
+.torch-worktrees/
 /tmp/
 *.log
 *.bun-build

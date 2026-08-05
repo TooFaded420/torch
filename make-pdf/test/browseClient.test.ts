@@ -71,7 +71,7 @@ describe("resolveBrowseBin", () => {
     try {
       withEnv(
         {
-          GSTACK_BROWSE_BIN: "/nonexistent/gstack-browse-bin",
+          torch_BROWSE_BIN: "/nonexistent/torch-browse-bin",
           BROWSE_BIN: "/nonexistent/browse-bin",
           PATH: "",
           Path: "",
@@ -86,7 +86,7 @@ describe("resolveBrowseBin", () => {
       expect(thrown).toBeInstanceOf(BrowseClientError);
       expect((thrown as BrowseClientError).message).toContain("browse binary not found");
       expect((thrown as BrowseClientError).message).toContain("./setup");
-      expect((thrown as BrowseClientError).message).toContain("GSTACK_BROWSE_BIN");
+      expect((thrown as BrowseClientError).message).toContain("torch_BROWSE_BIN");
       // Back-compat alias still surfaces in the diagnostic.
       expect((thrown as BrowseClientError).message).toContain("BROWSE_BIN");
     }
@@ -95,29 +95,29 @@ describe("resolveBrowseBin", () => {
     // gated on whether it threw at all.
   });
 
-  test("honors GSTACK_BROWSE_BIN when it points at a real executable", () => {
-    const resolved = withEnv({ GSTACK_BROWSE_BIN: REAL_EXE }, () => resolveBrowseBin());
+  test("honors torch_BROWSE_BIN when it points at a real executable", () => {
+    const resolved = withEnv({ torch_BROWSE_BIN: REAL_EXE }, () => resolveBrowseBin());
     expect(resolved).toBe(REAL_EXE);
   });
 
   test("honors BROWSE_BIN as a back-compat alias", () => {
     const resolved = withEnv(
-      { GSTACK_BROWSE_BIN: undefined, BROWSE_BIN: REAL_EXE },
+      { torch_BROWSE_BIN: undefined, BROWSE_BIN: REAL_EXE },
       () => resolveBrowseBin(),
     );
     expect(resolved).toBe(REAL_EXE);
   });
 
-  test("GSTACK_BROWSE_BIN takes precedence over BROWSE_BIN", () => {
+  test("torch_BROWSE_BIN takes precedence over BROWSE_BIN", () => {
     const resolved = withEnv(
-      { GSTACK_BROWSE_BIN: REAL_EXE, BROWSE_BIN: "/nonexistent/legacy" },
+      { torch_BROWSE_BIN: REAL_EXE, BROWSE_BIN: "/nonexistent/legacy" },
       () => resolveBrowseBin(),
     );
     expect(resolved).toBe(REAL_EXE);
   });
 
   test("strips wrapping double quotes from override values", () => {
-    const resolved = withEnv({ GSTACK_BROWSE_BIN: `"${REAL_EXE}"` }, () => resolveBrowseBin());
+    const resolved = withEnv({ torch_BROWSE_BIN: `"${REAL_EXE}"` }, () => resolveBrowseBin());
     expect(resolved).toBe(REAL_EXE);
   });
 });

@@ -69,7 +69,7 @@ export function render(opts: RenderOptions): RenderResult {
   // 1. Markdown → HTML
   const rawHtml = marked.parse(opts.markdown, { async: false }) as string;
 
-  // 1.5. Image directive suffixes: `![a](x.png){width=50%}` → data-gstack-*
+  // 1.5. Image directive suffixes: `![a](x.png){width=50%}` → data-torch-*
   // attributes. Before the sanitizer (which keeps data- attrs) so the brace
   // text never reaches smartypants or the final page.
   const directedHtml = applyImageDirectives(rawHtml);

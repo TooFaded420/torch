@@ -36,8 +36,8 @@ const CONTAMINATED: NodeJS.ProcessEnv = {
   CLAUDECODE: '1',
   CLAUDE_CODE_ENTRYPOINT: 'cli',
   CLAUDE_CONFIG_DIR: '/Users/op/.claude',
-  GSTACK_HOME: '/Users/op/.gstack',
-  GSTACK_HEADLESS_DEFAULT: 'x',
+  torch_HOME: '/Users/op/.torch',
+  torch_HEADLESS_DEFAULT: 'x',
   MCP_TIMEOUT: '5000',
   GBRAIN_ENDPOINT: 'http://localhost:1234',
   OPENAI_API_KEY: 'sk-openai-secret',
@@ -47,7 +47,7 @@ const CONTAMINATED: NodeJS.ProcessEnv = {
   GIT_AUTHOR_NAME: 'Op',
 };
 
-const HERMETIC_VARS = { CLAUDE_CONFIG_DIR: '/x/.claude', GSTACK_HOME: '/x/gstack-home' };
+const HERMETIC_VARS = { CLAUDE_CONFIG_DIR: '/x/.claude', torch_HOME: '/x/torch-home' };
 
 describe('buildHermeticEnv allowlist', () => {
   const env = buildHermeticEnv(CONTAMINATED, HERMETIC_VARS);
@@ -70,7 +70,7 @@ describe('buildHermeticEnv allowlist', () => {
   test('drops session-context and operator-credential vars', () => {
     for (const k of [
       'CONDUCTOR_WORKSPACE_PATH', 'CONDUCTOR_SESSION', 'CLAUDECODE',
-      'CLAUDE_CODE_ENTRYPOINT', 'GSTACK_HEADLESS_DEFAULT', 'MCP_TIMEOUT',
+      'CLAUDE_CODE_ENTRYPOINT', 'torch_HEADLESS_DEFAULT', 'MCP_TIMEOUT',
       'GBRAIN_ENDPOINT', 'OPENAI_API_KEY', 'VOYAGE_API_KEY', 'GH_TOKEN',
       'SSH_AUTH_SOCK', 'GIT_AUTHOR_NAME',
     ]) {
@@ -78,29 +78,29 @@ describe('buildHermeticEnv allowlist', () => {
     }
   });
 
-  test('redirects CLAUDE_CONFIG_DIR and GSTACK_HOME to hermetic values', () => {
+  test('redirects CLAUDE_CONFIG_DIR and torch_HOME to hermetic values', () => {
     expect(env.CLAUDE_CONFIG_DIR).toBe('/x/.claude');
-    expect(env.GSTACK_HOME).toBe('/x/gstack-home');
+    expect(env.torch_HOME).toBe('/x/torch-home');
   });
 
   test('overrides merge last — per-test re-contamination is deliberate', () => {
     const e = buildHermeticEnv(CONTAMINATED, HERMETIC_VARS, {
       CONDUCTOR_WORKSPACE_PATH: '/tmp/test-ws',
-      GSTACK_HOME: '/tmp/test-home',
-      GSTACK_HEADLESS: '',
+      torch_HOME: '/tmp/test-home',
+      torch_HEADLESS: '',
     });
     expect(e.CONDUCTOR_WORKSPACE_PATH).toBe('/tmp/test-ws');
-    expect(e.GSTACK_HOME).toBe('/tmp/test-home');
-    expect(e.GSTACK_HEADLESS).toBe('');
+    expect(e.torch_HOME).toBe('/tmp/test-home');
+    expect(e.torch_HEADLESS).toBe('');
   });
 
-  test('promotes GSTACK_ANTHROPIC_API_KEY when canonical absent (shared shim fn)', () => {
+  test('promotes torch_ANTHROPIC_API_KEY when canonical absent (shared shim fn)', () => {
     const base = { ...CONTAMINATED } as NodeJS.ProcessEnv;
     delete base.ANTHROPIC_API_KEY;
-    base.GSTACK_ANTHROPIC_API_KEY = 'sk-ant-promoted-9876543210';
+    base.torch_ANTHROPIC_API_KEY = 'sk-ant-promoted-9876543210';
     const e = buildHermeticEnv(base, HERMETIC_VARS);
     expect(e.ANTHROPIC_API_KEY).toBe('sk-ant-promoted-9876543210');
-    expect(e.GSTACK_ANTHROPIC_API_KEY).toBeUndefined(); // GSTACK_* still dropped
+    expect(e.torch_ANTHROPIC_API_KEY).toBeUndefined(); // torch_* still dropped
   });
 
   test('extraAllow re-admits exact names and prefixes per runner', () => {
@@ -122,13 +122,13 @@ describe('buildHermeticEnv allowlist', () => {
 describe('EVALS_HERMETIC=0 escape hatch', () => {
   test('returns byte-identical legacy env, overrides still last', () => {
     const base = { ...CONTAMINATED, EVALS_HERMETIC: '0' } as NodeJS.ProcessEnv;
-    const e = buildHermeticEnv(base, HERMETIC_VARS, { GSTACK_HEADLESS: '1' });
+    const e = buildHermeticEnv(base, HERMETIC_VARS, { torch_HEADLESS: '1' });
     // Legacy spread: every base var survives, hermeticVars NOT applied.
     expect(e.CONDUCTOR_WORKSPACE_PATH).toBe(CONTAMINATED.CONDUCTOR_WORKSPACE_PATH);
     expect(e.CLAUDE_CONFIG_DIR).toBe('/Users/op/.claude');
-    expect(e.GSTACK_HOME).toBe('/Users/op/.gstack');
-    expect(e.GSTACK_HEADLESS).toBe('1');
-    expect(e).toEqual({ ...(base as Record<string, string>), GSTACK_HEADLESS: '1' });
+    expect(e.torch_HOME).toBe('/Users/op/.torch');
+    expect(e.torch_HEADLESS).toBe('1');
+    expect(e).toEqual({ ...(base as Record<string, string>), torch_HEADLESS: '1' });
   });
 
   test('isHermeticEnabled reads at call time (ESM-hoist safety)', () => {
@@ -204,10 +204,10 @@ describe('gcStaleHermeticDirs', () => {
     // Find a pid that is definitely dead: spawn-and-reap is overkill; use a
     // huge pid beyond pid_max on macOS/Linux defaults.
     const deadPid = 99999999;
-    const dead = path.join(tmp, `gstack-hermetic-${deadPid}-abc`);
-    const live = path.join(tmp, `gstack-hermetic-${process.pid}-abc`);
+    const dead = path.join(tmp, `torch-hermetic-${deadPid}-abc`);
+    const live = path.join(tmp, `torch-hermetic-${process.pid}-abc`);
     const foreign = path.join(tmp, 'unrelated-dir');
-    const malformed = path.join(tmp, 'gstack-hermetic-notapid-abc');
+    const malformed = path.join(tmp, 'torch-hermetic-notapid-abc');
     for (const d of [dead, live, foreign, malformed]) fs.mkdirSync(d);
     // GC only reclaims dirs older than its 1h age floor (PID-reuse guard);
     // backdate the dead-pid dir's mtime so it qualifies.
@@ -227,7 +227,7 @@ describe('gcStaleHermeticDirs', () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'hermetic-gc-fresh-'));
     // Dead pid but just created — must survive GC, else PID reuse could delete
     // a dir whose original pid exited and got recycled to a live process.
-    const freshDead = path.join(tmp, 'gstack-hermetic-99999999-xyz');
+    const freshDead = path.join(tmp, 'torch-hermetic-99999999-xyz');
     fs.mkdirSync(freshDead);
     gcStaleHermeticDirs(tmp);
     expect(fs.existsSync(freshDead)).toBe(true);
@@ -239,11 +239,11 @@ describe('hermeticChildEnv composition', () => {
   test('hermetic by default: redirects config dirs, drops contamination', () => {
     // process.env in a real test run may carry CONDUCTOR_*/CLAUDECODE — the
     // composition must scrub them and point at the singleton dirs.
-    const e = hermeticChildEnv({ GSTACK_HEADLESS: '1' });
+    const e = hermeticChildEnv({ torch_HEADLESS: '1' });
     const dirs = getHermeticDirs();
     expect(e.CLAUDE_CONFIG_DIR).toBe(dirs.configDir);
-    expect(e.GSTACK_HOME).toBe(dirs.gstackHome);
-    expect(e.GSTACK_HEADLESS).toBe('1');
+    expect(e.torch_HOME).toBe(dirs.torchHome);
+    expect(e.torch_HEADLESS).toBe('1');
     expect(e.CLAUDECODE).toBeUndefined();
     expect(e.CONDUCTOR_WORKSPACE_PATH).toBeUndefined();
   });

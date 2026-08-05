@@ -3,7 +3,7 @@
  *
  * The BRAIN_WRITE_BACK resolver output describes two paths:
  *   1. Preferred: mcp__gbrain__takes_add op (upstream gbrain v0.42+, T8)
- *   2. Fallback: mcp__gbrain__put_page with a gstack:takes fence block
+ *   2. Fallback: mcp__gbrain__put_page with a torch:takes fence block
  *
  * Until T8 ships, the fallback is the only path. Verify the resolver output
  * mentions the fence-block fallback explicitly so the agent knows what to
@@ -77,7 +77,7 @@ describe('Phase 2 write-back fence-block fallback', () => {
 
   test('write-back invalidates affected cache digests after write', () => {
     const out = generateBrainWriteBack(buildCtx('plan-ceo-review'));
-    expect(out).toContain('gstack-brain-cache invalidate');
+    expect(out).toContain('torch-brain-cache invalidate');
   });
 
   test('non-preflight skill gets empty write-back (no Phase 2 path)', () => {

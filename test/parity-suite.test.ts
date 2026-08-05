@@ -8,7 +8,7 @@
  * Baseline rebased v1.53.0.0 → v1.57.7.0: the v1.54–v1.57 releases (ship/plan
  * carving, carve-guards, AUQ prose fallback, the cross-session decision-log
  * preamble) plus the mandatory unresolved-decisions status added to every
- * GSTACK REVIEW REPORT pushed the three plan-review skills past the 5% ratchet
+ * torch REVIEW REPORT pushed the three plan-review skills past the 5% ratchet
  * on the v1.53 anchor even after exhaustive compression. The v1.57.7.0 baseline
  * captures current UNION sizes (skeleton + sections/*.md, matching what the
  * harness measures) so the per-skill 1.05 ratio still catches future bloat.

@@ -14,12 +14,12 @@ function makeCtx(overrides: Partial<TemplateContext> = {}): TemplateContext {
     tmplPath: '/tmp/test/SKILL.md.tmpl',
     host: 'claude',
     paths: {
-      skillRoot: '~/.claude/skills/gstack',
+      skillRoot: '~/.claude/skills/torch',
       localSkillRoot: '.claude/skills',
-      binDir: '~/.claude/skills/gstack/bin',
-      browseDir: '~/.claude/skills/gstack/browse/dist',
-      designDir: '~/.claude/skills/gstack/design/dist',
-      makePdfDir: '~/.claude/skills/gstack/make-pdf/dist',
+      binDir: '~/.claude/skills/torch/bin',
+      browseDir: '~/.claude/skills/torch/browse/dist',
+      designDir: '~/.claude/skills/torch/design/dist',
+      makePdfDir: '~/.claude/skills/torch/make-pdf/dist',
     },
     ...overrides,
   };

@@ -98,7 +98,7 @@ describe('cso skill preserves load-bearing security guidance', () => {
     const desc = fmMatch![1].match(/^description:\s+(.+)$/m);
     expect(desc).not.toBeNull();
     expect(desc![1].trim().length).toBeLessThanOrEqual(200);
-    expect(desc![1]).toContain('(gstack)');
+    expect(desc![1]).toContain('(torch)');
   });
 
   test('cso routing prose moved to "## When to invoke" body section', () => {

@@ -25,8 +25,8 @@ const GENERATE = fs.readFileSync(path.join(ROOT, "document-generate", "SKILL.md.
 
 describe("/document-release redaction", () => {
   test("scans the PR-body temp file before gh pr edit", () => {
-    const scanIdx = RELEASE.indexOf("gstack-redact --from-file /tmp/gstack-pr-body");
-    const editIdx = RELEASE.indexOf("gh pr edit --body-file /tmp/gstack-pr-body");
+    const scanIdx = RELEASE.indexOf("torch-redact --from-file /tmp/torch-pr-body");
+    const editIdx = RELEASE.indexOf("gh pr edit --body-file /tmp/torch-pr-body");
     expect(scanIdx).toBeGreaterThan(-1);
     expect(editIdx).toBeGreaterThan(scanIdx);
   });
@@ -37,13 +37,13 @@ describe("/document-release redaction", () => {
 
 describe("/document-generate redaction", () => {
   test("scans staged doc diff before commit", () => {
-    const scanIdx = GENERATE.indexOf("gstack-redact --repo-visibility");
+    const scanIdx = GENERATE.indexOf("torch-redact --repo-visibility");
     const commitIdx = GENERATE.indexOf("git commit -m");
     expect(scanIdx).toBeGreaterThan(-1);
     expect(commitIdx).toBeGreaterThan(scanIdx);
   });
   test("scans added lines of the staged diff", () => {
-    expect(GENERATE).toMatch(/git diff --cached[\s\S]{0,80}gstack-redact/);
+    expect(GENERATE).toMatch(/git diff --cached[\s\S]{0,80}torch-redact/);
   });
   test("HIGH blocks the commit", () => {
     expect(GENERATE).toMatch(/Do NOT commit/i);

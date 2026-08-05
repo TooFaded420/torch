@@ -26,7 +26,7 @@
  * Invariants:
  *   - Always exits 0. A failing hook MUST NOT block the user's session.
  *   - Never triggers on a successful answer (would corrupt a normal AUQ).
- *   - Errors land in ~/.gstack/hook-errors.log.
+ *   - Errors land in ~/.torch/hook-errors.log.
  */
 import * as fs from 'fs';
 import * as path from 'path';
@@ -41,9 +41,9 @@ interface HookStdin {
 
 function stateRoot(): string {
   return (
-    process.env.GSTACK_STATE_ROOT ||
-    process.env.GSTACK_HOME ||
-    path.join(os.homedir(), '.gstack')
+    process.env.torch_STATE_ROOT ||
+    process.env.torch_HOME ||
+    path.join(os.homedir(), '.torch')
   );
 }
 
@@ -127,7 +127,7 @@ export function isErrorResponse(response: unknown): boolean {
 export function sessionKind(cwd?: string): 'spawned' | 'headless' | 'interactive' {
   try {
     const here = path.dirname(new URL(import.meta.url).pathname);
-    const bin = path.resolve(here, '..', '..', '..', 'bin', 'gstack-session-kind');
+    const bin = path.resolve(here, '..', '..', '..', 'bin', 'torch-session-kind');
     const res = spawnSync(bin, [], {
       encoding: 'utf-8',
       timeout: 3000,

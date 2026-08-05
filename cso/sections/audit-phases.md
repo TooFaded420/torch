@@ -11,7 +11,7 @@ greps below target (AKIA, ghp_, sk-ant-, sk_live_, xoxb-, `-----BEGIN ... PRIVAT
 KEY-----`, etc.) are the same set `/spec`'s in-flight redaction blocks on. The full
 3-tier taxonomy (HIGH credentials, MEDIUM PII/legal/internal, LOW) is generated from
 and lives in `lib/redact-patterns.ts` — the single source of truth shared by the
-`gstack-redact` engine, `/spec`, `/ship`, and the `/document-*` skills.
+`torch-redact` engine, `/spec`, `/ship`, and the `/document-*` skills.
 
 **Git history — known secret prefixes:**
 ```bash
@@ -154,7 +154,7 @@ If approved, run the same Grep patterns on globally installed skill files and ch
 
 **Severity:** CRITICAL for credential exfiltration attempts / prompt injection in skill files. HIGH for suspicious network calls / overly broad tool permissions. MEDIUM for skills from unverified sources without review.
 
-**FP rules:** gstack's own skills are trusted (check if skill path resolves to a known repo). Skills that use `curl` for legitimate purposes (downloading tools, health checks) need context — only flag when the target URL is suspicious or when the command includes credential variables.
+**FP rules:** torch's own skills are trusted (check if skill path resolves to a known repo). Skills that use `curl` for legitimate purposes (downloading tools, health checks) need context — only flag when the target URL is suspicious or when the command includes credential variables.
 
 ### Phase 9: OWASP Top 10 Assessment
 

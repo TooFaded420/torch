@@ -26,20 +26,20 @@ import { withCdpSession } from './cdp-bridge';
 import type { MemorySnapshot, MemoryStructureStats, MemoryTabSnapshot, MemoryProcess } from './memory-snapshot';
 
 /**
- * Detect whether GSTACK_CHROMIUM_PATH points at a custom Chromium build that
- * already bakes the gstack extension in as a component extension (e.g.,
- * GStack Browser.app / GBrowser). Passing --load-extension against such a
+ * Detect whether torch_CHROMIUM_PATH points at a custom Chromium build that
+ * already bakes the torch extension in as a component extension (e.g.,
+ * torch Browser.app / GBrowser). Passing --load-extension against such a
  * binary triggers a ServiceWorkerState::SetWorkerId DCHECK because two
  * copies of the same service worker try to register.
  *
  * Resolution:
- *   1. GSTACK_CHROMIUM_KIND === 'custom-extension-baked' (preferred, explicit)
- *   2. GSTACK_CHROMIUM_PATH path substring contains 'GBrowser' or 'gbrowser'
+ *   1. torch_CHROMIUM_KIND === 'custom-extension-baked' (preferred, explicit)
+ *   2. torch_CHROMIUM_PATH path substring contains 'GBrowser' or 'gbrowser'
  *      (fallback for callers that only set the path)
  */
 export function isCustomChromium(): boolean {
-  if (process.env.GSTACK_CHROMIUM_KIND === 'custom-extension-baked') return true;
-  const p = process.env.GSTACK_CHROMIUM_PATH || '';
+  if (process.env.torch_CHROMIUM_KIND === 'custom-extension-baked') return true;
+  const p = process.env.torch_CHROMIUM_PATH || '';
   return p.includes('GBrowser') || p.includes('gbrowser');
 }
 
@@ -65,10 +65,10 @@ export function shouldEnableChromiumSandbox(): boolean {
   // Explicit user override for Ubuntu/AppArmor and similar environments where
   // unprivileged Chromium sandboxing is blocked even for normal users (the
   // sandbox needs unprivileged user namespaces that the host policy denies,
-  // so /qa hangs without --no-sandbox). Setting GSTACK_CHROMIUM_NO_SANDBOX=1
+  // so /qa hangs without --no-sandbox). Setting torch_CHROMIUM_NO_SANDBOX=1
   // forces the sandbox off without changing the default for everyone else.
   // See #1562.
-  if (process.env.GSTACK_CHROMIUM_NO_SANDBOX === '1') return false;
+  if (process.env.torch_CHROMIUM_NO_SANDBOX === '1') return false;
   const isRoot = typeof process.getuid === 'function' && process.getuid() === 0;
   return !(process.env.CI || process.env.CONTAINER || isRoot);
 }
@@ -116,7 +116,7 @@ export async function handleChromiumDisconnect(browser: Browser | null): Promise
     process.exit(0);
   }
   console.error('[browse] FATAL: Chromium process crashed or was killed. Server exiting (1).');
-  console.error('[browse] Console/network logs flushed to .gstack/browse-*.log');
+  console.error('[browse] Console/network logs flushed to .torch/browse-*.log');
   process.exit(1);
 }
 
@@ -281,25 +281,25 @@ export class BrowserManager {
   }
 
   /**
-   * Find the gstack Chrome extension directory.
+   * Find the torch Chrome extension directory.
    * Checks: repo root /extension, global install, dev install.
    */
   private findExtensionPath(): string | null {
     const fs = require('fs');
     const path = require('path');
     const candidates = [
-      // Explicit override via env var (used by GStack Browser.app bundle)
+      // Explicit override via env var (used by torch Browser.app bundle)
       process.env.BROWSE_EXTENSIONS_DIR || '',
       // Relative to this source file (dev mode: browse/src/ -> ../../extension)
       path.resolve(__dirname, '..', '..', 'extension'),
-      // Global gstack install
-      path.join(process.env.HOME || '', '.claude', 'skills', 'gstack', 'extension'),
+      // Global torch install
+      path.join(process.env.HOME || '', '.claude', 'skills', 'torch', 'extension'),
       // Git repo root (detected via BROWSE_STATE_FILE location)
       (() => {
         const stateFile = process.env.BROWSE_STATE_FILE || '';
         if (stateFile) {
           const repoRoot = path.resolve(path.dirname(stateFile), '..');
-          return path.join(repoRoot, '.claude', 'skills', 'gstack', 'extension');
+          return path.join(repoRoot, '.claude', 'skills', 'torch', 'extension');
         }
         return '';
       })(),
@@ -342,8 +342,8 @@ export class BrowserManager {
     // BROWSE_EXTENSIONS_DIR points to an unpacked Chrome extension directory.
     // Extensions only work in headed mode, so we use an off-screen window.
     const extensionsDir = process.env.BROWSE_EXTENSIONS_DIR;
-    const { STEALTH_LAUNCH_ARGS, buildGStackLaunchArgs } = await import('./stealth');
-    const launchArgs: string[] = [...STEALTH_LAUNCH_ARGS, ...buildGStackLaunchArgs()];
+    const { STEALTH_LAUNCH_ARGS, buildtorchLaunchArgs } = await import('./stealth');
+    const launchArgs: string[] = [...STEALTH_LAUNCH_ARGS, ...buildtorchLaunchArgs()];
     let useHeadless = true;
 
     // Docker/CI/root: Chromium sandbox requires unprivileged user namespaces which
@@ -356,7 +356,7 @@ export class BrowserManager {
 
     if (extensionsDir) {
       // Skip --load-extension when running against a custom Chromium build that
-      // already bakes the extension in (e.g., GBrowser / GStack Browser.app).
+      // already bakes the extension in (e.g., GBrowser / torch Browser.app).
       // Loading it twice causes a ServiceWorkerState::SetWorkerId DCHECK crash.
       if (!isCustomChromium()) {
         launchArgs.push(
@@ -421,7 +421,7 @@ export class BrowserManager {
 
   // ─── Headed Mode ─────────────────────────────────────────────
   /**
-   * Launch Playwright's bundled Chromium in headed mode with the gstack
+   * Launch Playwright's bundled Chromium in headed mode with the torch
    * Chrome extension auto-loaded. Uses launchPersistentContext() which
    * is required for extension loading (launch() + newContext() can't
    * load extensions).
@@ -435,42 +435,42 @@ export class BrowserManager {
     this.tabSessions.clear();
     this.nextTabId = 1;
 
-    // Find the gstack extension directory for auto-loading
+    // Find the torch extension directory for auto-loading
     const extensionPath = this.findExtensionPath();
-    const { STEALTH_LAUNCH_ARGS, buildGStackLaunchArgs } = await import('./stealth');
+    const { STEALTH_LAUNCH_ARGS, buildtorchLaunchArgs } = await import('./stealth');
     const launchArgs = [
       '--hide-crash-restore-bubble',
       // Anti-bot-detection: --disable-blink-features=AutomationControlled (and any
       // future blink-level tells) via the shared STEALTH_LAUNCH_ARGS constant — the
       // same flag launch() and handoff() use, kept in one place instead of a literal.
       ...STEALTH_LAUNCH_ARGS,
-      // GStack Pack 1: per-install hardware/GPU/UA-CH overrides for the
+      // torch Pack 1: per-install hardware/GPU/UA-CH overrides for the
       // C++ patches in gbrowser's Chromium build. Each switch is a no-op
       // on Chromium builds without the corresponding patch (the patch's
       // empty-fallback returns native), so this is safe on stock Playwright
       // Chromium too.
-      ...buildGStackLaunchArgs(),
+      ...buildtorchLaunchArgs(),
     ];
     if (extensionPath) {
       // Skip --load-extension when running against a custom Chromium build
       // that already bakes the extension in as a component extension
-      // (gbrowser / GStack Browser.app). Loading it twice causes a
+      // (gbrowser / torch Browser.app). Loading it twice causes a
       // ServiceWorkerState::SetWorkerId DCHECK crash.
       if (!isCustomChromium()) {
         launchArgs.push(`--disable-extensions-except=${extensionPath}`);
         launchArgs.push(`--load-extension=${extensionPath}`);
       }
       // Write auth token for extension bootstrap (still required even when
-      // the extension is component-baked — it reads ~/.gstack/.auth.json at
+      // the extension is component-baked — it reads ~/.torch/.auth.json at
       // startup to learn how to call the daemon).
-      // Write to ~/.gstack/.auth.json (not the extension dir, which may be read-only
+      // Write to ~/.torch/.auth.json (not the extension dir, which may be read-only
       // in .app bundles and breaks codesigning).
       if (authToken) {
         const fs = require('fs');
         const path = require('path');
-        const gstackDir = path.join(process.env.HOME || '/tmp', '.gstack');
-        mkdirSecure(gstackDir);
-        const authFile = path.join(gstackDir, '.auth.json');
+        const torchDir = path.join(process.env.HOME || '/tmp', '.torch');
+        mkdirSecure(torchDir);
+        const authFile = path.join(torchDir, '.auth.json');
         try {
           writeSecureFile(authFile, JSON.stringify({ token: authToken, port: this.serverPort || 34567 }));
         } catch (err: any) {
@@ -493,14 +493,14 @@ export class BrowserManager {
     // (SIGKILL, hard crash) — the lockfiles point at a PID that may no longer
     // exist. Shutdown cleanup doesn't run on hard crashes, so we clean here
     // too. Safe under external coordination: gbd.lock for gbrowser,
-    // single-instance CLI check for gstack.
+    // single-instance CLI check for torch.
     cleanSingletonLocks(userDataDir);
 
-    // Support custom Chromium binary via GSTACK_CHROMIUM_PATH env var.
-    // Used by GStack Browser.app to point at the bundled Chromium.
-    const executablePath = process.env.GSTACK_CHROMIUM_PATH || undefined;
+    // Support custom Chromium binary via torch_CHROMIUM_PATH env var.
+    // Used by torch Browser.app to point at the bundled Chromium.
+    const executablePath = process.env.torch_CHROMIUM_PATH || undefined;
 
-    // Rebrand Chromium → GStack Browser in macOS menu bar / Dock / Cmd+Tab.
+    // Rebrand Chromium → torch Browser in macOS menu bar / Dock / Cmd+Tab.
     // Patch the Chromium .app's Info.plist so macOS shows our name.
     // This works for both dev mode (system Playwright cache) and .app bundle.
     const chromePath = executablePath || chromium.executablePath();
@@ -514,13 +514,13 @@ export class BrowserManager {
         const plistContent = fs.readFileSync(chromePlist, 'utf-8');
         if (plistContent.includes('Google Chrome for Testing')) {
           const patched = plistContent
-            .replace(/Google Chrome for Testing/g, 'GStack Browser');
+            .replace(/Google Chrome for Testing/g, 'torch Browser');
           fs.writeFileSync(chromePlist, patched);
         }
         // Replace Chromium's Dock icon with ours (Chromium's process owns the Dock icon)
         const iconCandidates = [
           path.join(__dirname, '..', '..', 'scripts', 'app', 'icon.icns'),       // repo dev mode
-          path.join(process.env.HOME || '', '.claude', 'skills', 'gstack', 'scripts', 'app', 'icon.icns'), // global install
+          path.join(process.env.HOME || '', '.claude', 'skills', 'torch', 'scripts', 'app', 'icon.icns'), // global install
         ];
         const iconSrc = iconCandidates.find(p => fs.existsSync(p));
         if (iconSrc) {
@@ -544,12 +544,12 @@ export class BrowserManager {
 
     // Build custom user agent: report as stock Chrome with the version
     // matching the underlying Chromium binary. D6 (codex #18 correction):
-    // the previous "GStackBrowser" branding suffix was itself a high-entropy
+    // the previous "torchBrowser" branding suffix was itself a high-entropy
     // classifier — sites grepping UA for known browser strings caught us
     // immediately. Branding still lives in the wrapper .app name + Dock icon
     // + tray; it does NOT need to be in the UA string for the product to be
     // "GBrowser." Removing it resolves the "looks like Chrome but identifies
-    // as GStackBrowser" contradiction codex flagged.
+    // as torchBrowser" contradiction codex flagged.
     let customUA: string | undefined;
     if (!this.customUserAgent) {
       // Detect Chrome version from the Chromium binary
@@ -609,27 +609,27 @@ export class BrowserManager {
     // Extension's content script handles the floating pill
     const indicatorScript = () => {
       const injectIndicator = () => {
-        if (document.getElementById('gstack-ctrl')) return;
+        if (document.getElementById('torch-ctrl')) return;
 
         const topLine = document.createElement('div');
-        topLine.id = 'gstack-ctrl';
+        topLine.id = 'torch-ctrl';
         topLine.style.cssText = `
           position: fixed; top: 0; left: 0; right: 0; height: 2px;
           background: linear-gradient(90deg, #F59E0B, #FBBF24, #F59E0B);
           background-size: 200% 100%;
-          animation: gstack-shimmer 3s linear infinite;
+          animation: torch-shimmer 3s linear infinite;
           pointer-events: none; z-index: 2147483647;
           opacity: 0.8;
         `;
 
         const style = document.createElement('style');
         style.textContent = `
-          @keyframes gstack-shimmer {
+          @keyframes torch-shimmer {
             0% { background-position: 200% 0; }
             100% { background-position: -200% 0; }
           }
           @media (prefers-reduced-motion: reduce) {
-            #gstack-ctrl { animation: none !important; }
+            #torch-ctrl { animation: none !important; }
           }
         `;
 
@@ -1482,7 +1482,7 @@ export class BrowserManager {
       throw new Error(`viewport --scale: value must be a finite number, got ${scale}`);
     }
     if (scale < 1 || scale > 3) {
-      throw new Error(`viewport --scale: value must be between 1 and 3 (gstack policy cap), got ${scale}`);
+      throw new Error(`viewport --scale: value must be between 1 and 3 (torch policy cap), got ${scale}`);
     }
     if (this.connectionMode === 'headed') {
       throw new Error('viewport --scale is not supported in headed mode — scale is controlled by the real browser window.');
@@ -1553,11 +1553,11 @@ export class BrowserManager {
       const fs = require('fs');
       const path = require('path');
       const extensionPath = this.findExtensionPath();
-      const { STEALTH_LAUNCH_ARGS, buildGStackLaunchArgs } = await import('./stealth');
+      const { STEALTH_LAUNCH_ARGS, buildtorchLaunchArgs } = await import('./stealth');
       // Same blink-level stealth flags as launch()/launchHeaded(). Without
       // STEALTH_LAUNCH_ARGS the handed-off browser kept the AutomationControlled
       // tell that the other two paths strip.
-      const launchArgs: string[] = ['--hide-crash-restore-bubble', ...STEALTH_LAUNCH_ARGS, ...buildGStackLaunchArgs()];
+      const launchArgs: string[] = ['--hide-crash-restore-bubble', ...STEALTH_LAUNCH_ARGS, ...buildtorchLaunchArgs()];
       if (extensionPath) {
         launchArgs.push(`--disable-extensions-except=${extensionPath}`);
         launchArgs.push(`--load-extension=${extensionPath}`);
@@ -1568,7 +1568,7 @@ export class BrowserManager {
         console.log('[browse] Handoff: extension not found — headed mode without side panel');
       }
 
-      const userDataDir = path.join(process.env.HOME || '/tmp', '.gstack', 'chromium-profile');
+      const userDataDir = path.join(process.env.HOME || '/tmp', '.torch', 'chromium-profile');
       fs.mkdirSync(userDataDir, { recursive: true });
 
       // T1: same automation-tell-stripping defaults as launchHeaded().

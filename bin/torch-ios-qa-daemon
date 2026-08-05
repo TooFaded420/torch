@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# torch-ios-qa-daemon — Mac-side daemon that brokers tailnet/loopback traffic
+# to a connected iPhone running the in-app StateServer over the CoreDevice USB
+# tunnel. Single-instance via flock on ~/.torch/ios-qa-daemon.pid.
+#
+# Usage:
+#   torch-ios-qa-daemon                         # loopback-only (local USB)
+#   torch-ios-qa-daemon --tailnet               # additionally open tailnet listener
+#
+# Environment:
+#   torch_IOS_DAEMON_PORT       — loopback listener port (default 9099)
+#   torch_IOS_TARGET_UDID       — target iOS device UDID (optional; otherwise
+#                                  the first paired connected device is used)
+#   torch_IOS_TARGET_BUNDLE_ID  — bundle ID of the iOS app hosting StateServer
+#                                  (default com.torch.iosqa.fixture)
+#
+# Readiness protocol: prints `READY: port=<n> pid=<pid>` to stdout once both
+# listeners are bound. Spawners read stdin with a ~5s timeout to confirm.
+#
+# Exits cleanly when no active loopback clients are connected AND no remote
+# session tokens are outstanding.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+torch_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+ENTRY="$torch_DIR/ios-qa/daemon/src/index.ts"
+
+if [ ! -f "$ENTRY" ]; then
+  echo "torch-ios-qa-daemon: missing $ENTRY (torch install incomplete?)" >&2
+  exit 1
+fi
+
+if ! command -v bun >/dev/null 2>&1; then
+  echo "torch-ios-qa-daemon: bun runtime not on PATH — install from https://bun.sh" >&2
+  exit 1
+fi
+
+exec bun run "$ENTRY" "$@"

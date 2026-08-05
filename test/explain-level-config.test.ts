@@ -1,5 +1,5 @@
 /**
- * gstack-config explain_level round-trip + validation tests.
+ * torch-config explain_level round-trip + validation tests.
  *
  * Coverage:
  * - `set explain_level default` persists, `get` returns "default"
@@ -15,12 +15,12 @@ import * as os from 'os';
 import { spawnSync } from 'child_process';
 
 const ROOT = path.resolve(import.meta.dir, '..');
-const BIN_CONFIG = path.join(ROOT, 'bin', 'gstack-config');
+const BIN_CONFIG = path.join(ROOT, 'bin', 'torch-config');
 
 let tmpHome: string;
 
 beforeEach(() => {
-  tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'gstack-cfg-test-'));
+  tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'torch-cfg-test-'));
 });
 
 afterEach(() => {
@@ -28,11 +28,11 @@ afterEach(() => {
 });
 
 function run(...args: string[]): { stdout: string; stderr: string; status: number } {
-  // gstack-config precedence is `${GSTACK_HOME:-${GSTACK_STATE_DIR:-$HOME/.gstack}}`,
-  // so GSTACK_HOME from the developer's parent env wins over the test's
-  // GSTACK_STATE_DIR. Override both to isolate from the real ~/.gstack.
+  // torch-config precedence is `${torch_HOME:-${torch_STATE_DIR:-$HOME/.torch}}`,
+  // so torch_HOME from the developer's parent env wins over the test's
+  // torch_STATE_DIR. Override both to isolate from the real ~/.torch.
   const res = spawnSync(BIN_CONFIG, args, {
-    env: { ...process.env, GSTACK_STATE_DIR: tmpHome, GSTACK_HOME: tmpHome },
+    env: { ...process.env, torch_STATE_DIR: tmpHome, torch_HOME: tmpHome },
     encoding: 'utf-8',
     cwd: ROOT,
   });
@@ -43,7 +43,7 @@ function run(...args: string[]): { stdout: string; stderr: string; status: numbe
   };
 }
 
-describe('gstack-config explain_level', () => {
+describe('torch-config explain_level', () => {
   test('set + get default round-trip', () => {
     expect(run('set', 'explain_level', 'default').status).toBe(0);
     expect(run('get', 'explain_level').stdout).toBe('default');
@@ -63,8 +63,8 @@ describe('gstack-config explain_level', () => {
   });
 
   test('get with unset explain_level returns the documented default', () => {
-    // gstack-config returns the documented default ("default") when the
-    // key is absent from config.yaml — see bin/gstack-config:103. Earlier
+    // torch-config returns the documented default ("default") when the
+    // key is absent from config.yaml — see bin/torch-config:103. Earlier
     // versions of this test expected "" (preamble shell substitution),
     // but the script ships defaults inline so callers always get a
     // usable value without bash fallback gymnastics.

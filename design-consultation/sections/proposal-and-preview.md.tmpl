@@ -113,15 +113,15 @@ Each drill-down is one focused AskUserQuestion. After the user decides, re-check
 
 ## Phase 5: Design System Preview (default ON)
 
-This phase generates visual previews of the proposed design system. Two paths depending on whether the gstack designer is available.
+This phase generates visual previews of the proposed design system. Two paths depending on whether the torch designer is available.
 
 ### Path A: AI Mockups (if DESIGN_READY)
 
 Generate AI-rendered mockups showing the proposed design system applied to realistic screens for this product. This is far more powerful than an HTML preview — the user sees what their product could actually look like.
 
 ```bash
-eval "$(~/.claude/skills/gstack/bin/gstack-slug 2>/dev/null)"
-_DESIGN_DIR="$HOME/.gstack/projects/$SLUG/designs/design-system-$(date +%Y%m%d)"
+eval "$(~/.claude/skills/torch/bin/torch-slug 2>/dev/null)"
+_DESIGN_DIR="$HOME/.torch/projects/$SLUG/designs/design-system-$(date +%Y%m%d)"
 mkdir -p "$_DESIGN_DIR"
 echo "DESIGN_DIR: $_DESIGN_DIR"
 ```

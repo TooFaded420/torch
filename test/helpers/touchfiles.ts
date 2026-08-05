@@ -43,7 +43,7 @@ export const E2E_TOUCHFILES: Record<string, string[]> = {
 
   // P4 first-run scaffold (activation lift) — the detection binary end-to-end
   // through the real runner, plus the preamble wiring that gates + maps it.
-  'first-task-scaffold': ['bin/gstack-first-task-detect', 'scripts/resolvers/preamble/generate-first-run-guidance.ts', 'scripts/resolvers/preamble/generate-preamble-bash.ts', 'test/skill-e2e-first-task-scaffold.test.ts', 'test/helpers/session-runner.ts'],
+  'first-task-scaffold': ['bin/torch-first-task-detect', 'scripts/resolvers/preamble/generate-first-run-guidance.ts', 'scripts/resolvers/preamble/generate-preamble-bash.ts', 'test/skill-e2e-first-task-scaffold.test.ts', 'test/helpers/session-runner.ts'],
 
   // SKILL.md setup + preamble (depend on ROOT SKILL.md + gen-skill-docs)
   'skillmd-setup-discovery':  ['SKILL.md', 'SKILL.md.tmpl', 'scripts/gen-skill-docs.ts'],
@@ -51,7 +51,7 @@ export const E2E_TOUCHFILES: Record<string, string[]> = {
   'skillmd-outside-git':      ['SKILL.md', 'SKILL.md.tmpl', 'scripts/gen-skill-docs.ts'],
 
   'session-awareness':        ['SKILL.md', 'SKILL.md.tmpl', 'scripts/gen-skill-docs.ts'],
-  'operational-learning':     ['scripts/resolvers/preamble.ts', 'bin/gstack-learnings-log'],
+  'operational-learning':     ['scripts/resolvers/preamble.ts', 'bin/torch-learnings-log'],
 
   // QA (+ test-server dependency)
   'qa-quick':       ['qa/**', 'browse/src/**', 'browse/test/test-server.ts'],
@@ -69,8 +69,8 @@ export const E2E_TOUCHFILES: Record<string, string[]> = {
   'review-design-lite':       ['review/**', 'test/fixtures/review-eval-design-slop.*'],
 
   // Review Army (specialist dispatch)
-  'review-army-migration-safety': ['review/**', 'scripts/resolvers/review-army.ts', 'bin/gstack-diff-scope'],
-  'review-army-perf-n-plus-one':  ['review/**', 'scripts/resolvers/review-army.ts', 'bin/gstack-diff-scope'],
+  'review-army-migration-safety': ['review/**', 'scripts/resolvers/review-army.ts', 'bin/torch-diff-scope'],
+  'review-army-perf-n-plus-one':  ['review/**', 'scripts/resolvers/review-army.ts', 'bin/torch-diff-scope'],
   'review-army-delivery-audit':   ['review/**', 'scripts/resolvers/review.ts', 'scripts/resolvers/review-army.ts'],
   'review-army-quality-score':    ['review/**', 'scripts/resolvers/review-army.ts'],
   'review-army-json-findings':    ['review/**', 'scripts/resolvers/review-army.ts'],
@@ -120,7 +120,7 @@ export const E2E_TOUCHFILES: Record<string, string[]> = {
   // written a never-ask preference, AUQ should still auto-decide rather than
   // surfacing the question. Touches the question-tuning + preference
   // infrastructure plus the resolvers that own the AUTO_DECIDE preamble.
-  'auto-decide-preserved':        ['scripts/resolvers/question-tuning.ts', 'scripts/resolvers/preamble/generate-ask-user-format.ts', 'scripts/resolvers/preamble/generate-preamble-bash.ts', 'scripts/resolvers/preamble/generate-completion-status.ts', 'plan-ceo-review/**', 'bin/gstack-question-preference', 'bin/gstack-config', 'bin/gstack-slug', 'hosts/claude/hooks/question-preference-hook.ts', 'lib/is-conductor.ts', 'test/helpers/claude-pty-runner.ts'],
+  'auto-decide-preserved':        ['scripts/resolvers/question-tuning.ts', 'scripts/resolvers/preamble/generate-ask-user-format.ts', 'scripts/resolvers/preamble/generate-preamble-bash.ts', 'scripts/resolvers/preamble/generate-completion-status.ts', 'plan-ceo-review/**', 'bin/torch-question-preference', 'bin/torch-config', 'bin/torch-slug', 'hosts/claude/hooks/question-preference-hook.ts', 'lib/is-conductor.ts', 'test/helpers/claude-pty-runner.ts'],
 
   // Conductor → prose decision brief (Conductor signal makes prose the default;
   // the PreToolUse hook denies the flaky tool). Touches the resolver that owns
@@ -134,12 +134,12 @@ export const E2E_TOUCHFILES: Record<string, string[]> = {
   'plan-ceo-mode-routing':       ['plan-ceo-review/**', 'scripts/resolvers/preamble/generate-ask-user-format.ts', 'scripts/resolvers/preamble.ts', 'test/helpers/claude-pty-runner.ts'],
   'plan-design-with-ui-scope':   ['plan-design-review/**', 'test/fixtures/plans/ui-heavy-feature.md', 'test/helpers/claude-pty-runner.ts'],
   'budget-regression-pty':       ['test/helpers/eval-store.ts', 'test/skill-budget-regression.test.ts'],
-  'ship-idempotency-pty':        ['ship/**', 'bin/gstack-next-version', 'bin/gstack-version-bump', 'scripts/resolvers/sections.ts', 'lib/worktree.ts', 'test/helpers/claude-pty-runner.ts'],
+  'ship-idempotency-pty':        ['ship/**', 'bin/torch-next-version', 'bin/torch-version-bump', 'scripts/resolvers/sections.ts', 'lib/worktree.ts', 'test/helpers/claude-pty-runner.ts'],
   'ship-section-loading':        ['ship/**', 'scripts/resolvers/sections.ts', 'scripts/gen-skill-docs.ts', 'test/helpers/auq-sdk-capture.ts', 'test/helpers/session-runner.ts'],
   'plan-ceo-section-loading':    ['plan-ceo-review/**', 'scripts/resolvers/sections.ts', 'scripts/gen-skill-docs.ts', 'test/helpers/auq-sdk-capture.ts', 'test/helpers/session-runner.ts'],
   // Data-driven behavioral guard for the 'plan'/'prompt' carves (eng, design,
   // devex, office-hours + future PR2 carves). One file iterating CARVE_GUARDS;
-  // the selector sets GSTACK_CARVE_SKILL=<name> to scope cost to the changed
+  // the selector sets torch_CARVE_SKILL=<name> to scope cost to the changed
   // skill (D-CODEX A). Touching the registry/helper or sections.ts runs all.
   'carve-section-loading':       ['plan-eng-review/**', 'plan-design-review/**', 'plan-devex-review/**', 'office-hours/**', 'document-release/**', 'design-consultation/**', 'cso/**', 'test/helpers/carve-guards.ts', 'scripts/resolvers/sections.ts', 'scripts/gen-skill-docs.ts', 'test/helpers/auq-sdk-capture.ts', 'test/helpers/session-runner.ts'],
   'autoplan-chain-pty':          ['autoplan/**', 'plan-ceo-review/**', 'plan-design-review/**', 'plan-eng-review/**', 'plan-devex-review/**', 'test/fixtures/plans/ui-heavy-feature.md', 'test/helpers/claude-pty-runner.ts'],
@@ -170,20 +170,20 @@ export const E2E_TOUCHFILES: Record<string, string[]> = {
   // confirm" plan write. runPlanSkillFloorCheck cannot detect that shape
   // (it exits on first AUQ); runPlanSkillCounting can.
   'plan-eng-multi-finding-batching': ['plan-eng-review/**', 'scripts/resolvers/preamble.ts', 'scripts/resolvers/preamble/generate-ask-user-format.ts', 'scripts/resolvers/preamble/generate-completion-status.ts', 'scripts/resolvers/review.ts', 'test/helpers/claude-pty-runner.ts', 'test/fixtures/forcing-finding-seeds.ts', 'test/skill-e2e-plan-eng-multi-finding-batching.test.ts'],
-  'plan-ceo-split-overflow': ['plan-ceo-review/**', 'scripts/resolvers/preamble.ts', 'scripts/resolvers/preamble/generate-ask-user-format.ts', 'bin/gstack-question-preference', 'test/helpers/claude-pty-runner.ts', 'test/fixtures/forcing-finding-seeds.ts', 'test/skill-e2e-plan-ceo-split-overflow.test.ts'],
-  'brain-privacy-gate':           ['scripts/resolvers/preamble/generate-brain-sync-block.ts', 'scripts/resolvers/preamble.ts', 'bin/gstack-brain-sync', 'bin/gstack-artifacts-init', 'bin/gstack-config', 'test/helpers/agent-sdk-runner.ts'],
+  'plan-ceo-split-overflow': ['plan-ceo-review/**', 'scripts/resolvers/preamble.ts', 'scripts/resolvers/preamble/generate-ask-user-format.ts', 'bin/torch-question-preference', 'test/helpers/claude-pty-runner.ts', 'test/fixtures/forcing-finding-seeds.ts', 'test/skill-e2e-plan-ceo-split-overflow.test.ts'],
+  'brain-privacy-gate':           ['scripts/resolvers/preamble/generate-brain-sync-block.ts', 'scripts/resolvers/preamble.ts', 'bin/torch-brain-sync', 'bin/torch-artifacts-init', 'bin/torch-config', 'test/helpers/agent-sdk-runner.ts'],
 
   // /setup-gbrain Path 4 (Remote MCP) — happy + bad-token end-to-end via
   // Agent SDK. Gate-tier (deterministic stub server, fixed inputs); fires
   // when the skill template, the verify helper, the artifacts-init helper,
   // or the detect script changes.
-  'setup-gbrain-remote':          ['setup-gbrain/SKILL.md.tmpl', 'bin/gstack-gbrain-mcp-verify', 'bin/gstack-artifacts-init', 'bin/gstack-gbrain-detect', 'test/helpers/agent-sdk-runner.ts'],
-  'setup-gbrain-bad-token':       ['setup-gbrain/SKILL.md.tmpl', 'bin/gstack-gbrain-mcp-verify', 'test/helpers/agent-sdk-runner.ts'],
+  'setup-gbrain-remote':          ['setup-gbrain/SKILL.md.tmpl', 'bin/torch-gbrain-mcp-verify', 'bin/torch-artifacts-init', 'bin/torch-gbrain-detect', 'test/helpers/agent-sdk-runner.ts'],
+  'setup-gbrain-bad-token':       ['setup-gbrain/SKILL.md.tmpl', 'bin/torch-gbrain-mcp-verify', 'test/helpers/agent-sdk-runner.ts'],
   // v1.34.0.0 split-engine Path 4 + Step 4.5 Yes (local PGLite for code).
   // Periodic-tier per codex #12 (AgentSDK harness is non-deterministic).
   // Fires when the setup-gbrain template, install/verify/init helpers, or
   // the agent-sdk-runner harness changes.
-  'setup-gbrain-path4-local-pglite': ['setup-gbrain/SKILL.md.tmpl', 'bin/gstack-gbrain-mcp-verify', 'bin/gstack-gbrain-install', 'bin/gstack-gbrain-detect', 'lib/gbrain-local-status.ts', 'test/helpers/agent-sdk-runner.ts'],
+  'setup-gbrain-path4-local-pglite': ['setup-gbrain/SKILL.md.tmpl', 'bin/torch-gbrain-mcp-verify', 'bin/torch-gbrain-install', 'bin/torch-gbrain-detect', 'lib/gbrain-local-status.ts', 'test/helpers/agent-sdk-runner.ts'],
 
   // AskUserQuestion format regression (RECOMMENDATION + Completeness: N/10)
   // Fires when either template OR the two preamble resolvers change.
@@ -210,14 +210,14 @@ export const E2E_TOUCHFILES: Record<string, string[]> = {
   'document-release-prosons-format':  ['document-release/**', 'scripts/resolvers/preamble/generate-ask-user-format.ts', 'scripts/resolvers/preamble.ts', 'model-overlays/opus-4-7.md'],
 
   // /plan-tune (v1 observational)
-  'plan-tune-inspect':         ['plan-tune/**', 'scripts/question-registry.ts', 'scripts/psychographic-signals.ts', 'scripts/one-way-doors.ts', 'bin/gstack-question-log', 'bin/gstack-question-preference', 'bin/gstack-developer-profile'],
+  'plan-tune-inspect':         ['plan-tune/**', 'scripts/question-registry.ts', 'scripts/psychographic-signals.ts', 'scripts/one-way-doors.ts', 'bin/torch-question-log', 'bin/torch-question-preference', 'bin/torch-developer-profile'],
 
   // /plan-tune cathedral (T16 — 5 E2E scenarios, all gate per D12)
-  'plan-tune-hook-capture':      ['hosts/claude/hooks/**', 'bin/gstack-question-log', 'bin/gstack-developer-profile', 'plan-tune/**'],
-  'plan-tune-enforcement':       ['hosts/claude/hooks/**', 'bin/gstack-question-preference', 'scripts/question-registry.ts'],
+  'plan-tune-hook-capture':      ['hosts/claude/hooks/**', 'bin/torch-question-log', 'bin/torch-developer-profile', 'plan-tune/**'],
+  'plan-tune-enforcement':       ['hosts/claude/hooks/**', 'bin/torch-question-preference', 'scripts/question-registry.ts'],
   'plan-tune-annotation':        ['hosts/claude/hooks/**', 'scripts/declared-annotation.ts', 'scripts/psychographic-signals.ts', 'scripts/question-registry.ts'],
-  'plan-tune-codex-import':      ['bin/gstack-codex-session-import', 'bin/gstack-question-log', 'docs/spikes/codex-session-format.md'],
-  'plan-tune-dream-cycle':       ['bin/gstack-distill-free-text', 'bin/gstack-distill-apply', 'hosts/claude/hooks/**', 'plan-tune/**'],
+  'plan-tune-codex-import':      ['bin/torch-codex-session-import', 'bin/torch-question-log', 'docs/spikes/codex-session-format.md'],
+  'plan-tune-dream-cycle':       ['bin/torch-distill-free-text', 'bin/torch-distill-apply', 'hosts/claude/hooks/**', 'plan-tune/**'],
 
   // Codex offering verification
   'codex-offered-office-hours':  ['office-hours/**', 'scripts/gen-skill-docs.ts'],
@@ -226,7 +226,7 @@ export const E2E_TOUCHFILES: Record<string, string[]> = {
   'codex-offered-eng-review':    ['plan-eng-review/**', 'scripts/gen-skill-docs.ts'],
 
   // Ship
-  'ship-base-branch': ['ship/**', 'bin/gstack-repo-mode'],
+  'ship-base-branch': ['ship/**', 'bin/torch-repo-mode'],
   'ship-local-workflow': ['ship/**', 'scripts/gen-skill-docs.ts'],
   'review-dashboard-via': ['ship/**', 'scripts/resolvers/review.ts', 'codex/**', 'autoplan/**', 'land-and-deploy/**'],
   'ship-plan-completion': ['ship/**', 'scripts/gen-skill-docs.ts'],
@@ -237,7 +237,7 @@ export const E2E_TOUCHFILES: Record<string, string[]> = {
   'retro-base-branch': ['retro/**'],
 
   // Global discover
-  'global-discover':   ['bin/gstack-global-discover.ts', 'test/global-discover.test.ts'],
+  'global-discover':   ['bin/torch-global-discover.ts', 'test/global-discover.test.ts'],
 
   // CSO
   'cso-full-audit':   ['cso/**'],
@@ -245,20 +245,20 @@ export const E2E_TOUCHFILES: Record<string, string[]> = {
   'cso-infra-scope':  ['cso/**'],
 
   // Learnings
-  'learnings-show': ['learn/**', 'bin/gstack-learnings-search', 'bin/gstack-learnings-log', 'scripts/resolvers/learnings.ts'],
+  'learnings-show': ['learn/**', 'bin/torch-learnings-search', 'bin/torch-learnings-log', 'scripts/resolvers/learnings.ts'],
 
   // Session Intelligence (timeline, context recovery, /context-save + /context-restore)
-  'timeline-event-flow':            ['bin/gstack-timeline-log', 'bin/gstack-timeline-read'],
-  'context-recovery-artifacts':     ['scripts/resolvers/preamble.ts', 'bin/gstack-timeline-log', 'bin/gstack-slug', 'learn/**'],
-  'context-save-writes-file':       ['context-save/**', 'bin/gstack-slug'],
-  'context-restore-loads-latest':   ['context-restore/**', 'bin/gstack-slug'],
+  'timeline-event-flow':            ['bin/torch-timeline-log', 'bin/torch-timeline-read'],
+  'context-recovery-artifacts':     ['scripts/resolvers/preamble.ts', 'bin/torch-timeline-log', 'bin/torch-slug', 'learn/**'],
+  'context-save-writes-file':       ['context-save/**', 'bin/torch-slug'],
+  'context-restore-loads-latest':   ['context-restore/**', 'bin/torch-slug'],
 
   // Context skills E2E (live-fire, Skill-tool routing path) — see
   // test/skill-e2e-context-skills.test.ts. These are periodic-tier because
   // each one spawns claude -p and costs ~$0.20-$0.40. Collectively they
   // verify the thing the /checkpoint → /context-save rename was for.
   'context-save-routing':                  ['context-save/**', 'scripts/resolvers/preamble.ts'],
-  'context-save-then-restore-roundtrip':   ['context-save/**', 'context-restore/**', 'bin/gstack-slug'],
+  'context-save-then-restore-roundtrip':   ['context-save/**', 'context-restore/**', 'bin/torch-slug'],
   'context-restore-fragment-match':        ['context-restore/**'],
   'context-restore-empty-state':           ['context-restore/**'],
   'context-restore-list-delegates':        ['context-restore/**'],
@@ -274,17 +274,17 @@ export const E2E_TOUCHFILES: Record<string, string[]> = {
 
   // Codex E2E (tests skills via Codex CLI + worktree)
   'codex-discover-skill':  ['codex/**', '.agents/skills/**', 'test/helpers/codex-session-runner.ts', 'lib/worktree.ts'],
-  'codex-review-findings': ['review/**', '.agents/skills/gstack-review/**', 'codex/**', 'test/helpers/codex-session-runner.ts', 'lib/worktree.ts'],
+  'codex-review-findings': ['review/**', '.agents/skills/torch-review/**', 'codex/**', 'test/helpers/codex-session-runner.ts', 'lib/worktree.ts'],
 
   // Gemini E2E — smoke test only (Gemini gets lost in worktrees on complex tasks)
   'gemini-smoke':  ['.agents/skills/**', 'test/helpers/gemini-session-runner.ts', 'lib/worktree.ts'],
 
 
   // Coverage audit (shared fixture) + triage + gates
-  'ship-coverage-audit': ['ship/**', 'test/fixtures/coverage-audit-fixture.ts', 'bin/gstack-repo-mode'],
+  'ship-coverage-audit': ['ship/**', 'test/fixtures/coverage-audit-fixture.ts', 'bin/torch-repo-mode'],
   'review-coverage-audit': ['review/**', 'test/fixtures/coverage-audit-fixture.ts'],
   'plan-eng-coverage-audit': ['plan-eng-review/**', 'test/fixtures/coverage-audit-fixture.ts'],
-  'ship-triage': ['ship/**', 'bin/gstack-repo-mode'],
+  'ship-triage': ['ship/**', 'bin/torch-repo-mode'],
 
   // Plan completion audit + verification
   'ship-plan-completion': ['ship/**', 'scripts/gen-skill-docs.ts'],
@@ -310,13 +310,13 @@ export const E2E_TOUCHFILES: Record<string, string[]> = {
   'diagram-triplet':            ['diagram/**', 'lib/diagram-render/**', 'browse/src/write-commands.ts', 'browse/src/read-commands.ts'],
   'diagram-authoring-quality':  ['diagram/**', 'lib/diagram-render/**', 'test/helpers/llm-judge.ts'],
 
-  // gstack-upgrade
-  'gstack-upgrade-happy-path': ['gstack-upgrade/**'],
+  // torch-upgrade
+  'torch-upgrade-happy-path': ['torch-upgrade/**'],
 
   // Deploy skills
   'land-and-deploy-workflow':      ['land-and-deploy/**', 'scripts/gen-skill-docs.ts'],
-  'land-and-deploy-first-run':     ['land-and-deploy/**', 'scripts/gen-skill-docs.ts', 'bin/gstack-slug'],
-  'land-and-deploy-review-gate':   ['land-and-deploy/**', 'bin/gstack-review-read'],
+  'land-and-deploy-first-run':     ['land-and-deploy/**', 'scripts/gen-skill-docs.ts', 'bin/torch-slug'],
+  'land-and-deploy-review-gate':   ['land-and-deploy/**', 'bin/torch-review-read'],
   'canary-workflow':               ['canary/**', 'browse/src/**'],
   'benchmark-workflow':            ['benchmark/**', 'browse/src/**'],
   'setup-deploy-workflow':         ['setup-deploy/**', 'scripts/gen-skill-docs.ts'],
@@ -328,10 +328,10 @@ export const E2E_TOUCHFILES: Record<string, string[]> = {
 
   // Autoplan
   'autoplan-core':  ['autoplan/**', 'plan-ceo-review/**', 'plan-eng-review/**', 'plan-design-review/**'],
-  'autoplan-dual-voice': ['autoplan/**', 'codex/**', 'bin/gstack-codex-probe', 'scripts/resolvers/review.ts', 'scripts/resolvers/design.ts'],
+  'autoplan-dual-voice': ['autoplan/**', 'codex/**', 'bin/torch-codex-probe', 'scripts/resolvers/review.ts', 'scripts/resolvers/design.ts'],
 
   // Multi-provider benchmark adapters — live API smoke against real claude/codex/gemini CLIs
-  'benchmark-providers-live': ['bin/gstack-model-benchmark', 'test/helpers/providers/**', 'test/helpers/benchmark-runner.ts', 'test/helpers/pricing.ts'],
+  'benchmark-providers-live': ['bin/torch-model-benchmark', 'test/helpers/providers/**', 'test/helpers/benchmark-runner.ts', 'test/helpers/pricing.ts'],
 
   // Browser-skills Phase 2a — /scrape + /skillify (v1.19.0.0). Gate-tier
   // E2E covers the D1 (provenance guard), D3 (atomic write) contracts plus
@@ -397,14 +397,14 @@ export const E2E_TOUCHFILES: Record<string, string[]> = {
 
   // /ios-qa — agent flow E2E. Daemon + stub StateServer + codegen
   // exercised end-to-end. The no-device path is gate-tier; the with-device
-  // path requires GSTACK_HAS_IOS_DEVICE=1 and is periodic-tier.
+  // path requires torch_HAS_IOS_DEVICE=1 and is periodic-tier.
   'ios-qa-e2e':       ['ios-qa/**', 'ios-fix/**', 'ios-design-review/**', 'ios-clean/**', 'ios-sync/**', 'test/skill-e2e-ios.test.ts'],
   // Swift-build invariant test — requires the Swift toolchain. Compiles the
   // fixture SPM package + runs the XCTest suite that validates the real
   // Swift StateServer implementation (loopback bind, boot token rotation,
   // session lock). Periodic-tier — Swift build is heavier than TS unit tests.
   'ios-qa-swift-build': ['ios-qa/templates/**', 'test/fixtures/ios-qa/FixtureApp/**', 'test/skill-e2e-ios-swift-build.test.ts'],
-  // Real-device path — only runs with GSTACK_HAS_IOS_DEVICE=1 + a paired
+  // Real-device path — only runs with torch_HAS_IOS_DEVICE=1 + a paired
   // iPhone. Validates the CoreDevice agent + iOS SDK toolchain. Periodic-tier.
   'ios-qa-device':    ['ios-qa/templates/**', 'test/fixtures/ios-qa/FixtureApp/**', 'test/skill-e2e-ios-device.test.ts'],
 
@@ -422,8 +422,8 @@ export const E2E_TOUCHFILES: Record<string, string[]> = {
   'office-hours-brain-writeback': [
     'scripts/resolvers/gbrain.ts',
     'scripts/gen-skill-docs.ts',
-    'bin/gstack-gbrain-detect',
-    'bin/gstack-config',
+    'bin/torch-gbrain-detect',
+    'bin/torch-config',
     'office-hours/SKILL.md.tmpl',
     'docs/gbrain-write-surfaces.md',
     'test/fixtures/office-hours-brain-writeback/**',
@@ -431,7 +431,7 @@ export const E2E_TOUCHFILES: Record<string, string[]> = {
   ],
 
   // gbrain CLI real round-trip against a local PGLite store (v1.50.0.0
-  // T11). Proves the gbrain CLI persistence contract gstack relies on —
+  // T11). Proves the gbrain CLI persistence contract torch relies on —
   // a `gbrain put` followed by `gbrain get` returns the body. Skips if
   // VOYAGE_API_KEY is unset OR gbrain CLI not on PATH. Touched by the
   // resolver (which emits the CLI shape) and the test itself.
@@ -551,7 +551,7 @@ export const E2E_TIERS: Record<string, 'gate' | 'periodic'> = {
   'ship-idempotency-pty':      'periodic',   // ~$3/run, real /ship in plan mode
   'ship-section-loading':      'periodic',   // ~$3/run, real /ship; asserts section reads
   'plan-ceo-section-loading':  'periodic',   // ~$3-5/run, real /plan-ceo-review; asserts section read
-  'carve-section-loading':     'periodic',   // ~$1-2/skill, data-driven; GSTACK_CARVE_SKILL scopes to one
+  'carve-section-loading':     'periodic',   // ~$1-2/skill, data-driven; torch_CARVE_SKILL scopes to one
   'autoplan-chain-pty':        'periodic',   // ~$8/run, all 3 phases sequential
 
   // Per-finding count + review-report-at-bottom — periodic because each
@@ -569,7 +569,7 @@ export const E2E_TIERS: Record<string, 'gate' | 'periodic'> = {
   'plan-eng-multi-finding-batching': 'periodic',
   'plan-ceo-split-overflow': 'periodic',
 
-  // Privacy gate for gstack-brain-sync — periodic (non-deterministic LLM call,
+  // Privacy gate for torch-brain-sync — periodic (non-deterministic LLM call,
   // costs ~$0.30-$0.50 per run, not needed on every commit)
   'brain-privacy-gate': 'periodic',
 
@@ -694,8 +694,8 @@ export const E2E_TIERS: Record<string, 'gate' | 'periodic'> = {
   'diagram-triplet': 'gate',
   'diagram-authoring-quality': 'periodic',
 
-  // gstack-upgrade
-  'gstack-upgrade-happy-path': 'gate',
+  // torch-upgrade
+  'torch-upgrade-happy-path': 'gate',
 
   // Deploy skills
   'land-and-deploy-workflow': 'gate',
@@ -745,7 +745,7 @@ export const E2E_TIERS: Record<string, 'gate' | 'periodic'> = {
   'overlay-harness-opus-4-7-fanout-realistic': 'periodic',
 
   // /ios-qa daemon + codegen — no-device path runs every PR (no hardware
-  // dependency, deterministic). with-device path requires GSTACK_HAS_IOS_DEVICE.
+  // dependency, deterministic). with-device path requires torch_HAS_IOS_DEVICE.
   'ios-qa-e2e': 'gate',
   // Swift toolchain only, no device required, but heavier than TS unit tests.
   'ios-qa-swift-build': 'periodic',
@@ -799,7 +799,7 @@ export const LLM_JUDGE_TOUCHFILES: Record<string, string[]> = {
   // Other skills
   'retro/SKILL.md instructions':          ['retro/SKILL.md', 'retro/SKILL.md.tmpl'],
   'qa-only/SKILL.md workflow':            ['qa-only/SKILL.md', 'qa-only/SKILL.md.tmpl'],
-  'gstack-upgrade/SKILL.md upgrade flow': ['gstack-upgrade/SKILL.md', 'gstack-upgrade/SKILL.md.tmpl'],
+  'torch-upgrade/SKILL.md upgrade flow': ['torch-upgrade/SKILL.md', 'torch-upgrade/SKILL.md.tmpl'],
 
   // Voice directive
   'voice directive tone':                 ['scripts/resolvers/preamble.ts', 'review/SKILL.md', 'review/SKILL.md.tmpl', 'scripts/gen-skill-docs.ts'],

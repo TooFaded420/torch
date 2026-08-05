@@ -96,7 +96,7 @@ export function extractSectionReads(result: TranscriptResultLike): string[] {
 export const SHIP_ACTIONS = [
   'merged_base',       // git merge <base>
   'ran_tests',         // bun test / npm test / the project test cmd
-  'bumped_version',    // wrote VERSION / package.json version / ran gstack-version-bump
+  'bumped_version',    // wrote VERSION / package.json version / ran torch-version-bump
   'wrote_changelog',   // edited CHANGELOG.md
   'committed',         // git commit
   'pushed',            // git push
@@ -107,7 +107,7 @@ export type ShipAction = (typeof SHIP_ACTIONS)[number];
 const BASH_ACTION_PATTERNS: Array<{ action: ShipAction; re: RegExp }> = [
   { action: 'merged_base', re: /\bgit\s+merge\b/ },
   { action: 'ran_tests', re: /\b(bun\s+test|npm\s+(run\s+)?test|yarn\s+test|pytest|go\s+test|cargo\s+test|rspec)\b/ },
-  { action: 'bumped_version', re: /gstack-version-bump\b|gstack-next-version\b|>\s*VERSION\b|npm\s+version\b/ },
+  { action: 'bumped_version', re: /torch-version-bump\b|torch-next-version\b|>\s*VERSION\b|npm\s+version\b/ },
   { action: 'wrote_changelog', re: /CHANGELOG\.md/ },
   { action: 'committed', re: /\bgit\s+commit\b/ },
   { action: 'pushed', re: /\bgit\s+push\b/ },
@@ -149,7 +149,7 @@ export interface ShipBaseline {
   capturedAt: string;
 }
 
-const DEFAULT_BASELINE_DIR = path.join(os.homedir(), '.gstack-dev', 'ship-baselines');
+const DEFAULT_BASELINE_DIR = path.join(os.homedir(), '.torch-dev', 'ship-baselines');
 
 /** Where a baseline for a given situation lives. */
 export function baselinePath(situation: string, dir = DEFAULT_BASELINE_DIR): string {

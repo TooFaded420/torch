@@ -34,7 +34,7 @@ describe('generateBrainPreflight', () => {
       const out = generateBrainPreflight(buildCtx(skill));
       expect(out.length).toBeGreaterThan(0);
       expect(out).toContain('## Brain Context');
-      expect(out).toContain('gstack-brain-cache get');
+      expect(out).toContain('torch-brain-cache get');
     }
   });
 
@@ -60,8 +60,8 @@ describe('generateBrainPreflight', () => {
     expect(out).toContain('product');
     expect(out).toContain('recent-decisions');
     // Should NOT load brand or developer-persona
-    expect(out).not.toContain('gstack-brain-cache get brand');
-    expect(out).not.toContain('gstack-brain-cache get developer-persona');
+    expect(out).not.toContain('torch-brain-cache get brand');
+    expect(out).not.toContain('torch-brain-cache get developer-persona');
   });
 
   test('mentions D9 salience privacy in the prose (transparency)', () => {
@@ -75,7 +75,7 @@ describe('generateBrainPreflight', () => {
     const userProfileLine = out.split('\n').find((l) => l.includes('user-profile')) || '';
     // user-profile is cross-project; the get call should NOT have --project
     // (the only --project mentions on that line are inside the comment, not in the get call)
-    const getLine = out.split('\n').find((l) => l.includes('gstack-brain-cache get user-profile')) || '';
+    const getLine = out.split('\n').find((l) => l.includes('torch-brain-cache get user-profile')) || '';
     expect(getLine).not.toContain('--project');
   });
 
@@ -89,7 +89,7 @@ describe('generateBrainCacheRefresh', () => {
   test('emits refresh hook for preflight skills', () => {
     const out = generateBrainCacheRefresh(buildCtx('plan-ceo-review'));
     expect(out).toContain('Background Refresh');
-    expect(out).toContain('gstack-brain-cache refresh');
+    expect(out).toContain('torch-brain-cache refresh');
   });
 
   test('empty for non-preflight skills', () => {
@@ -143,7 +143,7 @@ describe('generateBrainWriteBack', () => {
   test('emits invalidation bash for affected cache digests', () => {
     const out = generateBrainWriteBack(buildCtx('plan-ceo-review'));
     // plan-ceo-review invalidates: product, goals, competitive-intel
-    expect(out).toContain('gstack-brain-cache invalidate');
+    expect(out).toContain('torch-brain-cache invalidate');
   });
 });
 

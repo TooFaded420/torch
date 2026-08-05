@@ -3,10 +3,10 @@
  *
  * v1.49 shipped two prose-driven implicit gates inside plan-tune/SKILL.md.tmpl
  * Step 0:
- *   - Consent gate:  question_tuning=false AND ~/.gstack/.question-tuning-prompted missing
+ *   - Consent gate:  question_tuning=false AND ~/.torch/.question-tuning-prompted missing
  *                    → run "Consent + opt-in".
  *   - Setup gate:    question_tuning=true AND declared empty AND
- *                    ~/.gstack/.declared-setup-prompted missing → run "5-Q setup".
+ *                    ~/.torch/.declared-setup-prompted missing → run "5-Q setup".
  *
  * The gates are evaluated by the agent reading the template's bash + prose.
  * The cathedral (T5/T6) replaces enforcement with hooks, but it must NOT break
@@ -18,7 +18,7 @@
  *   2. setup-gate fires under the right conditions and stops re-firing after marker.
  *   3. marker idempotency: re-invoking after either decision produces zero re-prompts.
  *
- * Strategy: exercise the helpers the gates depend on (gstack-config get,
+ * Strategy: exercise the helpers the gates depend on (torch-config get,
  * developer-profile.json schema, marker file paths). If those break, the
  * gates break. Plus a static-template assertion so the gate language can't
  * be silently deleted from the template.
@@ -31,14 +31,14 @@ import * as os from 'os';
 import { spawnSync } from 'child_process';
 
 const ROOT = path.resolve(import.meta.dir, '..');
-const BIN_CONFIG = path.join(ROOT, 'bin', 'gstack-config');
-const BIN_DEV = path.join(ROOT, 'bin', 'gstack-developer-profile');
+const BIN_CONFIG = path.join(ROOT, 'bin', 'torch-config');
+const BIN_DEV = path.join(ROOT, 'bin', 'torch-developer-profile');
 const SKILL_TMPL = path.join(ROOT, 'plan-tune', 'SKILL.md.tmpl');
 
 let stateRoot: string;
 
 beforeEach(() => {
-  stateRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'gstack-gate-'));
+  stateRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'torch-gate-'));
 });
 
 afterEach(() => {
@@ -53,8 +53,8 @@ function runBin(
   for (const [k, v] of Object.entries(process.env)) {
     if (v !== undefined) env[k] = v;
   }
-  env.GSTACK_STATE_ROOT = stateRoot;
-  delete env.GSTACK_HOME;
+  env.torch_STATE_ROOT = stateRoot;
+  delete env.torch_HOME;
   const res = spawnSync(bin, args, { env, encoding: 'utf-8', cwd: ROOT });
   return {
     stdout: res.stdout ?? '',

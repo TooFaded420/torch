@@ -63,23 +63,23 @@ exit 0
 describeE2E('/setup-gbrain Path 4 — bad token STOPs cleanly', () => {
   test('AUTH classifier fires, no MCP registration, no CLAUDE.md mutation', async () => {
     const stubServer = await startStub401();
-    const gstackHome = fs.mkdtempSync(path.join(os.tmpdir(), 'setup-gbrain-bad-'));
+    const torchHome = fs.mkdtempSync(path.join(os.tmpdir(), 'setup-gbrain-bad-'));
     const fakeBinDir = fs.mkdtempSync(path.join(os.tmpdir(), 'setup-gbrain-bad-bin-'));
     const callLog = makeFakeClaude(fakeBinDir);
 
     const ORIGINAL_CLAUDE_MD = '# Test project\n\nSome existing content here.\n';
-    fs.writeFileSync(path.join(gstackHome, 'CLAUDE.md'), ORIGINAL_CLAUDE_MD);
+    fs.writeFileSync(path.join(torchHome, 'CLAUDE.md'), ORIGINAL_CLAUDE_MD);
 
     const BAD_TOKEN = 'gbrain_BAD_TOKEN_67890_DELIBERATELY_INVALID';
     const askUserQuestions: Array<{ input: Record<string, unknown> }> = [];
     const binary = resolveClaudeBinary();
 
     const orig = {
-      gstackHome: process.env.GSTACK_HOME,
+      torchHome: process.env.torch_HOME,
       pathEnv: process.env.PATH,
       mcpToken: process.env.GBRAIN_MCP_TOKEN,
     };
-    process.env.GSTACK_HOME = gstackHome;
+    process.env.torch_HOME = torchHome;
     process.env.PATH = `${fakeBinDir}:${path.join(path.resolve(import.meta.dir, '..'), 'bin')}:${process.env.PATH ?? '/usr/bin:/bin:/opt/homebrew/bin'}`;
     process.env.GBRAIN_MCP_TOKEN = BAD_TOKEN;
 
@@ -96,7 +96,7 @@ describeE2E('/setup-gbrain Path 4 — bad token STOPs cleanly', () => {
           `If verify fails (Step 4c), follow the skill's STOP rule — surface the error and stop. ` +
           `Do NOT register the MCP if verify failed. ` +
           `Do NOT modify CLAUDE.md if verify failed.`,
-        workingDirectory: gstackHome,
+        workingDirectory: torchHome,
         maxTurns: 15,
         allowedTools: ['Read', 'Grep', 'Glob', 'Bash', 'Write', 'Edit'],
         ...(binary ? { pathToClaudeCodeExecutable: binary } : {}),
@@ -133,17 +133,17 @@ describeE2E('/setup-gbrain Path 4 — bad token STOPs cleanly', () => {
       expect(calls).not.toMatch(/mcp add.*--transport http/);
 
       // Assertion 3: CLAUDE.md is unchanged (no half-written block).
-      const finalClaudeMd = fs.readFileSync(path.join(gstackHome, 'CLAUDE.md'), 'utf-8');
+      const finalClaudeMd = fs.readFileSync(path.join(torchHome, 'CLAUDE.md'), 'utf-8');
       expect(finalClaudeMd).toBe(ORIGINAL_CLAUDE_MD);
 
       // Assertion 4: the bad token never leaked to CLAUDE.md.
       expect(finalClaudeMd).not.toContain(BAD_TOKEN);
     } finally {
-      if (orig.gstackHome === undefined) delete process.env.GSTACK_HOME; else process.env.GSTACK_HOME = orig.gstackHome;
+      if (orig.torchHome === undefined) delete process.env.torch_HOME; else process.env.torch_HOME = orig.torchHome;
       if (orig.pathEnv === undefined) delete process.env.PATH; else process.env.PATH = orig.pathEnv;
       if (orig.mcpToken === undefined) delete process.env.GBRAIN_MCP_TOKEN; else process.env.GBRAIN_MCP_TOKEN = orig.mcpToken;
       await stubServer.close();
-      fs.rmSync(gstackHome, { recursive: true, force: true });
+      fs.rmSync(torchHome, { recursive: true, force: true });
       fs.rmSync(fakeBinDir, { recursive: true, force: true });
     }
   }, 240_000);

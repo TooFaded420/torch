@@ -23,25 +23,25 @@ import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
  */
 describe('security-classifier: missing claude CLI degraded path', () => {
   let origPath: string | undefined;
-  let origGstackClaudeBin: string | undefined;
+  let origtorchClaudeBin: string | undefined;
   let origClaudeBin: string | undefined;
 
   beforeEach(() => {
     origPath = process.env.PATH;
-    origGstackClaudeBin = process.env.GSTACK_CLAUDE_BIN;
+    origtorchClaudeBin = process.env.torch_CLAUDE_BIN;
     origClaudeBin = process.env.CLAUDE_BIN;
     // Force resolveClaudeCommand() to fail: clear PATH AND override env vars
-    // (resolveClaudeCommand in browse/src/claude-bin.ts honors GSTACK_CLAUDE_BIN
+    // (resolveClaudeCommand in browse/src/claude-bin.ts honors torch_CLAUDE_BIN
     // and CLAUDE_BIN before falling back to Bun.which(PATH)).
     process.env.PATH = '/nonexistent';
-    delete process.env.GSTACK_CLAUDE_BIN;
+    delete process.env.torch_CLAUDE_BIN;
     delete process.env.CLAUDE_BIN;
   });
 
   afterEach(() => {
     if (origPath === undefined) delete process.env.PATH;
     else process.env.PATH = origPath;
-    if (origGstackClaudeBin !== undefined) process.env.GSTACK_CLAUDE_BIN = origGstackClaudeBin;
+    if (origtorchClaudeBin !== undefined) process.env.torch_CLAUDE_BIN = origtorchClaudeBin;
     if (origClaudeBin !== undefined) process.env.CLAUDE_BIN = origClaudeBin;
   });
 
