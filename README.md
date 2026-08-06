@@ -101,11 +101,11 @@ These are conversational skills. Your OpenClaw agent runs them directly via chat
 
 ### Other AI Agents
 
-torch works on 10 AI coding agents, not just Claude. Setup auto-detects which
-agents you have installed:
+torch works on more than just Claude. Setup auto-detects which agents you have
+installed:
 
 ```bash
-git clone --single-branch --depth 1 https://github.com/garrytan/gstack.git ~/torch
+git clone --single-branch --depth 1 https://github.com/h3cz/torch.git ~/torch
 cd ~/torch && ./setup
 ```
 
@@ -115,12 +115,14 @@ Or target a specific agent with `./setup --host <name>`:
 |-------|------|-------------------|
 | OpenAI Codex CLI | `--host codex` | `~/.codex/skills/torch-*/` |
 | OpenCode | `--host opencode` | `~/.config/opencode/skills/torch-*/` |
-| Cursor | `--host cursor` | `~/.cursor/skills/torch-*/` |
 | Factory Droid | `--host factory` | `~/.factory/skills/torch-*/` |
-| Slate | `--host slate` | `~/.slate/skills/torch-*/` |
 | Kiro | `--host kiro` | `~/.kiro/skills/torch-*/` |
-| Hermes | `--host hermes` | `~/.hermes/skills/torch-*/` |
-| GBrain (mod) | `--host gbrain` | `~/.gbrain/skills/torch-*/` |
+| Hermes | `--host hermes` | integration notes only (spawns Claude Code) |
+| GBrain (mod) | `--host gbrain` | brain-aware skill variants from the GBrain repo |
+
+Cursor and other agents that read `~/.claude/skills` pick torch up from the
+Claude Code install — no extra step needed. Note: the install script accepts
+exactly the hosts above; anything else exits with "Unknown --host value".
 
 **Want to add support for another agent?** See [docs/ADDING_A_HOST.md](docs/ADDING_A_HOST.md).
 It's one TypeScript config file, zero code changes.
