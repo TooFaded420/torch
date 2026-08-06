@@ -1,35 +1,27 @@
 # torch
 
-> "I don't think I've typed like a line of code probably since December, basically, which is an extremely large change." — [Andrej Karpathy](https://fortune.com/2026/03/21/andrej-karpathy-openai-cofounder-ai-agents-coding-state-of-psychosis-openclaw/), No Priors podcast, March 2026
+> **Fork of [gstack](https://github.com/garrytan/gstack), simplified for the
+> [hecz.dev](https://hecz.dev) + annex workflows I run every day — and focused on
+> **cyber security**. That's the work I care about most, and it's where I'm
+> expanding this project.**
 
-When I heard Karpathy say this, I wanted to find out how. How does one person ship like a team of twenty? Peter Steinberger built [OpenClaw](https://github.com/openclaw/openclaw) — 247K GitHub stars — essentially solo with AI agents. The revolution is here. A single builder with the right tooling can move faster than a traditional team.
+torch turns Claude Code into a virtual engineering team — a CEO who rethinks the
+product, an eng manager who locks architecture, a designer who catches AI slop, a
+reviewer who finds production bugs, a QA lead who opens a real browser, a security
+officer who runs OWASP + STRIDE audits, and a release engineer who ships the PR.
+Twenty-three specialists and eight power tools, all slash commands, all Markdown,
+all free, MIT license.
 
-I'm [Garry Tan](https://x.com/garrytan), President & CEO of [Y Combinator](https://www.ycombinator.com/). I've worked with thousands of startups — Coinbase, Instacart, Rippling — when they were one or two people in a garage. Before YC, I was one of the first eng/PM/designers at Palantir, cofounded Posterous (sold to Twitter), and built Bookface, YC's internal social network.
-
-**torch is my answer.** I've been building products for twenty years, and right now I'm shipping more products than I ever have. In the last 60 days: 3 production services, 40+ shipped features, part-time, while running YC full-time. On logical code change — not raw LOC, which AI inflates — my 2026 run rate is **~810× my 2013 pace** (11,417 vs 14 logical lines/day). Year-to-date (through April 18), 2026 has already produced **240× the entire 2013 year**. Measured across 40 public + private `garrytan/*` repos including Bookface, after excluding one demo repo. AI wrote most of it. The point isn't who typed it, it's what shipped.
-
-> The LOC critics aren't wrong that raw line counts inflate with AI. They are wrong that normalized-for-inflation, I'm less productive. I'm more productive, by a lot. Full methodology, caveats, and reproduction script: **[On the LOC Controversy](docs/ON_THE_LOC_CONTROVERSY.md)**.
-
-**2026 — 1,237 contributions and counting:**
-
-![GitHub contributions 2026 — 1,237 contributions, massive acceleration in Jan-Mar](docs/images/github-2026.png)
-
-**2013 — when I built Bookface at YC (772 contributions):**
-
-![GitHub contributions 2013 — 772 contributions building Bookface at YC](docs/images/github-2013.png)
-
-Same person. Different era. The difference is the tooling.
-
-**torch is how I do it.** It turns Claude Code into a virtual engineering team — a CEO who rethinks the product, an eng manager who locks architecture, a designer who catches AI slop, a reviewer who finds production bugs, a QA lead who opens a real browser, a security officer who runs OWASP + STRIDE audits, and a release engineer who ships the PR. Twenty-three specialists and eight power tools, all slash commands, all Markdown, all free, MIT license.
-
-This is my open source software factory. I use it every day. I'm sharing it because these tools should be available to everyone.
-
-Fork it. Improve it. Make it yours. And if you want to hate on free open source software — you're welcome to, but I'd rather you just try it first.
+This fork keeps the parts of gstack I actually use and cuts the rest, so setup is
+simpler and every workflow runs with a security-first lens. I use it every day to
+ship hecz.dev and annex. Fork it. Improve it. Make it yours.
 
 **Who this is for:**
-- **Founders and CEOs** — especially technical ones who still want to ship
+- **Security-minded builders** — OWASP + STRIDE audits, threat modeling, and
+  prompt-injection defense baked into the normal ship flow
 - **First-time Claude Code users** — structured roles instead of a blank prompt
-- **Tech leads and staff engineers** — rigorous review, QA, and release automation on every PR
+- **Anyone who wants their AI agent to ship like a small team** — review, QA, and
+  release automation on every PR
 
 ## Quick start
 
@@ -46,9 +38,21 @@ Fork it. Improve it. Make it yours. And if you want to hate on free open source 
 
 ### Step 1: Install on your machine
 
-Open Claude Code and paste this. Claude does the rest.
+```bash
+git clone --single-branch --depth 1 https://github.com/h3cz/torch.git ~/torch
+cd ~/torch && ./setup
+```
 
-> Install torch: run **`git clone --single-branch --depth 1 https://github.com/garrytan/gstack.git ~/.claude/skills/torch && cd ~/.claude/skills/torch && ./setup`** then add a "torch" section to CLAUDE.md that says to use the /browse skill from torch for all web browsing, never use mcp\_\_claude-in-chrome\_\_\* tools, and lists the available skills: /office-hours, /plan-ceo-review, /plan-eng-review, /plan-design-review, /design-consultation, /design-shotgun, /design-html, /review, /ship, /land-and-deploy, /canary, /benchmark, /browse, /connect-chrome, /qa, /qa-only, /design-review, /setup-browser-cookies, /setup-deploy, /setup-gbrain, /retro, /investigate, /document-release, /document-generate, /codex, /cso, /autoplan, /plan-devex-review, /devex-review, /careful, /freeze, /guard, /unfreeze, /torch-upgrade, /learn. Then ask the user if they also want to add torch to the current project so teammates get it.
+That's it. `setup` auto-detects the agents on your machine (Claude Code, Codex,
+OpenCode, Factory Droid, Kiro) and registers the skills. You should see:
+
+```
+torch ready (claude). 23 slash commands registered.
+```
+
+> Tip: run `./setup --host <name>` to target one specific agent, and
+> `./setup --announce` to ping the public install counter on hecz.dev (opt-in,
+> one anonymous event, nothing else).
 
 ### Step 2: Team mode — auto-update for shared repos (recommended)
 
@@ -67,7 +71,7 @@ Swap `required` for `optional` if you'd rather nudge teammates than block them.
 OpenClaw spawns Claude Code sessions via ACP, so every torch skill just works
 when Claude Code has torch installed. Paste this to your OpenClaw agent:
 
-> Install torch: run `git clone --single-branch --depth 1 https://github.com/garrytan/gstack.git ~/.claude/skills/torch && cd ~/.claude/skills/torch && ./setup` to install torch for Claude Code. Then add a "Coding Tasks" section to AGENTS.md that says: when spawning Claude Code sessions for coding work, tell the session to use torch skills. Include these examples — security audit: "Load torch. Run /cso", code review: "Load torch. Run /review", QA test a URL: "Load torch. Run /qa https://...", build a feature end-to-end: "Load torch. Run /autoplan, implement the plan, then run /ship", plan before building: "Load torch. Run /office-hours then /autoplan. Save the plan, don't implement."
+> Install torch: run `git clone --single-branch --depth 1 https://github.com/h3cz/torch.git ~/.claude/skills/torch && cd ~/.claude/skills/torch && ./setup` to install torch for Claude Code. Then add a "Coding Tasks" section to AGENTS.md that says: when spawning Claude Code sessions for coding work, tell the session to use torch skills. Include these examples — security audit: "Load torch. Run /cso", code review: "Load torch. Run /review", QA test a URL: "Load torch. Run /qa https://...", build a feature end-to-end: "Load torch. Run /autoplan, implement the plan, then run /ship", plan before building: "Load torch. Run /office-hours then /autoplan. Save the plan, don't implement."
 
 **After setup, just talk to your OpenClaw agent naturally:**
 
@@ -180,7 +184,7 @@ Each skill feeds into the next. `/office-hours` writes a design doc that `/plan-
 
 | Skill | Your specialist | What they do |
 |-------|----------------|--------------|
-| `/office-hours` | **Office Hours (hecz.dev)** | Start here. Six forcing questions that reframe your product before you write code. Pushes back on your framing, challenges premises, generates implementation alternatives. Design doc feeds into every downstream skill. |
+| `/office-hours` | **Office Hours (hecz.dev)** | Start here. Six forcing questions that reframe your product before you write code — and a security-first framing for anything touching auth, data, or infrastructure. Pushes back on your framing, challenges premises, generates implementation alternatives. Design doc feeds into every downstream skill. |
 | `/plan-ceo-review` | **CEO / Founder** | Rethink the problem. Find the 10-star product hiding inside the request. Four modes: Expansion, Selective Expansion, Hold Scope, Reduction. |
 | `/plan-eng-review` | **Eng Manager** | Lock in architecture, data flow, diagrams, edge cases, and tests. Forces hidden assumptions into the open. |
 | `/plan-design-review` | **Senior Designer** | Rates each design dimension 0-10, explains what a 10 looks like, then edits the plan to get there. AI Slop detection. Interactive — one AskUserQuestion per design choice. |
@@ -385,10 +389,6 @@ The uninstall script does not edit CLAUDE.md. In each project where torch was ad
 Free, MIT licensed, open source. No premium tier, no waitlist.
 
 I open sourced how I build software. You can fork it and make it your own.
-
-> **We're hiring.** Want to ship real products at AI-coding speed and help harden torch?
-> Come work at YC — [ycombinator.com/software](https://ycombinator.com/software)
-> Extremely competitive salary and equity. San Francisco, Dogpatch District.
 
 ## GBrain — persistent knowledge for your coding agent
 
