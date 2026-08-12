@@ -1130,7 +1130,7 @@ Ship all four together, re-run BrowseSafe-Bench smoke, record before/after. Targ
 
 #### User-feedback flywheel — decisions become training data (P3)
 
-**What:** Every Allow/Block click is labeled data. Log (suspected_text hash, layer scores, user decision, ts) to ~/.torch/security/feedback.jsonl. Aggregate via community-pulse when `telemetry: community`. Periodically retrain the classifier on aggregate feedback.
+**What:** Every Allow/Block click is labeled data. Log (suspected_text hash, layer scores, user decision, ts) to ~/.torch/security/feedback.jsonl. Retrain the classifier on that feedback locally. (The original design aggregated across users over a hosted pipe; torch no longer has one, so any aggregation would need a fresh opt-in mechanism.)
 
 **Why:** The system gets better the more it's used. Closes the loop between user reality and defense quality.
 
@@ -1164,10 +1164,9 @@ telemetry binary now accepts `--event-type attack_attempt --url-domain
 --payload-hash --confidence --layer --verdict`. `logAttempt()` spawns the
 binary fire-and-forget. Existing tier gating carries the events.
 
-Downstream follow-up still open: update the `community-pulse` Supabase edge
-function to accept the new event type and store in a typed `security_attempts`
-table. Dashboard read path is a separate TODO ("Cross-user aggregate attack
-dashboard" below).
+The remote leg of this is gone: torch removed its hosted telemetry backend, so
+the events stay in the local analytics JSONL. Cross-user aggregation would need
+a new opt-in transport before it could be revived.
 
 #### Full BrowseSafe-Bench at gate tier (P2)
 
@@ -1181,16 +1180,12 @@ Smoke-200 is a sample; full coverage catches the long tail. Run time ~5min herme
 **Priority:** P2
 **Depends on:** v1 shipped + ~2 weeks real data
 
-#### ~~Cross-user aggregate attack dashboard (P2)~~ — CLI SHIPPED, web UI remains
+#### ~~Cross-user aggregate attack dashboard (P2)~~ — WITHDRAWN
 
-CLI dashboard shipped in commits a5588ec0 (schema migration) + 2d107978
-(community-pulse edge function security aggregation) + 756875a7 (bin/torch-
-security-dashboard). Users can now run `torch-security-dashboard` to see
-attacks last 7 days, top attacked domains, detection-layer distribution,
-and verdict counts — all aggregated from the Supabase community-pulse pipe.
-
-Web UI at torch.gg/dashboard/security is still open — that's a separate
-webapp project outside this repo's scope.
+The CLI dashboard shipped and was then removed: it read from a hosted
+aggregation endpoint, and torch no longer runs one. Attack attempts are still
+recorded locally (`telemetry: local`); anything cross-user would need a new
+opt-in transport designed from scratch.
 
 #### TestSavantAI ensemble → DeBERTa-v3 ensemble (P2) — SHIPPED (opt-in)
 

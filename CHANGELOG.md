@@ -1,5 +1,53 @@
 # Changelog
 
+## [1.61.0.0] - 2026-08-12
+
+## **torch phones home to nothing.**
+## **The Supabase backend, the anon key in the repo, and every remote event are gone.**
+
+torch shipped a hardcoded Supabase project URL and publishable key in `supabase/config.sh`, and three paths that used them: the telemetry sync, the `./setup --announce` install ping, and a POST inside the update check. That project is being decommissioned, so the honest move is to remove the client too rather than leave a repo that ships a database endpoint pointing at nothing. Local analytics survive — they never left your machine to begin with — and the place where torch used to ask for usage events now points at GitHub issues instead.
+
+### What actually leaves the machine now
+
+| Path | Before | After |
+|---|---|---|
+| Skill runs | local JSONL → `telemetry-ingest` edge function | local JSONL, no upload path exists |
+| `./setup --announce` | one POST per install | flag removed |
+| Update check | `VERSION` fetch **+** a POST to `update-check` | `VERSION` fetch only |
+| `browse` domain-skill / CDP counters | `browse-telemetry.jsonl` | not written |
+| Committed credentials | project ref + `sb_publishable_*` key | none |
+
+The update check keeps working: it resolves `VERSION` over raw GitHub, which needs no backend. It was also pointed at the **wrong repo** — `garrytan/gstack`, inherited from the fork — so torch had been comparing itself against upstream's version this whole time. It now checks `h3cz/torch` on the release branch, overridable with `torch_REMOTE_BRANCH`.
+
+### What this means for you
+
+Nothing to migrate. If you had `telemetry: community` or `telemetry: anonymous` set, it now means `local` — a usage log at `~/.torch/analytics/skill-usage.jsonl` that `torch-analytics` reads back, and nothing else. The default is still `off`. The community and security dashboards are gone; they only ever rendered the aggregate endpoint's output, and there is no aggregate endpoint.
+
+The first-run telemetry consent question is gone too. In its place, every skill preamble carries one line pointing at <https://github.com/h3cz/torch/issues>, which reaches a human instead of a counter.
+
+### Itemized changes
+
+#### Removed
+
+- `supabase/` entirely — `config.sh` (the project ref and committed anon key), the `telemetry-ingest` / `community-pulse` / `update-check` edge functions, migrations 001–006, `config.toml`, `verify-rls.sh`.
+- `bin/torch-telemetry-sync`, `bin/torch-community-dashboard`, `bin/torch-security-dashboard`.
+- `browse/src/telemetry.ts` and its counters in `cdp-bridge.ts` / `domain-skill-commands.ts` — a write-only local log with no reader.
+- `./setup --announce` and its install ping.
+- `scripts/resolvers/preamble/generate-telemetry-prompt.ts` and the `preamble-telemetry-consent` question.
+
+#### Changed
+
+- `bin/torch-update-check`: `torch_REMOTE_URL` / `torch_REMOTE_REPO` now default to `h3cz/torch` instead of `garrytan/gstack`; new `torch_REMOTE_BRANCH` override; the Supabase POST is gone.
+- `bin/torch-telemetry-log`: local-only. No sync trigger, no `installation_id`. Tier is `off | local`; legacy `anonymous` / `community` values read as `local`.
+- `bin/torch-config`: the telemetry block documents `off | local` and says plainly that nothing is uploaded.
+- Every generated `SKILL.md`: the consent prompt became a one-line link to issues; `## Telemetry (run last)` is now `## Local analytics (run last)`; `TEL_PROMPTED` is gone and the proactive prompt gates on `LAKE_INTRO` instead.
+- README `Privacy & Telemetry` → `Privacy`, describing what torch actually does.
+
+#### For contributors
+
+- Deleted `test/telemetry-repo-strip.test.ts` (guarded a strip step on an upload that no longer happens), `test/security-dashboard-fallback.test.ts`, `test/regression-pr1169-mktemp-fallbacks.test.ts` (both scripts it pinned are gone), `browse/test/telemetry.test.ts`, and the orphaned `test/fixtures/golden-ship-claude.md`.
+- `test/telemetry.test.ts` keeps the local-write, sanitization, redaction, and `.pending` coverage, and adds a no-phone-home invariant: no tracked file may contain a Supabase endpoint, a `sb_publishable_*` key, or the old project ref.
+
 ## [1.60.1.0] - 2026-07-09
 
 ## **The /autoplan dual-voice eval is back on the board, catching real regressions.**

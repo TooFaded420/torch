@@ -190,7 +190,7 @@ rm -f /tmp/.torch-brain-context-$$.md 2>/dev/null || true
  * age exceeds half its TTL but hasn't yet expired, so the NEXT invocation
  * gets a fresh cache without paying the cold-miss tax.
  *
- * Subordinate to {{TELEMETRY}} — runs after. Doesn't block the user.
+ * Subordinate to the local-analytics epilogue — runs after. Doesn't block the user.
  */
 export function generateBrainCacheRefresh(ctx: TemplateContext): string {
   if (!isPreflightSkill(ctx.skillName)) return '';

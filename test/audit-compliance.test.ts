@@ -50,7 +50,7 @@ describe('Audit compliance', () => {
     expect(preamble).toContain('-x ');
     expect(preamble).toContain('torch-telemetry-log');
     // End-of-skill telemetry must also be conditional
-    const completionIdx = preamble.indexOf('Telemetry (run last)');
+    const completionIdx = preamble.indexOf('Local analytics (run last)');
     expect(completionIdx).toBeGreaterThan(-1);
     const completionSection = preamble.slice(completionIdx);
     expect(completionSection).toContain('_TEL" != "off"');

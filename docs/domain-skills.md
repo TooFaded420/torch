@@ -111,13 +111,6 @@ poisoning a different domain.
 
 ## Telemetry
 
-When telemetry is enabled (default `community` mode unless turned off), the
-following events are written to `~/.torch/analytics/browse-telemetry.jsonl`:
-
-- `domain_skill_saved {host, scope, state, bytes}`
-- `domain_skill_save_blocked {host, reason}`
-- `domain_skill_fired {host, source, version}`
-- `domain_skill_state_changed {host, from_state, to_state}` (planned)
-
-Hostname only — no body content, no agent text. Disable entirely with
-`torch-config set telemetry off` or `torch_TELEMETRY_OFF=1`.
+None. Domain skills emit no events, local or remote — the
+`browse-telemetry.jsonl` counters were removed along with the rest of torch's
+telemetry.

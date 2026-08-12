@@ -57,11 +57,9 @@ echo "FIRST_TASK: $_FIRST_TASK"
 _LAKE_SEEN=$([ -f ~/.torch/.completeness-intro-seen ] && echo "yes" || echo "no")
 echo "LAKE_INTRO: $_LAKE_SEEN"
 _TEL=$(${ctx.paths.binDir}/torch-config get telemetry 2>/dev/null || true)
-_TEL_PROMPTED=$([ -f ~/.torch/.telemetry-prompted ] && echo "yes" || echo "no")
 _TEL_START=$(date +%s)
 _SESSION_ID="$$-$(date +%s)"
-echo "TELEMETRY: \${_TEL:-off}"
-echo "TEL_PROMPTED: $_TEL_PROMPTED"
+echo "ANALYTICS: \${_TEL:-off}"
 _EXPLAIN_LEVEL=$(${ctx.paths.binDir}/torch-config get explain_level 2>/dev/null || echo "default")
 if [ "$_EXPLAIN_LEVEL" != "default" ] && [ "$_EXPLAIN_LEVEL" != "terse" ]; then _EXPLAIN_LEVEL="default"; fi
 echo "EXPLAIN_LEVEL: $_EXPLAIN_LEVEL"

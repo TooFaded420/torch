@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# torch-telemetry-log — append a telemetry event to local JSONL
+# torch-telemetry-log — append a usage event to the local JSONL
+#
+# Local only. Nothing this script writes leaves the machine — there is no
+# remote endpoint and no upload path. `torch-analytics` reads the file back.
 #
 # Data flow:
 #   preamble (start) ──▶ .pending marker
-#   preamble (epilogue) ──▶ torch-telemetry-log ──▶ skill-usage.jsonl
-#                                                 └──▶ torch-telemetry-sync (bg)
+#   preamble (epilogue) ──▶ torch-telemetry-log ──▶ skill-usage.jsonl ──▶ torch-analytics
 #
 # Usage:
 #   torch-telemetry-log --skill qa --duration 142 --outcome success \
@@ -14,7 +16,7 @@
 #   torch_STATE_DIR  — override ~/.torch state directory
 #   torch_DIR        — override auto-detected torch root
 #
-# NOTE: Uses set -uo pipefail (no -e) — telemetry must never exit non-zero
+# NOTE: Uses set -uo pipefail (no -e) — logging must never exit non-zero
 set -uo pipefail
 
 torch_DIR="${torch_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
@@ -74,13 +76,17 @@ done
 # Source: flag > env > default 'live'
 SOURCE="${SOURCE:-${torch_TELEMETRY_SOURCE:-live}}"
 
-# ─── Read telemetry tier ─────────────────────────────────────
+# ─── Read analytics tier ─────────────────────────────────────
+# off   — write nothing
+# local — write ~/.torch/analytics/skill-usage.jsonl for `torch-analytics`
+# `anonymous` and `community` are legacy values from the old remote-telemetry
+# tiers; existing configs still carrying them are treated as `local`.
 TIER="$("$CONFIG_CMD" get telemetry 2>/dev/null || true)"
 TIER="${TIER:-off}"
 
-# Validate tier
 case "$TIER" in
-  off|anonymous|community) ;;
+  anonymous|community) TIER="local" ;;
+  off|local) ;;
   *) TIER="off" ;;  # invalid value → default to off
 esac
 
@@ -132,33 +138,7 @@ if [ -d "$STATE_DIR/sessions" ]; then
   [ -n "$_SC" ] && [ "$_SC" -gt 0 ] 2>/dev/null && SESSIONS="$_SC"
 fi
 
-# Generate installation_id for community tier
-# Uses a random UUID stored locally — not derived from hostname/user so it
-# can't be guessed or correlated by someone who knows your machine identity.
-INSTALL_ID=""
-if [ "$TIER" = "community" ]; then
-  ID_FILE="$HOME/.torch/installation-id"
-  if [ -f "$ID_FILE" ]; then
-    INSTALL_ID="$(cat "$ID_FILE" 2>/dev/null)"
-  fi
-  if [ -z "$INSTALL_ID" ]; then
-    # Generate a random UUID v4
-    if command -v uuidgen >/dev/null 2>&1; then
-      INSTALL_ID="$(uuidgen | tr '[:upper:]' '[:lower:]')"
-    elif [ -r /proc/sys/kernel/random/uuid ]; then
-      INSTALL_ID="$(cat /proc/sys/kernel/random/uuid)"
-    else
-      # Fallback: random hex from /dev/urandom
-      INSTALL_ID="$(od -An -tx1 -N16 /dev/urandom 2>/dev/null | tr -d ' \n')"
-    fi
-    if [ -n "$INSTALL_ID" ]; then
-      mkdir -p "$(dirname "$ID_FILE")" 2>/dev/null
-      printf '%s' "$INSTALL_ID" > "$ID_FILE" 2>/dev/null
-    fi
-  fi
-fi
-
-# Local-only fields (never sent remotely)
+# Repo / branch context — local only, like every other field here.
 REPO_SLUG=""
 BRANCH=""
 if command -v git >/dev/null 2>&1; then
@@ -221,9 +201,6 @@ fi
 DUR_FIELD="null"
 [ -n "$DURATION" ] && DUR_FIELD="$DURATION"
 
-INSTALL_FIELD="null"
-[ -n "$INSTALL_ID" ] && INSTALL_FIELD="\"$INSTALL_ID\""
-
 BROWSE_BOOL="false"
 [ "$USED_BROWSE" = "true" ] && BROWSE_BOOL="true"
 
@@ -251,18 +228,12 @@ SEC_LAYER_FIELD="null"
 SEC_VERDICT_FIELD="null"
 [ -n "$SEC_VERDICT" ] && SEC_VERDICT_FIELD="\"$SEC_VERDICT\""
 
-printf '{"v":1,"ts":"%s","event_type":"%s","skill":"%s","session_id":"%s","torch_version":"%s","os":"%s","arch":"%s","duration_s":%s,"outcome":"%s","error_class":%s,"error_message":%s,"failed_step":%s,"used_browse":%s,"sessions":%s,"installation_id":%s,"source":"%s","security_url_domain":%s,"security_payload_hash":%s,"security_confidence":%s,"security_layer":%s,"security_verdict":%s,"_repo_slug":"%s","_branch":"%s"}\n' \
+printf '{"v":1,"ts":"%s","event_type":"%s","skill":"%s","session_id":"%s","torch_version":"%s","os":"%s","arch":"%s","duration_s":%s,"outcome":"%s","error_class":%s,"error_message":%s,"failed_step":%s,"used_browse":%s,"sessions":%s,"source":"%s","security_url_domain":%s,"security_payload_hash":%s,"security_confidence":%s,"security_layer":%s,"security_verdict":%s,"_repo_slug":"%s","_branch":"%s"}\n' \
   "$TS" "$EVENT_TYPE" "$SKILL" "$SESSION_ID" "$torch_VERSION" "$OS" "$ARCH" \
   "$DUR_FIELD" "$OUTCOME" "$ERR_FIELD" "$ERR_MSG_FIELD" "$STEP_FIELD" \
   "$BROWSE_BOOL" "${SESSIONS:-1}" \
-  "$INSTALL_FIELD" "$SOURCE" \
+  "$SOURCE" \
   "$SEC_DOMAIN_FIELD" "$SEC_HASH_FIELD" "$SEC_CONF_FIELD" "$SEC_LAYER_FIELD" "$SEC_VERDICT_FIELD" \
   "$REPO_SLUG" "$BRANCH" >> "$JSONL_FILE" 2>/dev/null || true
-
-# ─── Trigger sync if tier is not off ─────────────────────────
-SYNC_CMD="$torch_DIR/bin/torch-telemetry-sync"
-if [ -x "$SYNC_CMD" ]; then
-  "$SYNC_CMD" 2>/dev/null &
-fi
 
 exit 0

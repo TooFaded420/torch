@@ -1044,11 +1044,12 @@ At end: `unset SUPABASE_ACCESS_TOKEN`. Revocation reminder.
 
 ---
 
-## Telemetry (D4)
+## Local analytics (D4)
 
-The preamble's Telemetry block logs skill success/failure at exit. When
-emitting the event, add these enumerated categorical values to the
-telemetry payload (SAFE — no free-form secrets, never the URL or PAT):
+The preamble's local-analytics block logs skill success/failure at exit. It
+writes to `~/.torch/analytics/` and is never uploaded. When emitting the event,
+add these enumerated categorical values to the payload (SAFE — no free-form
+secrets, never the URL or PAT):
 
 - `scenario`: `supabase-existing` | `supabase-auto-provision` |
   `supabase-manual` | `pglite-local` | `switch-to-supabase` |
@@ -1060,7 +1061,7 @@ telemetry payload (SAFE — no free-form secrets, never the URL or PAT):
   `skip-for-now` | `n/a` (outside git repo)
 
 Never pass `SUPABASE_ACCESS_TOKEN`, `DB_PASS`, `GBRAIN_POOLER_URL`,
-`GBRAIN_DATABASE_URL`, or any `postgresql://` substring to the telemetry
+`GBRAIN_DATABASE_URL`, or any `postgresql://` substring to the logging
 invocation. The CI grep test in `test/skill-validation.test.ts` enforces
 this at build time.
 

@@ -42,8 +42,8 @@ afterEach(() => {
 });
 
 describe('torch-telemetry-log', () => {
-  test('appends valid JSONL when tier=anonymous', () => {
-    setConfig('telemetry', 'anonymous');
+  test('appends valid JSONL when tier=local', () => {
+    setConfig('telemetry', 'local');
     run(`${BIN}/torch-telemetry-log --skill qa --duration 142 --outcome success --session-id test-123`);
 
     const events = parseJsonl();
@@ -72,26 +72,8 @@ describe('torch-telemetry-log', () => {
     expect(readJsonl()).toHaveLength(0);
   });
 
-  test('includes installation_id for community tier', () => {
-    setConfig('telemetry', 'community');
-    run(`${BIN}/torch-telemetry-log --skill review --duration 100 --outcome success --session-id comm-123`);
-
-    const events = parseJsonl();
-    expect(events).toHaveLength(1);
-    // installation_id should be a UUID v4 (or hex fallback)
-    expect(events[0].installation_id).toMatch(/^[a-f0-9-]{32,36}$/);
-  });
-
-  test('installation_id is null for anonymous tier', () => {
-    setConfig('telemetry', 'anonymous');
-    run(`${BIN}/torch-telemetry-log --skill qa --duration 50 --outcome success --session-id anon-123`);
-
-    const events = parseJsonl();
-    expect(events[0].installation_id).toBeNull();
-  });
-
   test('includes error_class when provided', () => {
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
     run(`${BIN}/torch-telemetry-log --skill browse --duration 10 --outcome error --error-class timeout --session-id err-123`);
 
     const events = parseJsonl();
@@ -100,7 +82,7 @@ describe('torch-telemetry-log', () => {
   });
 
   test('handles missing duration gracefully', () => {
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
     run(`${BIN}/torch-telemetry-log --skill qa --outcome success --session-id nodur-123`);
 
     const events = parseJsonl();
@@ -108,7 +90,7 @@ describe('torch-telemetry-log', () => {
   });
 
   test('supports event_type flag', () => {
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
     run(`${BIN}/torch-telemetry-log --event-type upgrade_prompted --skill "" --outcome success --session-id up-123`);
 
     const events = parseJsonl();
@@ -116,7 +98,7 @@ describe('torch-telemetry-log', () => {
   });
 
   test('includes local-only fields (_repo_slug, _branch)', () => {
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
     run(`${BIN}/torch-telemetry-log --skill qa --duration 50 --outcome success --session-id local-123`);
 
     const events = parseJsonl();
@@ -127,7 +109,7 @@ describe('torch-telemetry-log', () => {
 
   // ─── json_safe() injection prevention tests ────────────────
   test('sanitizes skill name with quote injection attempt', () => {
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
     run(`${BIN}/torch-telemetry-log --skill 'review","injected":"true' --duration 10 --outcome success --session-id inj-1`);
 
     const lines = readJsonl();
@@ -141,7 +123,7 @@ describe('torch-telemetry-log', () => {
   });
 
   test('truncates skill name exceeding 200 chars', () => {
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
     const longSkill = 'a'.repeat(250);
     run(`${BIN}/torch-telemetry-log --skill '${longSkill}' --duration 10 --outcome success --session-id trunc-1`);
 
@@ -150,7 +132,7 @@ describe('torch-telemetry-log', () => {
   });
 
   test('sanitizes outcome with newline injection attempt', () => {
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
     // Use printf to pass actual newline in the argument
     run(`bash -c 'OUTCOME=$(printf "success\\nfake\\":\\"true"); ${BIN}/torch-telemetry-log --skill qa --duration 10 --outcome "$OUTCOME" --session-id inj-2'`);
 
@@ -161,7 +143,7 @@ describe('torch-telemetry-log', () => {
   });
 
   test('sanitizes session_id with backslash-quote injection', () => {
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
     run(`${BIN}/torch-telemetry-log --skill qa --duration 10 --outcome success --session-id 'id\\\\"","x":"y'`);
 
     const lines = readJsonl();
@@ -171,7 +153,7 @@ describe('torch-telemetry-log', () => {
   });
 
   test('sanitizes error_class with quote injection', () => {
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
     run(`${BIN}/torch-telemetry-log --skill qa --duration 10 --outcome error --error-class 'timeout","extra":"val' --session-id inj-3`);
 
     const lines = readJsonl();
@@ -181,7 +163,7 @@ describe('torch-telemetry-log', () => {
   });
 
   test('sanitizes failed_step with quote injection', () => {
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
     run(`${BIN}/torch-telemetry-log --skill qa --duration 10 --outcome error --failed-step 'step1","hacked":"yes' --session-id inj-4`);
 
     const lines = readJsonl();
@@ -191,7 +173,7 @@ describe('torch-telemetry-log', () => {
   });
 
   test('escapes error_message quotes and preserves content', () => {
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
     run(`${BIN}/torch-telemetry-log --skill qa --duration 10 --outcome error --error-message 'Error: file "test.txt" not found' --session-id inj-5`);
 
     const lines = readJsonl();
@@ -202,7 +184,7 @@ describe('torch-telemetry-log', () => {
   });
 
   test('redacts credential spans in error_message before they touch disk (#1947)', () => {
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
     const token = 'ghp_' + 'A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8';
     run(
       `${BIN}/torch-telemetry-log --skill qa --duration 10 --outcome error --error-message 'push failed: auth ${token} rejected by remote' --session-id red-1`,
@@ -220,7 +202,7 @@ describe('torch-telemetry-log', () => {
   });
 
   test('fails closed: error_message becomes null when the redactor is unavailable (#1947)', () => {
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
     const token = 'ghp_' + 'A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8';
     // Shadow bun with a failing stub on a prepended PATH (deterministic on
     // any host layout — pre-landing review flagged the bare '/usr/bin:/bin'
@@ -246,7 +228,7 @@ describe('torch-telemetry-log', () => {
   });
 
   test('fails closed: PEM key in error_message drops the whole message (#1947 review fix)', () => {
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
     // Header-only pattern: span replacement would forward the key body, so
     // the engine returns null and the bin must store null.
     run(
@@ -261,7 +243,7 @@ describe('torch-telemetry-log', () => {
   });
 
   test('truncates error_message to 200 chars after redaction (#1947)', () => {
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
     const long = 'x'.repeat(300);
     run(
       `${BIN}/torch-telemetry-log --skill qa --duration 10 --outcome error --error-message '${long}' --session-id red-3`,
@@ -273,7 +255,7 @@ describe('torch-telemetry-log', () => {
   });
 
   test('fails closed: error_message becomes null when the engine cannot relocate a span (#1947)', () => {
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
     const secret = '8Fk2pQ9vXz4wL7mN3rT6yB1cD5eG0hJq';
     // env.kv-shaped finding (line-anchored, so the assignment leads the
     // message): the span (value) starts past the regex match start,
@@ -295,7 +277,7 @@ describe('torch-telemetry-log', () => {
     const analyticsDir = path.join(tmpDir, 'analytics');
     if (fs.existsSync(analyticsDir)) fs.rmSync(analyticsDir, { recursive: true });
 
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
     run(`${BIN}/torch-telemetry-log --skill qa --duration 50 --outcome success --session-id mkdir-123`);
 
     expect(fs.existsSync(analyticsDir)).toBe(true);
@@ -304,7 +286,7 @@ describe('torch-telemetry-log', () => {
 
   // ─── Telemetry JSON safety: branch/repo with special chars ────
   test('branch name with quotes does not corrupt JSON', () => {
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
     // Simulate a branch name with double quotes by setting it via git env override
     // The json_safe function strips quotes, so the JSONL should remain valid
     run(`${BIN}/torch-telemetry-log --skill qa --duration 10 --outcome success --session-id branch-quotes-1`);
@@ -319,7 +301,7 @@ describe('torch-telemetry-log', () => {
   });
 
   test('repo slug with special chars does not corrupt JSON', () => {
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
     run(`${BIN}/torch-telemetry-log --skill qa --duration 10 --outcome success --session-id repo-special-1`);
 
     const lines = readJsonl();
@@ -333,7 +315,7 @@ describe('torch-telemetry-log', () => {
 
 describe('.pending marker', () => {
   test('finalizes stale .pending from another session as outcome:unknown', () => {
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
 
     // Write a fake .pending marker from a different session
     const analyticsDir = path.join(tmpDir, 'analytics');
@@ -360,7 +342,7 @@ describe('.pending marker', () => {
   });
 
   test('.pending-SESSION file is removed after finalization', () => {
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
 
     const analyticsDir = path.join(tmpDir, 'analytics');
     fs.mkdirSync(analyticsDir, { recursive: true });
@@ -373,7 +355,7 @@ describe('.pending marker', () => {
   });
 
   test('does not finalize own session pending marker', () => {
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
 
     const analyticsDir = path.join(tmpDir, 'analytics');
     fs.mkdirSync(analyticsDir, { recursive: true });
@@ -412,7 +394,7 @@ describe('torch-analytics', () => {
   });
 
   test('renders usage dashboard with events', () => {
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
     run(`${BIN}/torch-telemetry-log --skill qa --duration 120 --outcome success --session-id a-1`);
     run(`${BIN}/torch-telemetry-log --skill qa --duration 60 --outcome success --session-id a-2`);
     run(`${BIN}/torch-telemetry-log --skill ship --duration 30 --outcome error --error-class timeout --session-id a-3`);
@@ -427,7 +409,7 @@ describe('torch-analytics', () => {
   });
 
   test('filters by time window', () => {
-    setConfig('telemetry', 'anonymous');
+    setConfig('telemetry', 'local');
     run(`${BIN}/torch-telemetry-log --skill qa --duration 60 --outcome success --session-id t-1`);
 
     const output7d = run(`${BIN}/torch-analytics 7d`);
@@ -436,57 +418,7 @@ describe('torch-analytics', () => {
   });
 });
 
-describe('torch-telemetry-sync', () => {
-  test('exits silently with no Supabase URL configured', () => {
-    // Default: torch_SUPABASE_URL is not set → exit 0
-    const result = run(`${BIN}/torch-telemetry-sync`);
-    expect(result).toBe('');
-  });
-
-  test('exits silently with no JSONL file', () => {
-    const result = run(`${BIN}/torch-telemetry-sync`, { torch_SUPABASE_URL: 'http://localhost:9999' });
-    expect(result).toBe('');
-  });
-
-  test('does not rename JSONL field names (edge function expects raw names)', () => {
-    setConfig('telemetry', 'anonymous');
-    run(`${BIN}/torch-telemetry-log --skill qa --duration 60 --outcome success --session-id raw-fields-1`);
-
-    const events = parseJsonl();
-    expect(events).toHaveLength(1);
-    // Edge function expects these raw field names, NOT Postgres column names
-    expect(events[0]).toHaveProperty('v');
-    expect(events[0]).toHaveProperty('ts');
-    expect(events[0]).toHaveProperty('sessions');
-    // Should NOT have Postgres column names
-    expect(events[0]).not.toHaveProperty('schema_version');
-    expect(events[0]).not.toHaveProperty('event_timestamp');
-    expect(events[0]).not.toHaveProperty('concurrent_sessions');
-  });
-});
-
-describe('torch-community-dashboard', () => {
-  test('shows unconfigured message when no Supabase config available', () => {
-    // Use a fake torch_DIR with no supabase/config.sh
-    const output = run(`${BIN}/torch-community-dashboard`, {
-      torch_DIR: tmpDir,
-      torch_SUPABASE_URL: '',
-      torch_SUPABASE_ANON_KEY: '',
-    });
-    expect(output).toContain('Supabase not configured');
-    expect(output).toContain('torch-analytics');
-  });
-
-  test('connects to Supabase when config exists', () => {
-    // Use the real torch_DIR which has supabase/config.sh
-    const output = run(`${BIN}/torch-community-dashboard`);
-    expect(output).toContain('torch community dashboard');
-    // Should not show "not configured" since config.sh exists
-    expect(output).not.toContain('Supabase not configured');
-  });
-});
-
-describe('preamble telemetry gating (#467)', () => {
+describe('preamble analytics gating (#467)', () => {
   test('preamble source does not write JSONL unconditionally', () => {
     const preamble = fs.readFileSync(path.join(ROOT, 'scripts', 'resolvers', 'preamble.ts'), 'utf-8');
     const lines = preamble.split('\n');
@@ -505,5 +437,55 @@ describe('preamble telemetry gating (#467)', () => {
         }
       }
     }
+  });
+});
+
+// ─── No phone-home invariant ────────────────────────────────
+//
+// torch removed its hosted telemetry backend. Nothing tracked in this repo may
+// reintroduce the endpoint, the committed publishable key, or the old project
+// ref — not in code, not in docs, not in a fixture. Two files are exempt:
+// CHANGELOG.md records the history of the removal, and this file has to spell
+// the identifiers out in order to search for them.
+describe('no phone-home', () => {
+  const trackedFiles = execSync('git ls-files -z', { cwd: ROOT, encoding: 'utf-8' })
+    .split('\0')
+    .filter(Boolean)
+    .filter(f => f !== 'CHANGELOG.md' && f !== 'test/telemetry.test.ts');
+
+  const FORBIDDEN: Array<[string, RegExp]> = [
+    ['decommissioned Supabase project ref', /dbbwvouxosctgkmnmzac/],
+    ['committed publishable key', /sb_publishable_/],
+    ['telemetry Supabase config', /torch_SUPABASE_ANON_KEY/],
+  ];
+
+  for (const [label, pattern] of FORBIDDEN) {
+    test(`no tracked file contains the ${label}`, () => {
+      const offenders = trackedFiles.filter(f => {
+        const full = path.join(ROOT, f);
+        let buf: Buffer;
+        try {
+          buf = fs.readFileSync(full);
+        } catch {
+          return false; // deleted or unreadable in this working tree
+        }
+        return pattern.test(buf.toString('utf-8'));
+      });
+      expect(offenders).toEqual([]);
+    });
+  }
+
+  test('no binary POSTs to a Supabase edge function', () => {
+    const bins = fs.readdirSync(path.join(ROOT, 'bin'));
+    const offenders = bins.filter(b => {
+      const full = path.join(ROOT, 'bin', b);
+      if (!fs.statSync(full).isFile()) return false;
+      const content = fs.readFileSync(full, 'utf-8');
+      // /setup-gbrain provisions a project in the USER's own Supabase account
+      // via the Management API — that is a feature, not telemetry.
+      if (b.startsWith('torch-gbrain-supabase')) return false;
+      return content.includes('/functions/v1/');
+    });
+    expect(offenders).toEqual([]);
   });
 });

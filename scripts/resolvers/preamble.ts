@@ -12,7 +12,7 @@
  *
  * Telemetry data flow:
  *   1. Always: local JSONL append to ~/.torch/analytics/ (inline, inspectable)
- *   2. If _TEL != "off" AND binary exists: torch-telemetry-log for remote reporting
+ *   2. If _TEL != "off" AND binary exists: torch-telemetry-log for local analytics
  */
 
 
@@ -30,7 +30,7 @@ import {
 
 // One-time onboarding prompts
 import { generateLakeIntro } from './preamble/generate-lake-intro';
-import { generateTelemetryPrompt } from './preamble/generate-telemetry-prompt';
+import { generateFeedbackLink } from './preamble/generate-feedback-link';
 import { generateProactivePrompt } from './preamble/generate-proactive-prompt';
 import { generateFirstRunGuidance } from './preamble/generate-first-run-guidance';
 import { generateRoutingInjection } from './preamble/generate-routing-injection';
@@ -66,7 +66,7 @@ export { generateTestFailureTriage } from './preamble/generate-test-failure-tria
 
 // Preamble Composition (tier → sections)
 // ─────────────────────────────────────────────
-// T1: core + upgrade + lake + telemetry + voice(trimmed) + completion
+// T1: core + upgrade + lake + feedback + voice(trimmed) + completion
 // T2: T1 + voice(full) + ask + completeness + context-recovery + confusion + checkpoint + context-health
 // T3: T2 + repo-mode + search
 // T4: (same as T3 — TEST_FAILURE_TRIAGE is a separate {{}} placeholder, not preamble)
@@ -93,7 +93,7 @@ export function generatePreamble(ctx: TemplateContext): string {
     generateUpgradeCheck(ctx),
     generateWritingStyleMigration(ctx),
     generateLakeIntro(),
-    generateTelemetryPrompt(ctx),
+    generateFeedbackLink(),
     generateProactivePrompt(ctx),
     generateFirstRunGuidance(ctx),
     generateRoutingInjection(ctx),

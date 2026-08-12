@@ -41,7 +41,6 @@ import {
 } from './domain-skills';
 import { runContentFilters } from './content-security';
 import { getCurrentProjectSlug } from './project-slug';
-import { logTelemetry } from './telemetry';
 
 // ─── Body input resolution ──────────────────────────────────────
 
@@ -121,7 +120,6 @@ async function handleSave(args: string[], bm: BrowserManager): Promise<string> {
   // injection time, not here (CLAUDE.md: classifier can't import in compiled binary).
   const filterResult = runContentFilters(body, page.url(), 'domain-skill-save');
   if (filterResult.blocked) {
-    logTelemetry({ event: 'domain_skill_save_blocked', host, reason: filterResult.message });
     throw new Error(
       `Save blocked: ${filterResult.message}\n` +
         'Cause: skill body trips L1-L3 content filters (likely contains URL blocklist match or ARIA injection patterns).\n' +
@@ -139,7 +137,6 @@ async function handleSave(args: string[], bm: BrowserManager): Promise<string> {
     source: 'agent',
     classifierScore: 0, // L4 deferred to load-time
   });
-  logTelemetry({ event: 'domain_skill_saved', host, scope: row.scope, state: row.state, bytes: body.length });
   return formatSavedOk(row, slug);
 }
 

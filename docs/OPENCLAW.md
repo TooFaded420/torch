@@ -110,14 +110,14 @@ Published to ClawHub. Install with `clawhub install`:
 
 Source lives in `openclaw/skills/` in the torch repo. These are hand-crafted
 adaptations of the torch methodology for OpenClaw's conversational context.
-No torch infrastructure (no browse, no telemetry, no preamble).
+No torch infrastructure (no browse, no analytics, no preamble).
 
 ## Spawned session detection
 
 When Claude Code runs inside a session spawned by OpenClaw, the `OPENCLAW_SESSION`
 environment variable should be set. torch detects this and adjusts:
 - Skips interactive prompts (auto-chooses recommended options)
-- Skips upgrade checks and telemetry prompts
+- Skips upgrade checks and one-time onboarding prompts
 - Focuses on task completion and prose reporting
 
 Set the env var in sessions_spawn: `env: { OPENCLAW_SESSION: "1" }`

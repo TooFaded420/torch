@@ -177,7 +177,7 @@ The Chrome sidebar agent has tools (Bash, Read, Glob, Grep, WebFetch) and reads 
 
 **Env knobs:** `torch_SECURITY_OFF=1` is a real kill switch (skips ML scan, canary still injects). Model cache at `~/.torch/models/testsavant-small/` (112MB, first run) and `~/.torch/models/deberta-v3-injection/` (721MB, opt-in only). Attack log at `~/.torch/security/attempts.jsonl` (salted sha256 + domain, rotates at 10MB, 5 generations). Per-device salt at `~/.torch/security/device-salt` (0600), cached in-process to survive FS-unwritable environments.
 
-**Visibility.** The sidebar header shows a shield icon (green/amber/red) polled via `/sidebar-chat`. A centered banner appears on canary leak or BLOCK verdict with the exact layer scores. `bin/torch-security-dashboard` aggregates local attempts; `supabase/functions/community-pulse` aggregates opt-in community telemetry across users.
+**Visibility.** The sidebar header shows a shield icon (green/amber/red) polled via `/sidebar-chat`. A centered banner appears on canary leak or BLOCK verdict with the exact layer scores. Attempts are recorded to the local analytics JSONL (`telemetry: local`) and never leave the machine — there is no cross-user aggregation.
 
 ## The ref system
 

@@ -501,16 +501,8 @@ export const QUESTIONS = {
   },
 
   // -----------------------------------------------------------------------
-  // Preamble one-time prompts (telemetry, proactive, routing)
+  // Preamble one-time prompts (proactive, routing)
   // -----------------------------------------------------------------------
-  'preamble-telemetry-consent': {
-    id: 'preamble-telemetry-consent',
-    skill: 'preamble',
-    category: 'approval',
-    door_type: 'two-way',
-    options: ['community', 'anonymous', 'off'],
-    description: "Share usage data with torch? community (recommended) / anonymous / off",
-  },
   'preamble-proactive-behavior': {
     id: 'preamble-proactive-behavior',
     skill: 'preamble',

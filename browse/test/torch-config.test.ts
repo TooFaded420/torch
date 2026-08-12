@@ -205,11 +205,11 @@ describe('torch-config', () => {
   });
 
   test('header does not break get on commented-out keys', () => {
-    run(['set', 'telemetry', 'community']);
-    // Header contains "# telemetry: anonymous" as a comment example.
+    run(['set', 'telemetry', 'local']);
+    // Header contains "# telemetry: off" as a comment example.
     // get should return the real value, not the comment.
     const { stdout } = run(['get', 'telemetry']);
-    expect(stdout).toBe('community');
+    expect(stdout).toBe('local');
   });
 
   test('existing config file is not overwritten with header', () => {
