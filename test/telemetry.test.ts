@@ -444,22 +444,22 @@ describe('preamble analytics gating (#467)', () => {
 //
 // torch removed its hosted telemetry backend. Nothing tracked in this repo may
 // reintroduce the endpoint, the committed publishable key, or the old project
-// ref — not in code, not in docs, not in a fixture. Two files are exempt:
-// CHANGELOG.md records the history of the removal, and this file has to spell
-// the identifiers out in order to search for them.
+// ref — not in code, not in docs, not in a fixture. CHANGELOG.md is exempt:
+// it records the history of the removal. The needles below are assembled from
+// fragments so that this file is not itself a hit for its own search.
 describe('no phone-home', () => {
   const trackedFiles = execSync('git ls-files -z', { cwd: ROOT, encoding: 'utf-8' })
     .split('\0')
     .filter(Boolean)
-    .filter(f => f !== 'CHANGELOG.md' && f !== 'test/telemetry.test.ts');
+    .filter(f => f !== 'CHANGELOG.md');
 
-  const FORBIDDEN: Array<[string, RegExp]> = [
-    ['decommissioned Supabase project ref', /dbbwvouxosctgkmnmzac/],
-    ['committed publishable key', /sb_publishable_/],
-    ['telemetry Supabase config', /torch_SUPABASE_ANON_KEY/],
+  const FORBIDDEN: Array<[string, string]> = [
+    ['decommissioned Supabase project ref', ['dbbwvouxos', 'ctgkmnmzac'].join('')],
+    ['committed publishable key', ['sb', 'publishable', ''].join('_')],
+    ['telemetry Supabase config', ['torch', 'SUPABASE', 'ANON', 'KEY'].join('_')],
   ];
 
-  for (const [label, pattern] of FORBIDDEN) {
+  for (const [label, needle] of FORBIDDEN) {
     test(`no tracked file contains the ${label}`, () => {
       const offenders = trackedFiles.filter(f => {
         const full = path.join(ROOT, f);
@@ -469,7 +469,7 @@ describe('no phone-home', () => {
         } catch {
           return false; // deleted or unreadable in this working tree
         }
-        return pattern.test(buf.toString('utf-8'));
+        return buf.toString('utf-8').includes(needle);
       });
       expect(offenders).toEqual([]);
     });
