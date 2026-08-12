@@ -50,11 +50,11 @@ ${ctx.paths.binDir}/torch-learnings-log '{"skill":"SKILL_NAME","type":"operation
 
 Do not log obvious facts or one-time transient errors.
 
-## Telemetry (run last)
+## Local analytics (run last)
 
-After workflow completion, log telemetry. Use skill \`name:\` from frontmatter. OUTCOME is success/error/abort/unknown.
+After workflow completion, log the run to local analytics. Use skill \`name:\` from frontmatter. OUTCOME is success/error/abort/unknown.
 
-**PLAN MODE EXCEPTION — ALWAYS RUN:** This command writes telemetry to
+**PLAN MODE EXCEPTION — ALWAYS RUN:** This command writes local analytics to
 \`~/.torch/analytics/\`, matching preamble analytics writes.
 
 Run this bash:
@@ -69,7 +69,7 @@ rm -f ~/.torch/analytics/.pending-"$_SESSION_ID" 2>/dev/null || true
 if [ "$_TEL" != "off" ]; then
 echo '{"skill":"SKILL_NAME","duration_s":"'"$_TEL_DUR"'","outcome":"OUTCOME","browse":"USED_BROWSE","session":"'"$_SESSION_ID"'","ts":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}' >> ~/.torch/analytics/skill-usage.jsonl 2>/dev/null || true
 fi
-# Remote telemetry (opt-in, requires binary)
+# Structured local analytics (opt-in, requires binary — never uploaded)
 if [ "$_TEL" != "off" ] && [ -x ~/.claude/skills/torch/bin/torch-telemetry-log ]; then
   ~/.claude/skills/torch/bin/torch-telemetry-log \\
     --skill "SKILL_NAME" --duration "$_TEL_DUR" --outcome "OUTCOME" \\

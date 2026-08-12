@@ -30,11 +30,12 @@ CONFIG_HEADER='# torch configuration — edit freely, changes take effect on nex
 # routing_declined: false   # Set to true to skip the CLAUDE.md routing injection
 #                           # prompt. Set back to false to be asked again.
 #
-# ─── Telemetry ───────────────────────────────────────────────────────
-# telemetry: off            # off | anonymous | community
-#                           #   off       — no data sent, no local analytics (default)
-#                           #   anonymous — counter only, no device ID
-#                           #   community — usage data + stable device ID
+# ─── Local analytics ─────────────────────────────────────────────────
+# telemetry: off            # off | local
+#                           #   off   — nothing recorded (default)
+#                           #   local — write ~/.torch/analytics/skill-usage.jsonl
+#                           #           for `torch-analytics`. Never uploaded;
+#                           #           torch has no remote endpoint.
 #
 # ─── Updates ─────────────────────────────────────────────────────────
 # auto_upgrade: false       # true = silently upgrade on session start

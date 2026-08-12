@@ -62,11 +62,9 @@ echo "FIRST_TASK: $_FIRST_TASK"
 _LAKE_SEEN=$([ -f ~/.torch/.completeness-intro-seen ] && echo "yes" || echo "no")
 echo "LAKE_INTRO: $_LAKE_SEEN"
 _TEL=$($torch_BIN/torch-config get telemetry 2>/dev/null || true)
-_TEL_PROMPTED=$([ -f ~/.torch/.telemetry-prompted ] && echo "yes" || echo "no")
 _TEL_START=$(date +%s)
 _SESSION_ID="$$-$(date +%s)"
-echo "TELEMETRY: ${_TEL:-off}"
-echo "TEL_PROMPTED: $_TEL_PROMPTED"
+echo "ANALYTICS: ${_TEL:-off}"
 _EXPLAIN_LEVEL=$($torch_BIN/torch-config get explain_level 2>/dev/null || echo "default")
 if [ "$_EXPLAIN_LEVEL" != "default" ] && [ "$_EXPLAIN_LEVEL" != "terse" ]; then _EXPLAIN_LEVEL="default"; fi
 echo "EXPLAIN_LEVEL: $_EXPLAIN_LEVEL"
@@ -182,35 +180,9 @@ touch ~/.torch/.completeness-intro-seen
 
 Only run `open` if yes. Always run `touch`.
 
-If `TEL_PROMPTED` is `no` AND `LAKE_INTRO` is `yes`: ask telemetry once via AskUserQuestion:
+torch collects nothing and phones home to nothing. If something is broken or missing, say so: https://github.com/h3cz/torch/issues
 
-> Help torch get better. Share usage data only: skill, duration, crashes, stable device ID. No code or file paths. Your repo name is recorded locally only and stripped before any upload.
-
-Options:
-- A) Help torch get better! (recommended)
-- B) No thanks
-
-If A: run `$torch_BIN/torch-config set telemetry community`
-
-If B: ask follow-up:
-
-> Anonymous mode sends only aggregate usage, no unique ID.
-
-Options:
-- A) Sure, anonymous is fine
-- B) No thanks, fully off
-
-If B→A: run `$torch_BIN/torch-config set telemetry anonymous`
-If B→B: run `$torch_BIN/torch-config set telemetry off`
-
-Always run:
-```bash
-touch ~/.torch/.telemetry-prompted
-```
-
-Skip if `TEL_PROMPTED` is `yes`.
-
-If `PROACTIVE_PROMPTED` is `no` AND `TEL_PROMPTED` is `yes`: ask once:
+If `PROACTIVE_PROMPTED` is `no` AND `LAKE_INTRO` is `yes`: ask once:
 
 > Let torch proactively suggest skills, like /qa for "does this work?" or /investigate for bugs?
 
@@ -316,7 +288,7 @@ If marker exists, skip.
 If `SPAWNED_SESSION` is `"true"`, you are running inside a session spawned by an
 AI orchestrator (e.g., OpenClaw). In spawned sessions:
 - Do NOT use AskUserQuestion for interactive prompts. Auto-choose the recommended option.
-- Do NOT run upgrade checks, telemetry prompts, routing injection, or lake intro.
+- Do NOT run upgrade checks, one-time onboarding prompts, routing injection, or lake intro.
 - Focus on completing the task and reporting results via prose output.
 - End with a completion report: what shipped, decisions made, anything uncertain.
 
@@ -757,11 +729,11 @@ $torch_BIN/torch-learnings-log '{"skill":"SKILL_NAME","type":"operational","key"
 
 Do not log obvious facts or one-time transient errors.
 
-## Telemetry (run last)
+## Local analytics (run last)
 
-After workflow completion, log telemetry. Use skill `name:` from frontmatter. OUTCOME is success/error/abort/unknown.
+After workflow completion, log the run to local analytics. Use skill `name:` from frontmatter. OUTCOME is success/error/abort/unknown.
 
-**PLAN MODE EXCEPTION — ALWAYS RUN:** This command writes telemetry to
+**PLAN MODE EXCEPTION — ALWAYS RUN:** This command writes local analytics to
 `~/.torch/analytics/`, matching preamble analytics writes.
 
 Run this bash:
@@ -776,7 +748,7 @@ $torch_ROOT/bin/torch-timeline-log '{"skill":"SKILL_NAME","event":"completed","b
 if [ "$_TEL" != "off" ]; then
 echo '{"skill":"SKILL_NAME","duration_s":"'"$_TEL_DUR"'","outcome":"OUTCOME","browse":"USED_BROWSE","session":"'"$_SESSION_ID"'","ts":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}' >> ~/.torch/analytics/skill-usage.jsonl 2>/dev/null || true
 fi
-# Remote telemetry (opt-in, requires binary)
+# Structured local analytics (opt-in, requires binary — never uploaded)
 if [ "$_TEL" != "off" ] && [ -x $torch_ROOT/bin/torch-telemetry-log ]; then
   $torch_ROOT/bin/torch-telemetry-log \
     --skill "SKILL_NAME" --duration "$_TEL_DUR" --outcome "OUTCOME" \

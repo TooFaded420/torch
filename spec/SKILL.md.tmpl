@@ -465,17 +465,17 @@ Update archive frontmatter with `spec_worktree_path: $SPAWN_PATH` and
 stash^{/$STASH_REF}`. Before restore, re-run `git status` to make sure your
 worktree is clean." Do NOT drop the stash; user owns it.
 
-#### TTHW telemetry (DX11/F7)
+#### TTHW instrumentation (DX11/F7)
 
-Capture timestamps at three checkpoints, write to telemetry envelope at /spec
-exit:
+Capture timestamps at three checkpoints, write to the local analytics envelope
+at /spec exit:
 
 - `T_PHASE1_START` — Phase 1 first AskUserQuestion or first text emit
 - `T_FIRST_CITATION` — first file/symbol reference in Phase 3 prose
 - `T_FILE_OR_SPAWN` — issue filed OR agent spawned, whichever ends Phase 5
 
 Append the captured timestamps to the local analytics line that the preamble's
-end-of-skill telemetry write emits, as `ttfc_ms` (Phase 1 → first citation) and
+end-of-skill write emits, as `ttfc_ms` (Phase 1 → first citation) and
 `tthw_ms` (Phase 1 → file/spawn) JSON fields. Surfacing the aggregates in
 `/retro` is a separate follow-up.
 

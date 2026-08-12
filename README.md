@@ -50,9 +50,7 @@ OpenCode, Factory Droid, Kiro) and registers the skills. You should see:
 torch ready (claude). 23 slash commands registered.
 ```
 
-> Tip: run `./setup --host <name>` to target one specific agent, and
-> `./setup --announce` to ping the public install counter on hecz.dev (opt-in,
-> one anonymous event, nothing else).
+> Tip: run `./setup --host <name>` to target one specific agent.
 
 ### Step 2: Team mode — auto-update for shared repos (recommended)
 
@@ -443,19 +441,21 @@ Other references: [docs/gbrain-sync.md](docs/gbrain-sync.md) (sync-specific guid
 | [Contributing](CONTRIBUTING.md) | Dev setup, testing, contributor mode, and dev mode |
 | [Changelog](CHANGELOG.md) | What's new in every version |
 
-## Privacy & Telemetry
+## Privacy
 
-torch includes **opt-in** usage telemetry to help improve the project. Here's exactly what happens:
+**torch phones home to nothing.** There is no analytics backend, no install
+counter, and no usage endpoint. The only network calls torch makes are the ones
+you can see doing their job: fetching `VERSION` from this repo to tell you an
+upgrade exists, and whatever a skill you invoked needs to do its work.
 
-- **Default is off.** Nothing is sent anywhere unless you explicitly say yes.
-- **On first run,** torch asks if you want to share anonymous usage data. You can say no.
-- **What's sent (if you opt in):** skill name, duration, success/fail, torch version, OS. That's it.
-- **What's never sent:** code, file paths, repo names, branch names, prompts, or any user-generated content.
-- **Change anytime:** `torch-config set telemetry off` disables everything instantly.
+**Local analytics are opt-in and stay on your machine.** `torch-config set
+telemetry local` writes a usage log to `~/.torch/analytics/skill-usage.jsonl`;
+`torch-analytics` reads it back as a personal dashboard. Nothing uploads it.
+`torch-config set telemetry off` (the default) records nothing at all.
 
-Data is stored in [Supabase](https://supabase.com) (open source Firebase alternative). The schema is in [`supabase/migrations/`](supabase/migrations/) — you can verify exactly what's collected. The Supabase publishable key in the repo is a public key (like a Firebase API key) — row-level security policies deny all direct access. Telemetry flows through validated edge functions that enforce schema checks, event type allowlists, and field length limits.
-
-**Local analytics are always available.** Run `torch-analytics` to see your personal usage dashboard from the local JSONL file — no remote data needed.
+Something broken, missing, or annoying? That's what
+[issues](https://github.com/h3cz/torch/issues) are for — it goes straight to a
+human instead of a table of anonymous counters.
 
 ## Troubleshooting
 

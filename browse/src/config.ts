@@ -157,7 +157,7 @@ export function readVersionHash(execPath: string = process.execPath): string | n
 /**
  * Resolve the torch home directory.
  *
- * Honors the existing convention used by telemetry.ts and domain-skills.ts:
+ * Honors the existing convention used by domain-skills.ts:
  *   1. torch_HOME env (explicit override)
  *   2. $HOME/.torch (default)
  */
